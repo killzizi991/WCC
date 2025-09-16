@@ -215,7 +215,6 @@ function calculateSummary() {
     let totalEarned = 0;
     let salary = 0;
     let balance = 0;
-    
     if (appSettings.mode === 'official') {
         const tax = appSettings.official.fixedDeduction * 0.13;
         totalEarned = totalEarnedWithoutTax - tax;
@@ -434,6 +433,11 @@ function setupEventListeners() {
         document.querySelectorAll('.palette-tool').forEach(t => t.classList.remove('active'));
         this.classList.add('active');
         massColoringMode = 'border';
+    });
+
+    // Обработчик для кнопки "Варианты расчёта" (заглушка)
+    document.getElementById('calculation-variants-btn').addEventListener('click', function() {
+        // Заглушка: пока ничего не делаем
     });
 }
 
