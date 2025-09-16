@@ -37,4 +37,4 @@ const DEFAULT_SETTINGS = {
 
 // Версия приложения
 const APP_VERSION = '1.1';
-const CACHE_NAME = 'sales-calendar-v4';
+const CACHE_NAME = 'sales-calendar-v5';
