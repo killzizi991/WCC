@@ -177,6 +177,7 @@ function closeModal() {
     document.getElementById('export-modal').style.display = 'none';
     document.getElementById('import-modal').style.display = 'none';
     document.getElementById('help-modal').style.display = 'none';
+    document.getElementById('clear-confirm-modal').style.display = 'none';
     document.body.classList.remove('modal-open');
 }
 
@@ -384,6 +385,9 @@ function setupEventListeners() {
     
     // Кнопка обновления версии
     document.getElementById('update-btn').addEventListener('click', forceUpdate);
+    
+    // Кнопка очистки данных
+    document.getElementById('clear-data-btn').addEventListener('click', showClearDataConfirm);
     
     // Кнопка помощи
     document.getElementById('help-btn').addEventListener('click', showHelpModal);
