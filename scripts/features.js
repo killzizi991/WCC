@@ -39,6 +39,11 @@ function showHelpModal() {
     const helpContent = document.getElementById('help-content');
     helpContent.innerHTML = '';
     
+    if (typeof HELP_DATA === 'undefined') {
+        helpContent.innerHTML = '<p>Данные справки не загружены</p>';
+        return;
+    }
+    
     HELP_DATA.forEach((item, index) => {
         const questionDiv = document.createElement('div');
         questionDiv.className = 'help-item';
