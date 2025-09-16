@@ -55,39 +55,52 @@ if (appSettings.hasOwnProperty('useTax') && !appSettings.hasOwnProperty('mode'))
 
 // Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', () => {
-    // Миграция данных: добавление functionalBorderValue если отсутствует
-    let needSave = false;
-    for (const dateKey in calendarData) {
-        const dayData = calendarData[dateKey];
-        if (dayData.functionalBorder && dayData.functionalBorderValue === undefined) {
-            dayData.functionalBorderValue = dayData.sales;
-            needSave = true;
+    try {
+        // Миграция данных: добавление functionalBorderValue если отсутствует
+        let needSave = false;
+        for (const dateKey in calendarData) {
+            const dayData = calendarData[dateKey];
+            if (dayData.functionalBorder && dayData.functionalBorderValue === undefined) {
+                dayData.functionalBorderValue = dayData.sales;
+                needSave = true;
+            }
         }
-    }
-    if (needSave) {
-        saveToStorage('calendarData', calendarData);
-    }
+        if (needSave) {
+            saveToStorage('calendarData', calendarData);
+        }
 
-    generateCalendar();
-    setupEventListeners();
-    initPeriodSelector();
-    loadSettingsToForm();
-    
-    // Проверка первого запуска
-    if (!localStorage.getItem('firstRun')) {
-        localStorage.setItem('firstRun', 'true');
-        showWelcomeMessage();
-    }
-    
-    // Отслеживание изменения размера для определения клавиатуры
-    window.addEventListener('resize', function() {
-        const newHeight = window.innerHeight;
-        const heightDifference = Math.abs(lastWindowHeight - newHeight);
+        generateCalendar();
+        setupEventListeners();
+        initPeriodSelector();
+        loadSettingsToForm();
         
-        // Если изменение высоты значительное, считаем что клавиатура открыта/закрыта
-        if (heightDifference > 200) {
-            isKeyboardOpen = (newHeight < lastWindowHeight);
-            lastWindowHeight = newHeight;
+        // Проверка первого запуска
+        if (!localStorage.getItem('firstRun')) {
+            localStorage.setItem('firstRun', 'true');
+            showWelcomeMessage();
         }
-    });
+        
+        // Отслеживание изменения размера для определения клавиатуры
+        window.addEventListener('resize', function() {
+            const newHeight = window.innerHeight;
+            const heightDifference = Math.abs(lastWindowHeight - newHeight);
+            
+            // Если изменение высоты значительное, считаем что клавиатура открыта/закрыта
+            if (heightDifference > 200) {
+                isKeyboardOpen = (newHeight < lastWindowHeight);
+                lastWindowHeight = newHeight;
+            }
+        });
+
+        // Скрываем индикатор загрузки после успешной инициализации
+        document.getElementById('app-loading').style.display = 'none';
+    } catch (error) {
+        console.error('Ошибка инициализации:', error);
+        document.getElementById('app-loading').style.display = 'none';
+        if (typeof showNotification === 'function') {
+            showNotification('Ошибка загрузки: ' + error.message);
+        } else {
+            alert('Ошибка загрузки: ' + error.message);
+        }
+    }
 });
