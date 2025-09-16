@@ -113,7 +113,7 @@
     <div id="period-modal" class="modal">
         <div class="modal-content period-selector">
             <span class="close">&times;</span>
-            <h3>Выберите период</h3>
+            <h3>Выберите период</h4>
             <div class="period-step" id="year-step">
                 <h4>Выберите год</h4>
                 <div class="period-options" id="year-options"></div>
@@ -127,6 +127,27 @@
     </div>
 
     <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Настройки</h3>
+
+            <div class="setting-group" style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="export-btn" style="flex: 1;">Экспорт</button>
+                <button id="import-btn" style="flex: 1;">Импорт</button>
+            </div>
+
+            <div class="setting-group" style="margin-top: 20px;">
+                <button id="clear-data-btn" style="width: 100%; background: #dc3545;">Очистить данные</button>
+            </div>
+
+            <div class="setting-group" style="margin-top: 20px;">
+                <button id="update-btn" style="width: 100%; background: #dc3545;">Обновить приложение</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Новое модальное окно для вариантов расчета -->
+    <div id="calculation-variants-modal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
             <h3>Настройки расчетов</h3>
@@ -186,19 +207,6 @@
                     <label>Значение функциональной обводки (руб):</label>
                     <input type="number" id="unofficial-functional-border-value" value="30000" min="0" step="1000">
                 </div>
-            </div>
-
-            <div class="setting-group" style="display: flex; gap: 10px; margin-top: 20px;">
-                <button id="export-btn" style="flex: 1;">Экспорт</button>
-                <button id="import-btn" style="flex: 1;">Импорт</button>
-            </div>
-
-            <div class="setting-group" style="margin-top: 20px;">
-                <button id="clear-data-btn" style="width: 100%; background: #dc3545;">Очистить данные</button>
-            </div>
-
-            <div class="setting-group" style="margin-top: 20px;">
-                <button id="update-btn" style="width: 100%; background: #dc3545;">Обновить приложение</button>
             </div>
             
             <button id="save-settings">Сохранить настройки</button>
