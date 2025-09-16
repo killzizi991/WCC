@@ -300,3 +300,18 @@ function importData(event) {
     event.target.value = ''; // Сброс input
     closeModal();
 }
+
+// Показать подтверждение очистки данных
+function showClearDataConfirm() {
+    if (confirm("ВНИМАНИЕ! Все данные календаря будут удалены. Перед продолжением убедитесь, что вы сделали экспорт данных. Продолжить?")) {
+        clearData();
+    }
+}
+
+// Очистка всех данных календаря
+function clearData() {
+    calendarData = {};
+    saveToStorage('calendarData', calendarData);
+    generateCalendar();
+    showNotification('Данные очищены');
+}
