@@ -398,6 +398,39 @@ function setupEventListeners() {
         document.getElementById('import-file').click();
     });
     document.getElementById('import-text-btn').addEventListener('click', importFromText);
+
+    // Обработчики для палитры
+    document.getElementById('palette-btn').addEventListener('click', function() {
+        const palettePanel = document.getElementById('palette-panel');
+        const isVisible = palettePanel.style.display === 'block';
+        palettePanel.style.display = isVisible ? 'none' : 'block';
+        this.classList.toggle('active', !isVisible);
+        
+        // Если панель скрывается, выключаем режим массовой заливки/обводки
+        if (isVisible) {
+            massColoringMode = null;
+            document.querySelectorAll('.palette-tool.active').forEach(tool => {
+                tool.classList.remove('active');
+            });
+        }
+    });
+
+    // Обработчики для инструментов палитры
+    document.querySelectorAll('.palette-tool.fill').forEach(tool => {
+        tool.addEventListener('click', function() {
+            // Активируем инструмент заливки
+            document.querySelectorAll('.palette-tool').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            massColoringMode = 'fill';
+        });
+    });
+
+    // Обработчик для инструмента обводки
+    document.getElementById('palette-border').addEventListener('click', function() {
+        document.querySelectorAll('.palette-tool').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        massColoringMode = 'border';
+    });
 }
 
 // Загрузка настроек в форму
