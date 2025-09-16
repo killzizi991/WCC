@@ -170,15 +170,19 @@ function saveDayData() {
 
 // Закрытие модального окна
 function closeModal() {
-    document.getElementById('modal').style.display = 'none';
-    document.getElementById('summary-modal').style.display = 'none';
-    document.getElementById('period-modal').style.display = 'none';
-    document.getElementById('settings-modal').style.display = 'none';
-    document.getElementById('calculation-variants-modal').style.display = 'none';
-    document.getElementById('export-modal').style.display = 'none';
-    document.getElementById('import-modal').style.display = 'none';
-    document.getElementById('help-modal').style.display = 'none';
-    document.getElementById('clear-confirm-modal').style.display = 'none';
+    const modals = [
+        'modal', 'summary-modal', 'period-modal', 'settings-modal',
+        'calculation-variants-modal', 'export-modal', 'import-modal',
+        'help-modal'
+    ];
+    
+    modals.forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    });
+    
     document.body.classList.remove('modal-open');
 }
 
