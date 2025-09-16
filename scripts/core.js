@@ -86,11 +86,28 @@ function checkLocalStorageSupport() {
 // Обработка ошибок
 window.addEventListener('error', function(e) {
     console.error('Произошла ошибка:', e.error);
-    showNotification('Произошла ошибка приложения');
+    const loadingElement = document.getElementById('app-loading');
+    if (loadingElement) {
+        loadingElement.style.display = 'none';
+    }
+    if (typeof showNotification === 'function') {
+        showNotification('Произошла ошибка приложения');
+    } else {
+        alert('Произошла ошибка приложения: ' + e.error.message);
+    }
 });
 
 // Обработка необработанных промисов
 window.addEventListener('unhandledrejection', function(e) {
     console.error('Необработанный промис:', e.reason);
+    const loadingElement = document.getElementById('app-loading');
+    if (loadingElement) {
+        loadingElement.style.display = 'none';
+    }
+    if (typeof showNotification === 'function') {
+        showNotification('Ошибка: ' + e.reason.message);
+    } else {
+        alert('Ошибка: ' + e.reason.message);
+    }
     e.preventDefault();
 });
