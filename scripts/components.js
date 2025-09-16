@@ -174,6 +174,7 @@ function closeModal() {
     document.getElementById('summary-modal').style.display = 'none';
     document.getElementById('period-modal').style.display = 'none';
     document.getElementById('settings-modal').style.display = 'none';
+    document.getElementById('calculation-variants-modal').style.display = 'none';
     document.getElementById('export-modal').style.display = 'none';
     document.getElementById('import-modal').style.display = 'none';
     document.getElementById('help-modal').style.display = 'none';
@@ -347,6 +348,12 @@ function setupEventListeners() {
     document.getElementById('settings-btn').addEventListener('click', () => {
         document.getElementById('settings-modal').style.display = 'block';
         document.body.classList.add('modal-open');
+    });
+    
+    // Варианты расчета
+    document.getElementById('calculation-variants-btn').addEventListener('click', () => {
+        document.getElementById('calculation-variants-modal').style.display = 'block';
+        document.body.classList.add('modal-open');
         updateSettingsUI();
     });
     
@@ -433,11 +440,6 @@ function setupEventListeners() {
         document.querySelectorAll('.palette-tool').forEach(t => t.classList.remove('active'));
         this.classList.add('active');
         massColoringMode = 'border';
-    });
-
-    // Обработчик для кнопки "Варианты расчёта" (заглушка)
-    document.getElementById('calculation-variants-btn').addEventListener('click', function() {
-        // Заглушка: пока ничего не делаем
     });
 }
 
