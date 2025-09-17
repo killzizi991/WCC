@@ -253,12 +253,14 @@ function importData(event) {
             showNotification('Данные импортированы');
         } catch (error) {
             console.error('Ошибка импорта:', error);
-            showNotification('Ошибка импорта данных');
+            showNotification('Ошибка импорта данных: неверный формат');
         }
     };
+    reader.onerror = function() {
+        showNotification('Ошибка чтения файла');
+    };
     reader.readAsText(file);
-    event.target.value = ''; // Сброс input
-    closeModal();
+    event.target.value = '';
 }
 
 // Показать подтверждение очистки данных
