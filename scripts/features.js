@@ -13,6 +13,8 @@ function toggleFunctionalBorder(day) {
             dayData.sales = 0;
         } else if (currentTemplate.type === 'hourly') {
             dayData.hours = 0;
+        } else if (currentTemplate.type === 'fixed_rate') {
+            dayData.workingDay = false;
         }
         
         showNotification('Обводка снята');
@@ -27,6 +29,9 @@ function toggleFunctionalBorder(day) {
         } else if (currentTemplate.type === 'hourly') {
             dayData.hours = currentTemplate.settings.functionalBorderValue;
             showNotification(`Обводка установлена, часы: ${currentTemplate.settings.functionalBorderValue} ч`);
+        } else if (currentTemplate.type === 'fixed_rate') {
+            dayData.workingDay = true;
+            showNotification(`Обводка установлена, смена добавлена`);
         }
     }
     
