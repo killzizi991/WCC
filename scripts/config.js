@@ -16,27 +16,6 @@ const MONTH_NAMES = [
     "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
 ];
 
-// Шаблоны расчета по умолчанию
-const DEFAULT_TEMPLATES = [
-    {
-        id: 1,
-        name: "Процент + ставка",
-        type: "percentage",
-        settings: {
-            salesPercent: 7,
-            shiftRate: 1000,
-            advance: 0,
-            functionalBorderValue: 30000
-        }
-    },
-    {
-        id: 2,
-        name: "Новый шаблон",
-        type: "custom",
-        settings: {}
-    }
-];
-
 // Версия приложения
 const APP_VERSION = '1.1';
 const CACHE_NAME = 'sales-calendar-v5';
