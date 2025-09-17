@@ -45,6 +45,7 @@ function generateCalendar() {
             <div class="day-number">${day}</div>
             ${(dayData.sales && currentTemplate.type === 'percentage') ? `<div class="day-sales">${formatDisplayNumber(dayData.sales)}</div>` : ''}
             ${(dayData.hours && currentTemplate.type === 'hourly') ? `<div class="day-sales">${dayData.hours}ч</div>` : ''}
+            ${(dayData.workingDay && currentTemplate.type === 'fixed_rate') ? `<div class="day-sales">✓</div>` : ''}
         `;
         
         // Цвет фона - белый цвет удаляет заливку
@@ -121,18 +122,32 @@ function openModal(day) {
         originalSalesValue = dayData.functionalBorderValue || (originalHasFunctionalBorder ? dayData.sales : 0);
     } else if (currentTemplate.type === 'hourly') {
         originalSalesValue = dayData.functionalBorderValue || (originalHasFunctionalBorder ? dayData.hours : 0);
+    } else if (currentTemplate.type === 'fixed_rate') {
+        originalSalesValue = dayData.functionalBorderValue || (originalHasFunctionalBorder ? 1 : 0);
     }
     
     document.getElementById('modal-day').textContent = day;
     
     // Устанавливаем placeholder в зависимости от типа шаблона
     const salesInput = document.getElementById('sales-input');
+    const workingDayCheckbox = document.getElementById('working-day-checkbox');
+    const salesInputContainer = document.getElementById('sales-input-container');
+    const workingDayContainer = document.getElementById('working-day-container');
+    
     if (currentTemplate.type === 'percentage') {
+        salesInputContainer.style.display = 'block';
+        workingDayContainer.style.display = 'none';
         salesInput.placeholder = "Сумма продаж";
         salesInput.value = dayData.sales || '';
     } else if (currentTemplate.type === 'hourly') {
+        salesInputContainer.style.display = 'block';
+        workingDayContainer.style.display = 'none';
         salesInput.placeholder = "Кол-во рабочих часов";
         salesInput.value = dayData.hours || '';
+    } else if (currentTemplate.type === 'fixed_rate') {
+        salesInputContainer.style.display = 'none';
+        workingDayContainer.style.display = 'block';
+        workingDayCheckbox.checked = dayData.workingDay || false;
     }
     
     document.getElementById('comment-input').value = dayData.comment || '';
@@ -152,11 +167,19 @@ function openModal(day) {
         document.getElementById('day-settings').style.display = 'block';
         document.getElementById('percentage-day-settings').style.display = 'block';
         document.getElementById('hourly-day-settings').style.display = 'none';
+        document.getElementById('fixed-rate-day-settings').style.display = 'none';
     } else if (currentTemplate.type === 'hourly') {
         document.getElementById('day-hourly-rate').value = dayData.customHourlyRate || '';
         document.getElementById('day-settings').style.display = 'block';
         document.getElementById('percentage-day-settings').style.display = 'none';
         document.getElementById('hourly-day-settings').style.display = 'block';
+        document.getElementById('fixed-rate-day-settings').style.display = 'none';
+    } else if (currentTemplate.type === 'fixed_rate') {
+        document.getElementById('day-shift-rate-fixed').value = dayData.customShiftRate || '';
+        document.getElementById('day-settings').style.display = 'block';
+        document.getElementById('percentage-day-settings').style.display = 'none';
+        document.getElementById('hourly-day-settings').style.display = 'none';
+        document.getElementById('fixed-rate-day-settings').style.display = 'block';
     } else {
         document.getElementById('day-settings').style.display = 'none';
     }
@@ -168,14 +191,15 @@ function openModal(day) {
 // Сохранение данных дня
 function saveDayData() {
     const currentTemplate = appSettings.templates.find(t => t.id === appSettings.currentTemplateId);
-    const inputValue = parseInt(document.getElementById('sales-input').value) || 0;
     const comment = document.getElementById('comment-input').value;
     const selectedColor = document.querySelector('.color-option.selected')?.dataset.color;
     
     const dateKey = `${currentYear}-${currentMonth+1}-${selectedDay}`;
     
     // Определяем, нужно ли сохранять функциональную обводку
-    const shouldKeepFunctionalBorder = originalHasFunctionalBorder && inputValue === originalSalesValue;
+    const shouldKeepFunctionalBorder = originalHasFunctionalBorder && 
+        ((currentTemplate.type === 'fixed_rate' && document.getElementById('working-day-checkbox').checked) || 
+         (currentTemplate.type !== 'fixed_rate' && parseInt(document.getElementById('sales-input').value) === originalSalesValue));
     
     let dayData = {
         comment: comment,
@@ -189,6 +213,7 @@ function saveDayData() {
             parseFloat(document.getElementById('day-sales-percent').value) : null;
         const customShiftRate = document.getElementById('day-shift-rate').value ? 
             parseInt(document.getElementById('day-shift-rate').value) : null;
+        const inputValue = parseInt(document.getElementById('sales-input').value) || 0;
             
         dayData.sales = inputValue;
         dayData.customSalesPercent = customSalesPercent;
@@ -196,9 +221,17 @@ function saveDayData() {
     } else if (currentTemplate.type === 'hourly') {
         const customHourlyRate = document.getElementById('day-hourly-rate').value ? 
             parseInt(document.getElementById('day-hourly-rate').value) : null;
+        const inputValue = parseInt(document.getElementById('sales-input').value) || 0;
             
         dayData.hours = inputValue;
         dayData.customHourlyRate = customHourlyRate;
+    } else if (currentTemplate.type === 'fixed_rate') {
+        const customShiftRate = document.getElementById('day-shift-rate-fixed').value ? 
+            parseInt(document.getElementById('day-shift-rate-fixed').value) : null;
+        const isWorkingDay = document.getElementById('working-day-checkbox').checked;
+            
+        dayData.workingDay = isWorkingDay;
+        dayData.customShiftRate = customShiftRate;
     }
     
     calendarData[dateKey] = dayData;
@@ -237,17 +270,24 @@ function calculateSummary() {
         document.getElementById('modal-total-sales').textContent = summary.totalSales.toLocaleString();
         document.getElementById('modal-total-sales').parentElement.style.display = 'block';
         document.getElementById('modal-total-hours').parentElement.style.display = 'none';
+        document.getElementById('modal-total-shifts').parentElement.style.display = 'none';
     } else if (summary.templateType === 'hourly') {
         document.getElementById('modal-total-hours').textContent = summary.totalHours.toLocaleString();
         document.getElementById('modal-total-sales').parentElement.style.display = 'none';
         document.getElementById('modal-total-hours').parentElement.style.display = 'block';
+        document.getElementById('modal-total-shifts').parentElement.style.display = 'none';
+    } else if (summary.templateType === 'fixed_rate') {
+        document.getElementById('modal-total-shifts').textContent = summary.workDays.toLocaleString();
+        document.getElementById('modal-total-sales').parentElement.style.display = 'none';
+        document.getElementById('modal-total-hours').parentElement.style.display = 'none';
+        document.getElementById('modal-total-shifts').parentElement.style.display = 'block';
     }
     
     document.getElementById('modal-total-earned').textContent = summary.totalEarned.toLocaleString();
     document.getElementById('modal-salary').textContent = summary.salary.toLocaleString();
     
-    // Убираем остаток и показываем аванс для почасового шаблона
-    if (summary.templateType === 'hourly') {
+    // Убираем остаток и показываем аванс для почасового и фиксированного шаблонов
+    if (summary.templateType === 'hourly' || summary.templateType === 'fixed_rate') {
         document.getElementById('modal-balance').parentElement.style.display = 'none';
         document.getElementById('modal-advance').textContent = currentTemplate.settings.advance.toLocaleString();
         document.getElementById('modal-advance').parentElement.style.display = 'block';
@@ -412,6 +452,7 @@ function setupEventListeners() {
         document.getElementById('day-sales-percent').value = '';
         document.getElementById('day-shift-rate').value = '';
         document.getElementById('day-hourly-rate').value = '';
+        document.getElementById('day-shift-rate-fixed').value = '';
     });
     
     // Переключение шаблонов в настройках
@@ -521,6 +562,13 @@ function updateSettingsUI() {
         document.getElementById('hourly-rate').value = template.settings.hourlyRate;
         document.getElementById('hourly-advance').value = template.settings.advance;
         document.getElementById('hourly-functional-border-value').value = template.settings.functionalBorderValue;
+    } else if (template.type === 'fixed_rate') {
+        document.getElementById('fixed-rate-settings').style.display = 'block';
+        
+        // Заполняем значения для шаблона "Фиксированная ставка за смену"
+        document.getElementById('fixed-shift-rate').value = template.settings.shiftRate;
+        document.getElementById('fixed-advance').value = template.settings.advance;
+        document.getElementById('fixed-functional-border-value').value = template.settings.functionalBorderValue;
     } else if (template.type === 'custom') {
         document.getElementById('custom-settings').style.display = 'block';
         // Пока пусто для пользовательских шаблонов
@@ -548,6 +596,12 @@ function saveSettings() {
             hourlyRate: parseInt(document.getElementById('hourly-rate').value),
             advance: parseInt(document.getElementById('hourly-advance').value),
             functionalBorderValue: parseInt(document.getElementById('hourly-functional-border-value').value)
+        };
+    } else if (appSettings.templates[templateIndex].type === 'fixed_rate') {
+        appSettings.templates[templateIndex].settings = {
+            shiftRate: parseInt(document.getElementById('fixed-shift-rate').value),
+            advance: parseInt(document.getElementById('fixed-advance').value),
+            functionalBorderValue: parseInt(document.getElementById('fixed-functional-border-value').value)
         };
     }
     // Для custom шаблонов пока ничего не сохраняем
@@ -636,9 +690,9 @@ function showTemplateSelectorModal() {
             editTemplateName(template.id);
         };
         
-        // Кнопка удаления (не показываем для шаблона с id=1 и id=2)
+        // Кнопка удаления (не показываем для шаблона с id=1, id=2 и id=3)
         let deleteButton = null;
-        if (template.id !== 1 && template.id !== 2) {
+        if (template.id !== 1 && template.id !== 2 && template.id !== 3) {
             deleteButton = document.createElement('button');
             deleteButton.textContent = '🗑️';
             deleteButton.style.padding = '5px';
@@ -683,7 +737,7 @@ function editTemplateName(templateId) {
 
 // Удаление шаблона
 function deleteTemplate(templateId) {
-    if (templateId === 1 || templateId === 2) {
+    if (templateId === 1 || templateId === 2 || templateId === 3) {
         showNotification('Нельзя удалить базовый шаблон');
         return;
     }
