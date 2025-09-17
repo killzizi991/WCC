@@ -173,7 +173,7 @@ function closeModal() {
     const modals = [
         'modal', 'summary-modal', 'period-modal', 'settings-modal',
         'calculation-variants-modal', 'export-modal', 'import-modal',
-        'help-modal'
+        'help-modal', 'template-selector-modal', 'add-template-modal'
     ];
     
     modals.forEach(modalId => {
@@ -188,65 +188,16 @@ function closeModal() {
 
 // Расчеты
 function calculateSummary() {
-    const monthDays = new Date(currentYear, currentMonth + 1, 0).getDate();
-    let workDays = 0;
-    let totalSales = 0;
-    let totalEarnedWithoutTax = 0;
+    const currentTemplate = appSettings.templates.find(t => t.id === appSettings.currentTemplateId);
+    const summary = calculateMonthSummary(calendarData, currentYear, currentMonth, currentTemplate.settings);
     
-    for (let day = 1; day <= monthDays; day++) {
-        const dateKey = `${currentYear}-${currentMonth+1}-${day}`;
-        const dayData = calendarData[dateKey] || {};
-        
-        if (dayData.sales > 0) {
-            workDays++;
-            totalSales += dayData.sales;
-            
-            if (appSettings.mode === 'official') {
-                // Используем индивидуальные настройки дня или общие
-                const dayPercent = dayData.customSalesPercent || appSettings.official.salesPercent;
-                const dayShiftRate = dayData.customShiftRate || appSettings.official.shiftRate;
-                
-                totalEarnedWithoutTax += calculateEarnings(dayData.sales, dayPercent) + dayShiftRate;
-            } else {
-                // Неофициальный режим: используем настройки из unofficial
-                const dayPercent = dayData.customSalesPercent || appSettings.unofficial.salesPercent;
-                const dayShiftRate = dayData.customShiftRate || appSettings.unofficial.shiftRate;
-                
-                totalEarnedWithoutTax += calculateEarnings(dayData.sales, dayPercent) + dayShiftRate;
-            }
-        }
-    }
-    
-    let totalEarned = 0;
-    let salary = 0;
-    let balance = 0;
-    if (appSettings.mode === 'official') {
-        const tax = appSettings.official.fixedDeduction * 0.13;
-        totalEarned = totalEarnedWithoutTax - tax;
-        salary = totalEarned - appSettings.official.advance;
-        balance = salary - appSettings.official.fixedSalaryPart;
-    } else {
-        // Неофициальный режим
-        totalEarned = totalEarnedWithoutTax;
-        salary = totalEarned - appSettings.unofficial.advance;
-        balance = salary;
-    }
-    
-    document.getElementById('modal-work-days').textContent = workDays;
-    document.getElementById('modal-total-sales').textContent = totalSales.toLocaleString();
-    document.getElementById('modal-total-earned').textContent = totalEarned.toLocaleString();
-    document.getElementById('modal-salary').textContent = salary.toLocaleString();
-    document.getElementById('modal-balance').textContent = balance.toLocaleString();
+    document.getElementById('modal-work-days').textContent = summary.workDays;
+    document.getElementById('modal-total-sales').textContent = summary.totalSales.toLocaleString();
+    document.getElementById('modal-total-earned').textContent = summary.totalEarned.toLocaleString();
+    document.getElementById('modal-salary').textContent = summary.salary.toLocaleString();
+    document.getElementById('modal-balance').textContent = summary.balance.toLocaleString();
     document.getElementById('summary-month-year').textContent = 
         `${new Date(currentYear, currentMonth).toLocaleString('ru', { month: 'long' })} ${currentYear}`;
-        
-    // Скрываем строку с остатком в неофициальном режиме
-    const balanceRow = document.getElementById('balance-row');
-    if (appSettings.mode === 'unofficial') {
-        balanceRow.style.display = 'none';
-    } else {
-        balanceRow.style.display = 'block';
-    }
 }
 
 // Инициализация выбора периода
@@ -330,12 +281,25 @@ function setupEventListeners() {
     
     // Модальные окна
     document.querySelectorAll('.close').forEach(closeBtn => {
-        closeBtn.addEventListener('click', closeModal);
+        closeBtn.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            if (modal.id === 'template-selector-modal') {
+                modal.style.display = 'none';
+                document.getElementById('calculation-variants-modal').style.display = 'block';
+            } else {
+                closeModal();
+            }
+        });
     });
     
     window.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal')) {
-            closeModal();
+            if (e.target.id === 'template-selector-modal') {
+                e.target.style.display = 'none';
+                document.getElementById('calculation-variants-modal').style.display = 'block';
+            } else {
+                closeModal();
+            }
         }
     });
     
@@ -369,7 +333,7 @@ function setupEventListeners() {
     
     document.getElementById('import-file').addEventListener('change', importData);
     
-    // Выбор цвета в модальном окне
+    // Выбор цвета в модальном окна
     document.querySelectorAll('.color-option').forEach(option => {
         option.addEventListener('click', () => {
             document.querySelectorAll('.color-option').forEach(o => o.classList.remove('selected'));
@@ -388,9 +352,9 @@ function setupEventListeners() {
         document.getElementById('day-shift-rate').value = '';
     });
     
-    // Переключение режимов в настройках
-    document.getElementById('mode-selector').addEventListener('change', function() {
-        updateSettingsUI();
+    // Переключение шаблонов в настройках
+    document.getElementById('select-template-btn').addEventListener('click', function() {
+        showTemplateSelectorModal();
     });
     
     // Кнопка обновления версии
@@ -445,71 +409,86 @@ function setupEventListeners() {
         this.classList.add('active');
         massColoringMode = 'border';
     });
+
+    // Кнопка добавления нового шаблона
+    document.getElementById('add-template-modal-btn').addEventListener('click', function() {
+        document.getElementById('add-template-modal').style.display = 'block';
+    });
+
+    // Создание нового шаблона
+    document.getElementById('create-template-btn').addEventListener('click', addNewTemplate);
 }
 
 // Загрузка настроек в форму
 function loadSettingsToForm() {
-    document.getElementById('mode-selector').value = appSettings.mode;
+    updateSelectedTemplateName();
     updateSettingsUI();
 }
 
-// Обновление интерфейса настроек в зависимости от выбранного режима
+// Обновление имени выбранного шаблона
+function updateSelectedTemplateName() {
+    const currentTemplate = appSettings.templates.find(t => t.id === appSettings.currentTemplateId);
+    document.getElementById('selected-template-name').textContent = currentTemplate.name;
+}
+
+// Обновление интерфейса настроек в зависимости от выбранного шаблона
 function updateSettingsUI() {
-    const mode = document.getElementById('mode-selector').value;
-    const officialSettings = document.getElementById('official-settings');
-    const unofficialSettings = document.getElementById('unofficial-settings');
+    const templateId = appSettings.currentTemplateId;
+    const template = appSettings.templates.find(t => t.id === templateId);
     
-    if (mode === 'official') {
-        officialSettings.style.display = 'block';
-        unofficialSettings.style.display = 'none';
+    if (!template) return;
+    
+    // Скрываем все настройки
+    document.querySelectorAll('.template-settings').forEach(el => {
+        el.style.display = 'none';
+    });
+    
+    // Показываем настройки для выбранного шаблона
+    if (template.type === 'percentage') {
+        document.getElementById('percentage-settings').style.display = 'block';
         
-        // Заполняем значения для официального режима
-        document.getElementById('sales-percent').value = appSettings.official.salesPercent;
-        document.getElementById('shift-rate').value = appSettings.official.shiftRate;
-        document.getElementById('advance').value = appSettings.official.advance;
-        document.getElementById('fixed-salary-part').value = appSettings.official.fixedSalaryPart;
-        document.getElementById('functional-border-value').value = appSettings.official.functionalBorderValue;
-    } else {
-        officialSettings.style.display = 'none';
-        unofficialSettings.style.display = 'block';
-        
-        // Заполняем значения для неофициального режима
-        document.getElementById('unofficial-sales-percent').value = appSettings.unofficial.salesPercent;
-        document.getElementById('unofficial-shift-rate').value = appSettings.unofficial.shiftRate;
-        document.getElementById('unofficial-advance').value = appSettings.unofficial.advance;
-        document.getElementById('unofficial-functional-border-value').value = appSettings.unofficial.functionalBorderValue;
+        // Заполняем значения для шаблона "Процент + ставка"
+        document.getElementById('sales-percent').value = template.settings.salesPercent;
+        document.getElementById('shift-rate').value = template.settings.shiftRate;
+        document.getElementById('advance').value = template.settings.advance;
+        document.getElementById('functional-border-value').value = template.settings.functionalBorderValue;
+    } else if (template.type === 'custom') {
+        document.getElementById('custom-settings').style.display = 'block';
+        // Пока пусто для пользовательских шаблонов
     }
 }
 
 // Сохранение настроек
 function saveSettings() {
-    const mode = document.getElementById('mode-selector').value;
-    const oldFunctionalBorderValue = appSettings[appSettings.mode].functionalBorderValue;
+    const templateId = appSettings.currentTemplateId;
+    const templateIndex = appSettings.templates.findIndex(t => t.id === templateId);
     
-    if (mode === 'official') {
-        appSettings.official = {
+    if (templateIndex === -1) return;
+    
+    const oldFunctionalBorderValue = appSettings.templates[templateIndex].settings.functionalBorderValue;
+    
+    if (appSettings.templates[templateIndex].type === 'percentage') {
+        appSettings.templates[templateIndex].settings = {
             salesPercent: parseFloat(document.getElementById('sales-percent').value),
             shiftRate: parseInt(document.getElementById('shift-rate').value),
-            fixedDeduction: 25000, // Фиксированное значение
             advance: parseInt(document.getElementById('advance').value),
-            fixedSalaryPart: parseInt(document.getElementById('fixed-salary-part').value),
             functionalBorderValue: parseInt(document.getElementById('functional-border-value').value)
         };
-    } else {
-        appSettings.unofficial = {
-            salesPercent: parseFloat(document.getElementById('unofficial-sales-percent').value),
-            shiftRate: parseInt(document.getElementById('unofficial-shift-rate').value),
-            advance: parseInt(document.getElementById('unofficial-advance').value),
-            functionalBorderValue: parseInt(document.getElementById('unofficial-functional-border-value').value)
-        };
     }
+    // Для custom шаблонов пока ничего не сохраняем
     
-    appSettings.mode = mode;
+    appSettings.currentTemplateId = templateId;
     
     // Обновляем установленные функциональные обводки, если значение изменилось
-    const newFunctionalBorderValue = appSettings[appSettings.mode].functionalBorderValue;
+    const newFunctionalBorderValue = appSettings.templates[templateIndex].settings.functionalBorderValue;
     if (oldFunctionalBorderValue !== newFunctionalBorderValue) {
-        updateFunctionalBorders(newFunctionalBorderValue);
+        const result = updateFunctionalBorders(calendarData, newFunctionalBorderValue);
+        calendarData = result.updatedData;
+        if (result.updated) {
+            saveToStorage('calendarData', calendarData);
+            generateCalendar();
+            showNotification('Значения обводок обновлены');
+        }
     }
     
     saveToStorage('appSettings', appSettings);
@@ -518,23 +497,150 @@ function saveSettings() {
     showNotification('Настройки сохранены');
 }
 
-// Обновление значений функциональных обводок
-function updateFunctionalBorders(newValue) {
-    let updated = false;
+// Добавление нового шаблона
+function addNewTemplate() {
+    const templateName = document.getElementById('new-template-name').value.trim();
     
-    for (const dateKey in calendarData) {
-        if (calendarData[dateKey].functionalBorder) {
-            calendarData[dateKey].sales = newValue;
-            calendarData[dateKey].functionalBorderValue = newValue;
-            updated = true;
+    if (!templateName) {
+        showNotification('Введите название шаблона');
+        return;
+    }
+    
+    const newId = Math.max(...appSettings.templates.map(t => t.id), 0) + 1;
+    const newTemplate = {
+        id: newId,
+        name: templateName,
+        type: 'custom',
+        settings: {}
+    };
+    
+    appSettings.templates.push(newTemplate);
+    appSettings.currentTemplateId = newId;
+    
+    saveToStorage('appSettings', appSettings);
+    updateSelectedTemplateName();
+    updateSettingsUI();
+    document.getElementById('add-template-modal').style.display = 'none';
+    showTemplateSelectorModal();
+    showNotification('Новый шаблон добавлен');
+}
+
+// Показать модальное окно выбора шаблона
+function showTemplateSelectorModal() {
+    const templateList = document.getElementById('template-list');
+    templateList.innerHTML = '';
+    
+    appSettings.templates.forEach(template => {
+        const templateElement = document.createElement('div');
+        templateElement.className = 'template-item';
+        templateElement.style.display = 'flex';
+        templateElement.style.justifyContent = 'space-between';
+        templateElement.style.alignItems = 'center';
+        templateElement.style.marginBottom = '10px';
+        templateElement.style.padding = '10px';
+        templateElement.style.border = '1px solid #e2e8f0';
+        templateElement.style.borderRadius = '5px';
+        
+        const templateName = document.createElement('div');
+        templateName.textContent = template.name;
+        templateName.style.flex = '1';
+        
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.style.display = 'flex';
+        buttonsContainer.style.gap = '5px';
+        
+        // Кнопка редактирования
+        const editButton = document.createElement('button');
+        editButton.textContent = '✏️';
+        editButton.style.padding = '5px';
+        editButton.style.border = 'none';
+        editButton.style.background = 'none';
+        editButton.style.cursor = 'pointer';
+        editButton.onclick = (e) => {
+            e.stopPropagation();
+            editTemplateName(template.id);
+        };
+        
+        // Кнопка удаления (не показываем для шаблона с id=1)
+        let deleteButton = null;
+        if (template.id !== 1) {
+            deleteButton = document.createElement('button');
+            deleteButton.textContent = '🗑️';
+            deleteButton.style.padding = '5px';
+            deleteButton.style.border = 'none';
+            deleteButton.style.background = 'none';
+            deleteButton.style.cursor = 'pointer';
+            deleteButton.onclick = (e) => {
+                e.stopPropagation();
+                deleteTemplate(template.id);
+            };
         }
+        
+        buttonsContainer.appendChild(editButton);
+        if (deleteButton) buttonsContainer.appendChild(deleteButton);
+        
+        templateElement.appendChild(templateName);
+        templateElement.appendChild(buttonsContainer);
+        
+        templateElement.addEventListener('click', () => selectTemplate(template.id));
+        templateList.appendChild(templateElement);
+    });
+    
+    document.getElementById('template-selector-modal').style.display = 'block';
+}
+
+// Редактирование имени шаблона
+function editTemplateName(templateId) {
+    const template = appSettings.templates.find(t => t.id === templateId);
+    if (!template) return;
+    
+    const newName = prompt('Введите новое название шаблона:', template.name);
+    if (newName && newName.trim() !== '') {
+        template.name = newName.trim();
+        saveToStorage('appSettings', appSettings);
+        
+        // Обновляем отображение
+        updateSelectedTemplateName();
+        showTemplateSelectorModal();
+        showNotification('Название шаблона изменено');
+    }
+}
+
+// Удаление шаблона
+function deleteTemplate(templateId) {
+    if (templateId === 1) {
+        showNotification('Нельзя удалить основной шаблон');
+        return;
     }
     
-    if (updated) {
-        saveToStorage('calendarData', calendarData);
-        generateCalendar();
-        showNotification('Значения обводок обновлены');
+    if (!confirm('Вы уверены, что хотите удалить этот шаблон?')) {
+        return;
     }
+    
+    // Если удаляемый шаблон был текущим, переключаемся на основной
+    if (appSettings.currentTemplateId === templateId) {
+        appSettings.currentTemplateId = 1;
+    }
+    
+    // Удаляем шаблон
+    appSettings.templates = appSettings.templates.filter(t => t.id !== templateId);
+    saveToStorage('appSettings', appSettings);
+    
+    // Обновляем интерфейс
+    updateSelectedTemplateName();
+    updateSettingsUI();
+    showTemplateSelectorModal();
+    showNotification('Шаблон удален');
+}
+
+// Выбор шаблона
+function selectTemplate(templateId) {
+    appSettings.currentTemplateId = templateId;
+    saveToStorage('appSettings', appSettings);
+    updateSelectedTemplateName();
+    updateSettingsUI();
+    document.getElementById('template-selector-modal').style.display = 'none';
+    document.getElementById('calculation-variants-modal').style.display = 'block';
 }
 
 // Обработка нажатий клавиш
