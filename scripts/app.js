@@ -38,9 +38,23 @@ if (appSettings.hasOwnProperty('mode')) {
             },
             {
                 id: 2,
-                name: "Новый шаблон",
-                type: "custom",
-                settings: {}
+                name: "Почасовая оплата",
+                type: "hourly",
+                settings: {
+                    hourlyRate: 500,
+                    advance: 0,
+                    functionalBorderValue: 8
+                }
+            },
+            {
+                id: 3,
+                name: "Фиксированная ставка за смену",
+                type: "fixed_rate",
+                settings: {
+                    shiftRate: 1500,
+                    advance: 0,
+                    functionalBorderValue: 1
+                }
             }
         ]
     };
