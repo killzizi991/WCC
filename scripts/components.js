@@ -32,17 +32,19 @@ function generateCalendar() {
         
         const dateKey = `${currentYear}-${currentMonth+1}-${day}`;
         const dayData = calendarData[dateKey] || {};
+        const currentTemplate = appSettings.templates.find(t => t.id === appSettings.currentTemplateId);
         
         // Форматирование чисел для отображения
-        const formatSalesNumber = (value) => {
-            if (value >= 10000) return Math.floor(value / 1000);
+        const formatDisplayNumber = (value) => {
+            if (value >= 10000 && currentTemplate.type === 'percentage') return Math.floor(value / 1000);
             return value;
         };
         
         // Форматирование содержимого
         dayElement.innerHTML = `
             <div class="day-number">${day}</div>
-            ${dayData.sales ? `<div class="day-sales">${formatSalesNumber(dayData.sales)}</div>` : ''}
+            ${(dayData.sales && currentTemplate.type === 'percentage') ? `<div class="day-sales">${formatDisplayNumber(dayData.sales)}</div>` : ''}
+            ${(dayData.hours && currentTemplate.type === 'hourly') ? `<div class="day-sales">${dayData.hours}ч</div>` : ''}
         `;
         
         // Цвет фона - белый цвет удаляет заливку
@@ -110,13 +112,29 @@ function openModal(day) {
     selectedDay = day;
     const dateKey = `${currentYear}-${currentMonth+1}-${day}`;
     const dayData = calendarData[dateKey] || {};
+    const currentTemplate = appSettings.templates.find(t => t.id === appSettings.currentTemplateId);
     
-    // Сохраняем исходное состояние обводки и значения продаж
+    // Сохраняем исходное состояние обводки и значения продаж/часов
     originalHasFunctionalBorder = dayData.functionalBorder || false;
-    originalSalesValue = dayData.functionalBorderValue || (originalHasFunctionalBorder ? dayData.sales : 0);
+    
+    if (currentTemplate.type === 'percentage') {
+        originalSalesValue = dayData.functionalBorderValue || (originalHasFunctionalBorder ? dayData.sales : 0);
+    } else if (currentTemplate.type === 'hourly') {
+        originalSalesValue = dayData.functionalBorderValue || (originalHasFunctionalBorder ? dayData.hours : 0);
+    }
     
     document.getElementById('modal-day').textContent = day;
-    document.getElementById('sales-input').value = dayData.sales || '';
+    
+    // Устанавливаем placeholder в зависимости от типа шаблона
+    const salesInput = document.getElementById('sales-input');
+    if (currentTemplate.type === 'percentage') {
+        salesInput.placeholder = "Сумма продаж";
+        salesInput.value = dayData.sales || '';
+    } else if (currentTemplate.type === 'hourly') {
+        salesInput.placeholder = "Кол-во рабочих часов";
+        salesInput.value = dayData.hours || '';
+    }
+    
     document.getElementById('comment-input').value = dayData.comment || '';
     
     // Выбор цвета
@@ -128,8 +146,16 @@ function openModal(day) {
     });
     
     // Заполнение настроек дня
-    document.getElementById('day-sales-percent').value = dayData.customSalesPercent || '';
-    document.getElementById('day-shift-rate').value = dayData.customShiftRate || '';
+    if (currentTemplate.type === 'percentage') {
+        document.getElementById('day-sales-percent').value = dayData.customSalesPercent || '';
+        document.getElementById('day-shift-rate').value = dayData.customShiftRate || '';
+        document.getElementById('day-settings').style.display = 'block';
+    } else if (currentTemplate.type === 'hourly') {
+        document.getElementById('day-hourly-rate').value = dayData.customHourlyRate || '';
+        document.getElementById('day-settings').style.display = 'block';
+    } else {
+        document.getElementById('day-settings').style.display = 'none';
+    }
     
     // Сброс видимости настроек дня
     document.getElementById('day-settings').style.display = 'none';
@@ -140,28 +166,41 @@ function openModal(day) {
 
 // Сохранение данных дня
 function saveDayData() {
-    const sales = parseInt(document.getElementById('sales-input').value) || 0;
+    const currentTemplate = appSettings.templates.find(t => t.id === appSettings.currentTemplateId);
+    const inputValue = parseInt(document.getElementById('sales-input').value) || 0;
     const comment = document.getElementById('comment-input').value;
     const selectedColor = document.querySelector('.color-option.selected')?.dataset.color;
-    const customSalesPercent = document.getElementById('day-sales-percent').value ? 
-        parseFloat(document.getElementById('day-sales-percent').value) : null;
-    const customShiftRate = document.getElementById('day-shift-rate').value ? 
-        parseInt(document.getElementById('day-shift-rate').value) : null;
     
     const dateKey = `${currentYear}-${currentMonth+1}-${selectedDay}`;
     
     // Определяем, нужно ли сохранять функциональную обводку
-    const shouldKeepFunctionalBorder = originalHasFunctionalBorder && sales === originalSalesValue;
+    const shouldKeepFunctionalBorder = originalHasFunctionalBorder && inputValue === originalSalesValue;
     
-    calendarData[dateKey] = {
-        sales: sales,
+    let dayData = {
         comment: comment,
         color: selectedColor,
-        customSalesPercent: customSalesPercent,
-        customShiftRate: customShiftRate,
         functionalBorder: shouldKeepFunctionalBorder,
         functionalBorderValue: shouldKeepFunctionalBorder ? originalSalesValue : undefined
     };
+    
+    if (currentTemplate.type === 'percentage') {
+        const customSalesPercent = document.getElementById('day-sales-percent').value ? 
+            parseFloat(document.getElementById('day-sales-percent').value) : null;
+        const customShiftRate = document.getElementById('day-shift-rate').value ? 
+            parseInt(document.getElementById('day-shift-rate').value) : null;
+            
+        dayData.sales = inputValue;
+        dayData.customSalesPercent = customSalesPercent;
+        dayData.customShiftRate = customShiftRate;
+    } else if (currentTemplate.type === 'hourly') {
+        const customHourlyRate = document.getElementById('day-hourly-rate').value ? 
+            parseInt(document.getElementById('day-hourly-rate').value) : null;
+            
+        dayData.hours = inputValue;
+        dayData.customHourlyRate = customHourlyRate;
+    }
+    
+    calendarData[dateKey] = dayData;
     
     saveToStorage('calendarData', calendarData);
     closeModal();
@@ -189,10 +228,20 @@ function closeModal() {
 // Расчеты
 function calculateSummary() {
     const currentTemplate = appSettings.templates.find(t => t.id === appSettings.currentTemplateId);
-    const summary = calculateMonthSummary(calendarData, currentYear, currentMonth, currentTemplate.settings);
+    const summary = calculateMonthSummary(calendarData, currentYear, currentMonth, currentTemplate.settings, currentTemplate.type);
     
     document.getElementById('modal-work-days').textContent = summary.workDays;
-    document.getElementById('modal-total-sales').textContent = summary.totalSales.toLocaleString();
+    
+    if (summary.templateType === 'percentage') {
+        document.getElementById('modal-total-sales').textContent = summary.totalSales.toLocaleString();
+        document.getElementById('modal-total-sales').parentElement.style.display = 'block';
+        document.getElementById('modal-total-hours').parentElement.style.display = 'none';
+    } else if (summary.templateType === 'hourly') {
+        document.getElementById('modal-total-hours').textContent = summary.totalHours.toLocaleString();
+        document.getElementById('modal-total-sales').parentElement.style.display = 'none';
+        document.getElementById('modal-total-hours').parentElement.style.display = 'block';
+    }
+    
     document.getElementById('modal-total-earned').textContent = summary.totalEarned.toLocaleString();
     document.getElementById('modal-salary').textContent = summary.salary.toLocaleString();
     document.getElementById('modal-balance').textContent = summary.balance.toLocaleString();
@@ -350,6 +399,7 @@ function setupEventListeners() {
     document.getElementById('reset-day-settings').addEventListener('click', function() {
         document.getElementById('day-sales-percent').value = '';
         document.getElementById('day-shift-rate').value = '';
+        document.getElementById('day-hourly-rate').value = '';
     });
     
     // Переключение шаблонов в настройках
@@ -452,6 +502,13 @@ function updateSettingsUI() {
         document.getElementById('shift-rate').value = template.settings.shiftRate;
         document.getElementById('advance').value = template.settings.advance;
         document.getElementById('functional-border-value').value = template.settings.functionalBorderValue;
+    } else if (template.type === 'hourly') {
+        document.getElementById('hourly-settings').style.display = 'block';
+        
+        // Заполняем значения для шаблона "Почасовая оплата"
+        document.getElementById('hourly-rate').value = template.settings.hourlyRate;
+        document.getElementById('hourly-advance').value = template.settings.advance;
+        document.getElementById('hourly-functional-border-value').value = template.settings.functionalBorderValue;
     } else if (template.type === 'custom') {
         document.getElementById('custom-settings').style.display = 'block';
         // Пока пусто для пользовательских шаблонов
@@ -474,6 +531,12 @@ function saveSettings() {
             advance: parseInt(document.getElementById('advance').value),
             functionalBorderValue: parseInt(document.getElementById('functional-border-value').value)
         };
+    } else if (appSettings.templates[templateIndex].type === 'hourly') {
+        appSettings.templates[templateIndex].settings = {
+            hourlyRate: parseInt(document.getElementById('hourly-rate').value),
+            advance: parseInt(document.getElementById('hourly-advance').value),
+            functionalBorderValue: parseInt(document.getElementById('hourly-functional-border-value').value)
+        };
     }
     // Для custom шаблонов пока ничего не сохраняем
     
@@ -482,7 +545,7 @@ function saveSettings() {
     // Обновляем установленные функциональные обводки, если значение изменилось
     const newFunctionalBorderValue = appSettings.templates[templateIndex].settings.functionalBorderValue;
     if (oldFunctionalBorderValue !== newFunctionalBorderValue) {
-        const result = updateFunctionalBorders(calendarData, newFunctionalBorderValue);
+        const result = updateFunctionalBorders(calendarData, newFunctionalBorderValue, appSettings.templates[templateIndex].type);
         calendarData = result.updatedData;
         if (result.updated) {
             saveToStorage('calendarData', calendarData);
