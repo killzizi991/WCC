@@ -128,6 +128,9 @@ function openModal(day) {
     
     document.getElementById('modal-day').textContent = day;
     
+    // Скрываем настройки дня при открытии модального окна
+    document.getElementById('day-settings').style.display = 'none';
+    
     // Устанавливаем placeholder в зависимости от типа шаблона
     const salesInput = document.getElementById('sales-input');
     const workingDayCheckbox = document.getElementById('working-day-checkbox');
@@ -164,19 +167,16 @@ function openModal(day) {
     if (currentTemplate.type === 'percentage') {
         document.getElementById('day-sales-percent').value = dayData.customSalesPercent || '';
         document.getElementById('day-shift-rate').value = dayData.customShiftRate || '';
-        document.getElementById('day-settings').style.display = 'block';
         document.getElementById('percentage-day-settings').style.display = 'block';
         document.getElementById('hourly-day-settings').style.display = 'none';
         document.getElementById('fixed-rate-day-settings').style.display = 'none';
     } else if (currentTemplate.type === 'hourly') {
         document.getElementById('day-hourly-rate').value = dayData.customHourlyRate || '';
-        document.getElementById('day-settings').style.display = 'block';
         document.getElementById('percentage-day-settings').style.display = 'none';
         document.getElementById('hourly-day-settings').style.display = 'block';
         document.getElementById('fixed-rate-day-settings').style.display = 'none';
     } else if (currentTemplate.type === 'fixed_rate') {
         document.getElementById('day-shift-rate-fixed').value = dayData.customShiftRate || '';
-        document.getElementById('day-settings').style.display = 'block';
         document.getElementById('percentage-day-settings').style.display = 'none';
         document.getElementById('hourly-day-settings').style.display = 'none';
         document.getElementById('fixed-rate-day-settings').style.display = 'block';
