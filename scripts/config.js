@@ -16,24 +16,26 @@ const MONTH_NAMES = [
     "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
 ];
 
-// Настройки по умолчанию
-const DEFAULT_SETTINGS = {
-    mode: 'official',
-    official: {
-        salesPercent: 7,
-        shiftRate: 1000,
-        fixedDeduction: 25000,
-        advance: 10875,
-        fixedSalaryPart: 10875,
-        functionalBorderValue: 30000
+// Шаблоны расчета по умолчанию
+const DEFAULT_TEMPLATES = [
+    {
+        id: 1,
+        name: "Процент + ставка",
+        type: "percentage",
+        settings: {
+            salesPercent: 7,
+            shiftRate: 1000,
+            advance: 0,
+            functionalBorderValue: 30000
+        }
     },
-    unofficial: {
-        salesPercent: 7,
-        shiftRate: 1000,
-        advance: 0,
-        functionalBorderValue: 30000
+    {
+        id: 2,
+        name: "Новый шаблон",
+        type: "custom",
+        settings: {}
     }
-};
+];
 
 // Версия приложения
 const APP_VERSION = '1.1';
