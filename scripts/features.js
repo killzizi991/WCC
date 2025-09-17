@@ -8,14 +8,26 @@ function toggleFunctionalBorder(day) {
         // Снятие обводки
         dayData.functionalBorder = false;
         dayData.functionalBorderValue = undefined;
-        dayData.sales = 0;
+        
+        if (currentTemplate.type === 'percentage') {
+            dayData.sales = 0;
+        } else if (currentTemplate.type === 'hourly') {
+            dayData.hours = 0;
+        }
+        
         showNotification('Обводка снята');
     } else {
         // Установка обводки
         dayData.functionalBorder = true;
-        dayData.sales = currentTemplate.settings.functionalBorderValue;
         dayData.functionalBorderValue = currentTemplate.settings.functionalBorderValue;
-        showNotification(`Обводка установлена, продажи: ${currentTemplate.settings.functionalBorderValue} руб`);
+        
+        if (currentTemplate.type === 'percentage') {
+            dayData.sales = currentTemplate.settings.functionalBorderValue;
+            showNotification(`Обводка установлена, продажи: ${currentTemplate.settings.functionalBorderValue} руб`);
+        } else if (currentTemplate.type === 'hourly') {
+            dayData.hours = currentTemplate.settings.functionalBorderValue;
+            showNotification(`Обводка установлена, часы: ${currentTemplate.settings.functionalBorderValue} ч`);
+        }
     }
     
     calendarData[dateKey] = dayData;
