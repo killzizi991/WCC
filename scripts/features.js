@@ -275,3 +275,9 @@ function clearData() {
     generateCalendar();
     showNotification('Данные очищены');
 }
+
+// Очистка данных календаря без подтверждения (для смены шаблона)
+function clearCalendarDataWithoutConfirmation() {
+    calendarData = {};
+    saveToStorage('calendarData', calendarData);
+}
