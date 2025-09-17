@@ -51,7 +51,7 @@
             <div class="palette-tool fill" data-color="#fff9c4" style="background-color: #fff9c4;"></div>
             <div class="palette-tool fill" data-color="#e1bee7" style="background-color: #e1bee7;"></div>
             <div class="palette-tool fill" data-color="#f8bbd0" style="background-color: #f8bbd0;"></div>
-            <div id="palette-border" class="palette-tool" title="Функциональная обводка">🔲</div>
+            <div id="palette-border" class="palette-tool" title="Функциональная обводки">🔲</div>
         </div>
     </div>
     
@@ -153,60 +153,39 @@
             <h3>Настройки расчетов</h3>
             
             <div class="setting-group">
-                <label>Режим работы:</label>
-                <select id="mode-selector">
-                    <option value="official">Официально</option>
-                    <option value="unofficial">Не официально</option>
+                <label>Выберите шаблон:</label>
+                <select id="template-selector">
+                    <!-- Опции будут добавлены динамически -->
                 </select>
+                <button id="add-template-btn" style="margin-top: 10px;">+ Добавить шаблон</button>
             </div>
             
-            <div id="official-settings">
+            <!-- Настройки для шаблона "Процент + ставка" -->
+            <div id="percentage-settings" class="template-settings">
                 <div class="setting-group">
                     <label>Процент с продаж (%):</label>
-                    <input type="number" id="sales-percent" value="7" min="0" max="100" step="0.1">
+                    <input type="number" id="sales-percent" min="0" max="100" step="0.1">
                 </div>
                 
                 <div class="setting-group">
                     <label>Ставка за смену (руб):</label>
-                    <input type="number" id="shift-rate" value="1000" min="0" step="100">
+                    <input type="number" id="shift-rate" min="0" step="100">
                 </div>
                 
                 <div class="setting-group">
                     <label>Аванс (руб):</label>
-                    <input type="number" id="advance" value="10875" min="0" step="1000">
-                </div>
-
-                <div class="setting-group">
-                    <label>Фиксированная часть зарплаты (руб):</label>
-                    <input type="number" id="fixed-salary-part" value="10875" min="0" step="1000">
+                    <input type="number" id="advance" min="0" step="1000">
                 </div>
 
                 <div class="setting-group">
                     <label>Значение функциональной обводки (руб):</label>
-                    <input type="number" id="functional-border-value" value="30000" min="0" step="1000">
+                    <input type="number" id="functional-border-value" min="0" step="1000">
                 </div>
             </div>
             
-            <div id="unofficial-settings" style="display: none;">
-                <div class="setting-group">
-                    <label>Процент с продаж (%):</label>
-                    <input type="number" id="unofficial-sales-percent" value="7" min="0" max="100" step="0.1">
-                </div>
-                
-                <div class="setting-group">
-                    <label>Ставка за смену (руб):</label>
-                    <input type="number" id="unofficial-shift-rate" value="1000" min="0" step="100">
-                </div>
-                
-                <div class="setting-group">
-                    <label>Аванс (руб):</label>
-                    <input type="number" id="unofficial-advance" value="0" min="0" step="1000">
-                </div>
-
-                <div class="setting-group">
-                    <label>Значение функциональной обводки (руб):</label>
-                    <input type="number" id="unofficial-functional-border-value" value="30000" min="0" step="1000">
-                </div>
+            <!-- Настройки для пользовательских шаблонов -->
+            <div id="custom-settings" class="template-settings" style="display: none;">
+                <p>Пользовательский шаблон. Настройки будут добавлены в будущем.</p>
             </div>
             
             <button id="save-settings">Сохранить настройки</button>
