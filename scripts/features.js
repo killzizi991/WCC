@@ -52,35 +52,6 @@ function applyFillColor(day) {
     generateCalendar();
 }
 
-// Конвертация типов данных при импорте
-function convertImportedDataTypes(data) {
-    if (data.calendarData) {
-        for (const dateKey in data.calendarData) {
-            const dayData = data.calendarData[dateKey];
-            const numberFields = ['sales', 'hours', 'customSalesPercent', 'customShiftRate', 'customHourlyRate', 'functionalBorderValue'];
-            numberFields.forEach(field => {
-                if (dayData.hasOwnProperty(field) && typeof dayData[field] !== 'number') {
-                    dayData[field] = Number(dayData[field]) || 0;
-                }
-            });
-        }
-    }
-    if (data.appSettings) {
-        if (data.appSettings.templates) {
-            data.appSettings.templates.forEach(template => {
-                if (template.settings) {
-                    for (const key in template.settings) {
-                        if (template.settings.hasOwnProperty(key) && typeof template.settings[key] === 'string') {
-                            template.settings[key] = Number(template.settings[key]) || 0;
-                        }
-                    }
-                }
-            });
-        }
-    }
-    return data;
-}
-
 // Показать модальное окно помощи
 function showHelpModal() {
     const helpContent = document.getElementById('help-content');
@@ -187,15 +158,14 @@ function importFromText() {
     
     try {
         const data = JSON.parse(jsonString);
-        const convertedData = convertImportedDataTypes(data);
         
-        if (convertedData.calendarData) {
-            calendarData = convertedData.calendarData;
+        if (data.calendarData) {
+            calendarData = data.calendarData;
             saveToStorage('calendarData', calendarData);
         }
         
-        if (convertedData.appSettings) {
-            appSettings = convertedData.appSettings;
+        if (data.appSettings) {
+            appSettings = data.appSettings;
             saveToStorage('appSettings', appSettings);
             loadSettingsToForm();
         }
@@ -267,15 +237,14 @@ function importData(event) {
     reader.onload = function(e) {
         try {
             const data = JSON.parse(e.target.result);
-            const convertedData = convertImportedDataTypes(data);
             
-            if (convertedData.calendarData) {
-                calendarData = convertedData.calendarData;
+            if (data.calendarData) {
+                calendarData = data.calendarData;
                 saveToStorage('calendarData', calendarData);
             }
             
-            if (convertedData.appSettings) {
-                appSettings = convertedData.appSettings;
+            if (data.appSettings) {
+                appSettings = data.appSettings;
                 saveToStorage('appSettings', appSettings);
                 loadSettingsToForm();
             }
