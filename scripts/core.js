@@ -21,11 +21,6 @@ function saveToStorage(key, data) {
   }
 }
 
-// Расчет заработка за день с учетом индивидуального процента
-function calculateEarnings(sales, percent) {
-    return sales * (percent / 100);
-}
-
 // Показ уведомлений
 function showNotification(message) {
     const notification = document.createElement('div');
