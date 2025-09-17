@@ -659,7 +659,10 @@ function selectTemplate(templateId) {
     saveToStorage('appSettings', appSettings);
     updateSelectedTemplateName();
     updateSettingsUI();
-    closeModal();
+
+    // Закрываем модальное окно выбора шаблона и открываем окно настроек
+    document.getElementById('template-selector-modal').style.display = 'none';
+    document.getElementById('calculation-variants-modal').style.display = 'block';
 }
 
 // Обновление значений функциональных обводок
