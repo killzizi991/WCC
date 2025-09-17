@@ -14,43 +14,37 @@ let calendarData = loadFromStorage('calendarData') || {};
 
 // Настройки приложения
 let appSettings = loadFromStorage('appSettings') || {
-  mode: 'official',
-  official: {
-    salesPercent: 7,
-    shiftRate: 1000,
-    fixedDeduction: 25000,
-    advance: 10875,
-    fixedSalaryPart: 10875,
-    functionalBorderValue: 30000
-  },
-  unofficial: {
-    salesPercent: 7,
-    shiftRate: 1000,
-    advance: 0,
-    functionalBorderValue: 30000
-  }
+    currentTemplateId: 1,
+    templates: DEFAULT_TEMPLATES
 };
 
 // Миграция старых настроек
-if (appSettings.hasOwnProperty('useTax') && !appSettings.hasOwnProperty('mode')) {
-  appSettings = {
-    mode: 'official',
-    official: {
-      salesPercent: appSettings.salesPercent,
-      shiftRate: appSettings.shiftRate,
-      fixedDeduction: appSettings.fixedDeduction,
-      advance: appSettings.advance,
-      fixedSalaryPart: appSettings.fixedSalaryPart,
-      functionalBorderValue: 30000
-    },
-    unofficial: {
-      salesPercent: 7,
-      shiftRate: 1000,
-      advance: 0,
-      functionalBorderValue: 30000
-    }
-  };
-  saveToStorage('appSettings', appSettings);
+if (appSettings.hasOwnProperty('mode')) {
+    // Переносим настройки из старого формата
+    const oldSettings = appSettings;
+    appSettings = {
+        currentTemplateId: 1,
+        templates: [
+            {
+                id: 1,
+                name: "Процент + ставка",
+                type: "percentage",
+                settings: {
+                    salesPercent: oldSettings.unofficial.salesPercent,
+                    shiftRate: oldSettings.unofficial.shiftRate,
+                    advance: oldSettings.unofficial.advance,
+                    functionalBorderValue: oldSettings.unofficial.functionalBorderValue
+                }
+            },
+            {
+                id: 2,
+                name: "Новый шаблон",
+                type: "custom",
+                settings: {}
+            }
+        ]
+    };
+    saveToStorage('appSettings', appSettings);
 }
 
 // Инициализация при загрузке
