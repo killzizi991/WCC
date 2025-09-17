@@ -152,13 +152,9 @@
             <span class="close">&times;</span>
             <h3>Настройки расчетов</h3>
             
-            <div class="setting-group">
-                <label>Выберите шаблон:</label>
-                <select id="template-selector">
-                    <!-- Опции будут добавлены динамически -->
-                </select>
-                <button id="add-template-btn" style="margin-top: 10px;">+ Добавить шаблон</button>
-            </div>
+            <button id="select-template-btn" style="width: 100%; margin-bottom: 20px;">Выбрать шаблон</button>
+            
+            <div id="selected-template-name" style="text-align: center; font-weight: bold; margin-bottom: 20px;"></div>
             
             <!-- Настройки для шаблона "Процент + ставка" -->
             <div id="percentage-settings" class="template-settings">
@@ -189,6 +185,35 @@
             </div>
             
             <button id="save-settings">Сохранить настройки</button>
+        </div>
+    </div>
+
+    <!-- Модальное окно выбора шаблона -->
+    <div id="template-selector-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Выберите шаблон</h3>
+            
+            <div id="template-list" style="margin: 20px 0;">
+                <!-- Список шаблонов будет добавляться динамически -->
+            </div>
+            
+            <button id="add-template-modal-btn">+ Добавить шаблон</button>
+        </div>
+    </div>
+
+    <!-- Модальное окно добавления шаблона -->
+    <div id="add-template-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Добавить шаблон</h3>
+            
+            <div class="setting-group">
+                <label>Название шаблона:</label>
+                <input type="text" id="new-template-name" placeholder="Введите название шаблона">
+            </div>
+            
+            <button id="create-template-btn">Создать шаблон</button>
         </div>
     </div>
 
