@@ -321,12 +321,25 @@ function setupEventListeners() {
     
     // Модальные окна
     document.querySelectorAll('.close').forEach(closeBtn => {
-        closeBtn.addEventListener('click', closeModal);
+        closeBtn.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            if (modal.id === 'template-selector-modal') {
+                modal.style.display = 'none';
+                document.getElementById('calculation-variants-modal').style.display = 'block';
+            } else {
+                closeModal();
+            }
+        });
     });
     
     window.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal')) {
-            closeModal();
+            if (e.target.id === 'template-selector-modal') {
+                e.target.style.display = 'none';
+                document.getElementById('calculation-variants-modal').style.display = 'block';
+            } else {
+                closeModal();
+            }
         }
     });
     
@@ -541,7 +554,8 @@ function addNewTemplate() {
     saveToStorage('appSettings', appSettings);
     updateSelectedTemplateName();
     updateSettingsUI();
-    closeModal();
+    document.getElementById('add-template-modal').style.display = 'none';
+    showTemplateSelectorModal();
     showNotification('Новый шаблон добавлен');
 }
 
@@ -659,8 +673,6 @@ function selectTemplate(templateId) {
     saveToStorage('appSettings', appSettings);
     updateSelectedTemplateName();
     updateSettingsUI();
-
-    // Закрываем модальное окно выбора шаблона и открываем окно настроек
     document.getElementById('template-selector-modal').style.display = 'none';
     document.getElementById('calculation-variants-modal').style.display = 'block';
 }
