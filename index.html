@@ -63,7 +63,18 @@
         <div class="modal-content">
             <span class="close">&times;</span>
             <h3>День <span id="modal-day"></span></h3>
-            <input type="number" id="sales-input" placeholder="Сумма продаж" inputmode="numeric">
+            
+            <div id="sales-input-container">
+                <input type="number" id="sales-input" placeholder="Сумма продаж" inputmode="numeric">
+            </div>
+            
+            <div id="working-day-container" style="display: none;">
+                <label>
+                    <input type="checkbox" id="working-day-checkbox">
+                    Смена
+                </label>
+            </div>
+            
             <textarea id="comment-input" placeholder="Комментарий"></textarea>
             <div class="color-picker">
                 <div class="color-option" style="background-color: #ffffff; border: 1px solid #e2e8f0;" data-color="#ffffff"></div>
@@ -97,6 +108,12 @@
                         <input type='number' id='day-hourly-rate' min='0' step='50'>
                     </div>
                 </div>
+                <div id="fixed-rate-day-settings" style="display: none;">
+                    <div class='setting-group'>
+                        <label>Ставка за смену (руб):</label>
+                        <input type='number' id='day-shift-rate-fixed' min='0' step='100'>
+                    </div>
+                </div>
                 <button id='reset-day-settings' style='background: #dc3545; margin-top: 10px;'>Сбросить к общим</button>
             </div>
             
@@ -112,6 +129,7 @@
                 <p>Рабочих дней: <span id="modal-work-days">0</span></p>
                 <p id="sales-summary-row">Сумма продаж: <span id="modal-total-sales">0</span> руб</p>
                 <p id="hours-summary-row" style="display: none;">Всего часов: <span id="modal-total-hours">0</span> ч</p>
+                <p id="shifts-summary-row" style="display: none;">Всего смен: <span id="modal-total-shifts">0</span></p>
                 <p>Заработано всего: <span id="modal-total-earned">0</span> руб</p>
                 <p>Зарплата: <span id="modal-salary">0</span> руб</p>
                 <p id="balance-row">Остаток: <span id="modal-balance">0</span> руб</p>
@@ -204,6 +222,24 @@
                 <div class="setting-group">
                     <label>Значение функциональной обводки (часы):</label>
                     <input type="number" id="hourly-functional-border-value" min="0" step="1">
+                </div>
+            </div>
+            
+            <!-- Настройки для шаблона "Фиксированная ставка за смену" -->
+            <div id="fixed-rate-settings" class="template-settings" style="display: none;">
+                <div class="setting-group">
+                    <label>Ставка за смену (руб):</label>
+                    <input type="number" id="fixed-shift-rate" min="0" step="100">
+                </div>
+                
+                <div class="setting-group">
+                    <label>Аванс (руб):</label>
+                    <input type="number" id="fixed-advance" min="0" step="1000">
+                </div>
+
+                <div class="setting-group">
+                    <label>Значение функциональной обводки (смена):</label>
+                    <input type="number" id="fixed-functional-border-value" min="0" step="1" value="1">
                 </div>
             </div>
             
