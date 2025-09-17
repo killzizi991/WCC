@@ -150,15 +150,16 @@ function openModal(day) {
         document.getElementById('day-sales-percent').value = dayData.customSalesPercent || '';
         document.getElementById('day-shift-rate').value = dayData.customShiftRate || '';
         document.getElementById('day-settings').style.display = 'block';
+        document.getElementById('percentage-day-settings').style.display = 'block';
+        document.getElementById('hourly-day-settings').style.display = 'none';
     } else if (currentTemplate.type === 'hourly') {
         document.getElementById('day-hourly-rate').value = dayData.customHourlyRate || '';
         document.getElementById('day-settings').style.display = 'block';
+        document.getElementById('percentage-day-settings').style.display = 'none';
+        document.getElementById('hourly-day-settings').style.display = 'block';
     } else {
         document.getElementById('day-settings').style.display = 'none';
     }
-    
-    // Сброс видимости настроек дня
-    document.getElementById('day-settings').style.display = 'none';
     
     document.getElementById('modal').style.display = 'block';
     document.body.classList.add('modal-open');
@@ -244,7 +245,18 @@ function calculateSummary() {
     
     document.getElementById('modal-total-earned').textContent = summary.totalEarned.toLocaleString();
     document.getElementById('modal-salary').textContent = summary.salary.toLocaleString();
-    document.getElementById('modal-balance').textContent = summary.balance.toLocaleString();
+    
+    // Убираем остаток и показываем аванс для почасового шаблона
+    if (summary.templateType === 'hourly') {
+        document.getElementById('modal-balance').parentElement.style.display = 'none';
+        document.getElementById('modal-advance').textContent = currentTemplate.settings.advance.toLocaleString();
+        document.getElementById('modal-advance').parentElement.style.display = 'block';
+    } else {
+        document.getElementById('modal-balance').textContent = summary.balance.toLocaleString();
+        document.getElementById('modal-balance').parentElement.style.display = 'block';
+        document.getElementById('modal-advance').parentElement.style.display = 'none';
+    }
+    
     document.getElementById('summary-month-year').textContent = 
         `${new Date(currentYear, currentMonth).toLocaleString('ru', { month: 'long' })} ${currentYear}`;
 }
@@ -624,9 +636,9 @@ function showTemplateSelectorModal() {
             editTemplateName(template.id);
         };
         
-        // Кнопка удаления (не показываем для шаблона с id=1)
+        // Кнопка удаления (не показываем для шаблона с id=1 и id=2)
         let deleteButton = null;
-        if (template.id !== 1) {
+        if (template.id !== 1 && template.id !== 2) {
             deleteButton = document.createElement('button');
             deleteButton.textContent = '🗑️';
             deleteButton.style.padding = '5px';
@@ -671,8 +683,8 @@ function editTemplateName(templateId) {
 
 // Удаление шаблона
 function deleteTemplate(templateId) {
-    if (templateId === 1) {
-        showNotification('Нельзя удалить основной шаблон');
+    if (templateId === 1 || templateId === 2) {
+        showNotification('Нельзя удалить базовый шаблон');
         return;
     }
     
