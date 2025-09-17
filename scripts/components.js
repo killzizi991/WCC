@@ -360,7 +360,7 @@ function setupEventListeners() {
     
     document.getElementById('import-file').addEventListener('change', importData);
     
-    // Выбор цвета в модальном окне
+    // Выбор цвета в модальном окна
     document.querySelectorAll('.color-option').forEach(option => {
         option.addEventListener('click', () => {
             document.querySelectorAll('.color-option').forEach(o => o.classList.remove('selected'));
@@ -552,14 +552,105 @@ function showTemplateSelectorModal() {
     
     appSettings.templates.forEach(template => {
         const templateElement = document.createElement('div');
-        templateElement.className = 'period-option';
-        templateElement.textContent = template.name;
-        templateElement.dataset.templateId = template.id;
+        templateElement.className = 'template-item';
+        templateElement.style.display = 'flex';
+        templateElement.style.justifyContent = 'space-between';
+        templateElement.style.alignItems = 'center';
+        templateElement.style.marginBottom = '10px';
+        templateElement.style.padding = '10px';
+        templateElement.style.border = '1px solid #e2e8f0';
+        templateElement.style.borderRadius = '5px';
+        
+        const templateName = document.createElement('div');
+        templateName.textContent = template.name;
+        templateName.style.flex = '1';
+        
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.style.display = 'flex';
+        buttonsContainer.style.gap = '5px';
+        
+        // Кнопка редактирования
+        const editButton = document.createElement('button');
+        editButton.textContent = '✏️';
+        editButton.style.padding = '5px';
+        editButton.style.border = 'none';
+        editButton.style.background = 'none';
+        editButton.style.cursor = 'pointer';
+        editButton.onclick = (e) => {
+            e.stopPropagation();
+            editTemplateName(template.id);
+        };
+        
+        // Кнопка удаления (не показываем для шаблона с id=1)
+        let deleteButton = null;
+        if (template.id !== 1) {
+            deleteButton = document.createElement('button');
+            deleteButton.textContent = '🗑️';
+            deleteButton.style.padding = '5px';
+            deleteButton.style.border = 'none';
+            deleteButton.style.background = 'none';
+            deleteButton.style.cursor = 'pointer';
+            deleteButton.onclick = (e) => {
+                e.stopPropagation();
+                deleteTemplate(template.id);
+            };
+        }
+        
+        buttonsContainer.appendChild(editButton);
+        if (deleteButton) buttonsContainer.appendChild(deleteButton);
+        
+        templateElement.appendChild(templateName);
+        templateElement.appendChild(buttonsContainer);
+        
         templateElement.addEventListener('click', () => selectTemplate(template.id));
         templateList.appendChild(templateElement);
     });
     
     document.getElementById('template-selector-modal').style.display = 'block';
+}
+
+// Редактирование имени шаблона
+function editTemplateName(templateId) {
+    const template = appSettings.templates.find(t => t.id === templateId);
+    if (!template) return;
+    
+    const newName = prompt('Введите новое название шаблона:', template.name);
+    if (newName && newName.trim() !== '') {
+        template.name = newName.trim();
+        saveToStorage('appSettings', appSettings);
+        
+        // Обновляем отображение
+        updateSelectedTemplateName();
+        showTemplateSelectorModal();
+        showNotification('Название шаблона изменено');
+    }
+}
+
+// Удаление шаблона
+function deleteTemplate(templateId) {
+    if (templateId === 1) {
+        showNotification('Нельзя удалить основной шаблон');
+        return;
+    }
+    
+    if (!confirm('Вы уверены, что хотите удалить этот шаблон?')) {
+        return;
+    }
+    
+    // Если удаляемый шаблон был текущим, переключаемся на основной
+    if (appSettings.currentTemplateId === templateId) {
+        appSettings.currentTemplateId = 1;
+    }
+    
+    // Удаляем шаблон
+    appSettings.templates = appSettings.templates.filter(t => t.id !== templateId);
+    saveToStorage('appSettings', appSettings);
+    
+    // Обновляем интерфейс
+    updateSelectedTemplateName();
+    updateSettingsUI();
+    showTemplateSelectorModal();
+    showNotification('Шаблон удален');
 }
 
 // Выбор шаблона
