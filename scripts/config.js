@@ -16,25 +16,6 @@ const MONTH_NAMES = [
     "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"
 ];
 
-// Настройки по умолчанию
-const DEFAULT_SETTINGS = {
-    mode: 'official',
-    official: {
-        salesPercent: 7,
-        shiftRate: 1000,
-        fixedDeduction: 25000,
-        advance: 10875,
-        fixedSalaryPart: 10875,
-        functionalBorderValue: 30000
-    },
-    unofficial: {
-        salesPercent: 7,
-        shiftRate: 1000,
-        advance: 0,
-        functionalBorderValue: 30000
-    }
-};
-
 // Версия приложения
 const APP_VERSION = '1.1';
 const CACHE_NAME = 'sales-calendar-v5';
