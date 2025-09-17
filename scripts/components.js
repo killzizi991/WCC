@@ -193,6 +193,8 @@ function calculateSummary() {
     let totalSales = 0;
     let totalEarnedWithoutTax = 0;
     
+    const currentTemplate = appSettings.templates.find(t => t.id === appSettings.currentTemplateId);
+    
     for (let day = 1; day <= monthDays; day++) {
         const dateKey = `${currentYear}-${currentMonth+1}-${day}`;
         const dayData = calendarData[dateKey] || {};
@@ -201,18 +203,15 @@ function calculateSummary() {
             workDays++;
             totalSales += dayData.sales;
             
-            if (appSettings.mode === 'official') {
+            if (currentTemplate.type === 'percentage') {
                 // Используем индивидуальные настройки дня или общие
-                const dayPercent = dayData.customSalesPercent || appSettings.official.salesPercent;
-                const dayShiftRate = dayData.customShiftRate || appSettings.official.shiftRate;
+                const dayPercent = dayData.customSalesPercent || currentTemplate.settings.salesPercent;
+                const dayShiftRate = dayData.customShiftRate || currentTemplate.settings.shiftRate;
                 
                 totalEarnedWithoutTax += calculateEarnings(dayData.sales, dayPercent) + dayShiftRate;
-            } else {
-                // Неофициальный режим: используем настройки из unofficial
-                const dayPercent = dayData.customSalesPercent || appSettings.unofficial.salesPercent;
-                const dayShiftRate = dayData.customShiftRate || appSettings.unofficial.shiftRate;
-                
-                totalEarnedWithoutTax += calculateEarnings(dayData.sales, dayPercent) + dayShiftRate;
+            } else if (currentTemplate.type === 'custom') {
+                // Пользовательский шаблон - пока просто 0
+                totalEarnedWithoutTax += 0;
             }
         }
     }
@@ -220,16 +219,16 @@ function calculateSummary() {
     let totalEarned = 0;
     let salary = 0;
     let balance = 0;
-    if (appSettings.mode === 'official') {
-        const tax = appSettings.official.fixedDeduction * 0.13;
-        totalEarned = totalEarnedWithoutTax - tax;
-        salary = totalEarned - appSettings.official.advance;
-        balance = salary - appSettings.official.fixedSalaryPart;
-    } else {
-        // Неофициальный режим
+    
+    if (currentTemplate.type === 'percentage') {
         totalEarned = totalEarnedWithoutTax;
-        salary = totalEarned - appSettings.unofficial.advance;
+        salary = totalEarned - currentTemplate.settings.advance;
         balance = salary;
+    } else if (currentTemplate.type === 'custom') {
+        // Пользовательский шаблон - пока просто 0
+        totalEarned = 0;
+        salary = 0;
+        balance = 0;
     }
     
     document.getElementById('modal-work-days').textContent = workDays;
@@ -239,14 +238,6 @@ function calculateSummary() {
     document.getElementById('modal-balance').textContent = balance.toLocaleString();
     document.getElementById('summary-month-year').textContent = 
         `${new Date(currentYear, currentMonth).toLocaleString('ru', { month: 'long' })} ${currentYear}`;
-        
-    // Скрываем строку с остатком в неофициальном режиме
-    const balanceRow = document.getElementById('balance-row');
-    if (appSettings.mode === 'unofficial') {
-        balanceRow.style.display = 'none';
-    } else {
-        balanceRow.style.display = 'block';
-    }
 }
 
 // Инициализация выбора периода
@@ -388,8 +379,8 @@ function setupEventListeners() {
         document.getElementById('day-shift-rate').value = '';
     });
     
-    // Переключение режимов в настройках
-    document.getElementById('mode-selector').addEventListener('change', function() {
+    // Переключение шаблонов в настройках
+    document.getElementById('template-selector').addEventListener('change', function() {
         updateSettingsUI();
     });
     
@@ -445,69 +436,83 @@ function setupEventListeners() {
         this.classList.add('active');
         massColoringMode = 'border';
     });
+
+    // Кнопка добавления нового шаблона
+    document.getElementById('add-template-btn').addEventListener('click', addNewTemplate);
 }
 
 // Загрузка настроек в форму
 function loadSettingsToForm() {
-    document.getElementById('mode-selector').value = appSettings.mode;
+    updateTemplateSelector();
     updateSettingsUI();
 }
 
-// Обновление интерфейса настроек в зависимости от выбранного режима
-function updateSettingsUI() {
-    const mode = document.getElementById('mode-selector').value;
-    const officialSettings = document.getElementById('official-settings');
-    const unofficialSettings = document.getElementById('unofficial-settings');
+// Обновление селектора шаблонов
+function updateTemplateSelector() {
+    const templateSelector = document.getElementById('template-selector');
+    templateSelector.innerHTML = '';
     
-    if (mode === 'official') {
-        officialSettings.style.display = 'block';
-        unofficialSettings.style.display = 'none';
+    appSettings.templates.forEach(template => {
+        const option = document.createElement('option');
+        option.value = template.id;
+        option.textContent = template.name;
+        if (template.id === appSettings.currentTemplateId) {
+            option.selected = true;
+        }
+        templateSelector.appendChild(option);
+    });
+}
+
+// Обновление интерфейса настроек в зависимости от выбранного шаблона
+function updateSettingsUI() {
+    const templateId = parseInt(document.getElementById('template-selector').value);
+    const template = appSettings.templates.find(t => t.id === templateId);
+    
+    if (!template) return;
+    
+    // Скрываем все настройки
+    document.querySelectorAll('.template-settings').forEach(el => {
+        el.style.display = 'none';
+    });
+    
+    // Показываем настройки для выбранного шаблона
+    if (template.type === 'percentage') {
+        document.getElementById('percentage-settings').style.display = 'block';
         
-        // Заполняем значения для официального режима
-        document.getElementById('sales-percent').value = appSettings.official.salesPercent;
-        document.getElementById('shift-rate').value = appSettings.official.shiftRate;
-        document.getElementById('advance').value = appSettings.official.advance;
-        document.getElementById('fixed-salary-part').value = appSettings.official.fixedSalaryPart;
-        document.getElementById('functional-border-value').value = appSettings.official.functionalBorderValue;
-    } else {
-        officialSettings.style.display = 'none';
-        unofficialSettings.style.display = 'block';
-        
-        // Заполняем значения для неофициального режима
-        document.getElementById('unofficial-sales-percent').value = appSettings.unofficial.salesPercent;
-        document.getElementById('unofficial-shift-rate').value = appSettings.unofficial.shiftRate;
-        document.getElementById('unofficial-advance').value = appSettings.unofficial.advance;
-        document.getElementById('unofficial-functional-border-value').value = appSettings.unofficial.functionalBorderValue;
+        // Заполняем значения для шаблона "Процент + ставка"
+        document.getElementById('sales-percent').value = template.settings.salesPercent;
+        document.getElementById('shift-rate').value = template.settings.shiftRate;
+        document.getElementById('advance').value = template.settings.advance;
+        document.getElementById('functional-border-value').value = template.settings.functionalBorderValue;
+    } else if (template.type === 'custom') {
+        document.getElementById('custom-settings').style.display = 'block';
+        // Пока пусто для пользовательских шаблонов
     }
 }
 
 // Сохранение настроек
 function saveSettings() {
-    const mode = document.getElementById('mode-selector').value;
-    const oldFunctionalBorderValue = appSettings[appSettings.mode].functionalBorderValue;
+    const templateId = parseInt(document.getElementById('template-selector').value);
+    const templateIndex = appSettings.templates.findIndex(t => t.id === templateId);
     
-    if (mode === 'official') {
-        appSettings.official = {
+    if (templateIndex === -1) return;
+    
+    const oldFunctionalBorderValue = appSettings.templates[templateIndex].settings.functionalBorderValue;
+    
+    if (appSettings.templates[templateIndex].type === 'percentage') {
+        appSettings.templates[templateIndex].settings = {
             salesPercent: parseFloat(document.getElementById('sales-percent').value),
             shiftRate: parseInt(document.getElementById('shift-rate').value),
-            fixedDeduction: 25000, // Фиксированное значение
             advance: parseInt(document.getElementById('advance').value),
-            fixedSalaryPart: parseInt(document.getElementById('fixed-salary-part').value),
             functionalBorderValue: parseInt(document.getElementById('functional-border-value').value)
         };
-    } else {
-        appSettings.unofficial = {
-            salesPercent: parseFloat(document.getElementById('unofficial-sales-percent').value),
-            shiftRate: parseInt(document.getElementById('unofficial-shift-rate').value),
-            advance: parseInt(document.getElementById('unofficial-advance').value),
-            functionalBorderValue: parseInt(document.getElementById('unofficial-functional-border-value').value)
-        };
     }
+    // Для custom шаблонов пока ничего не сохраняем
     
-    appSettings.mode = mode;
+    appSettings.currentTemplateId = templateId;
     
     // Обновляем установленные функциональные обводки, если значение изменилось
-    const newFunctionalBorderValue = appSettings[appSettings.mode].functionalBorderValue;
+    const newFunctionalBorderValue = appSettings.templates[templateIndex].settings.functionalBorderValue;
     if (oldFunctionalBorderValue !== newFunctionalBorderValue) {
         updateFunctionalBorders(newFunctionalBorderValue);
     }
@@ -516,6 +521,25 @@ function saveSettings() {
     closeModal();
     calculateSummary();
     showNotification('Настройки сохранены');
+}
+
+// Добавление нового шаблона
+function addNewTemplate() {
+    const newId = Math.max(...appSettings.templates.map(t => t.id), 0) + 1;
+    const newTemplate = {
+        id: newId,
+        name: `Шаблон ${newId}`,
+        type: 'custom',
+        settings: {}
+    };
+    
+    appSettings.templates.push(newTemplate);
+    appSettings.currentTemplateId = newId;
+    
+    saveToStorage('appSettings', appSettings);
+    updateTemplateSelector();
+    updateSettingsUI();
+    showNotification('Новый шаблон добавлен');
 }
 
 // Обновление значений функциональных обводок
