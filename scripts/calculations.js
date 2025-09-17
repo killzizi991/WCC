@@ -13,6 +13,16 @@ const DEFAULT_TEMPLATES = [
     },
     {
         id: 2,
+        name: "Почасовая оплата",
+        type: "hourly",
+        settings: {
+            hourlyRate: 500,
+            advance: 0,
+            functionalBorderValue: 8
+        }
+    },
+    {
+        id: 3,
         name: "Новый шаблон",
         type: "custom",
         settings: {}
@@ -24,26 +34,42 @@ function calculateEarnings(sales, percent) {
     return sales * (percent / 100);
 }
 
+// Расчет почасового заработка
+function calculateHourlyEarnings(hours, rate) {
+    return hours * rate;
+}
+
 // Расчеты за месяц
-function calculateMonthSummary(calendarData, year, month, templateSettings) {
+function calculateMonthSummary(calendarData, year, month, templateSettings, templateType) {
     const monthDays = new Date(year, month + 1, 0).getDate();
     let workDays = 0;
     let totalSales = 0;
     let totalEarnedWithoutTax = 0;
+    let totalHours = 0;
     
     for (let day = 1; day <= monthDays; day++) {
         const dateKey = `${year}-${month+1}-${day}`;
         const dayData = calendarData[dateKey] || {};
         
-        if (dayData.sales > 0) {
+        if (dayData.sales > 0 || (templateType === 'hourly' && dayData.hours > 0)) {
             workDays++;
-            totalSales += dayData.sales;
             
-            // Используем индивидуальные настройки дня или общие
-            const dayPercent = dayData.customSalesPercent || templateSettings.salesPercent;
-            const dayShiftRate = dayData.customShiftRate || templateSettings.shiftRate;
-            
-            totalEarnedWithoutTax += calculateEarnings(dayData.sales, dayPercent) + dayShiftRate;
+            if (templateType === 'percentage') {
+                totalSales += dayData.sales;
+                
+                // Используем индивидуальные настройки дня или общие
+                const dayPercent = dayData.customSalesPercent || templateSettings.salesPercent;
+                const dayShiftRate = dayData.customShiftRate || templateSettings.shiftRate;
+                
+                totalEarnedWithoutTax += calculateEarnings(dayData.sales, dayPercent) + dayShiftRate;
+            } else if (templateType === 'hourly') {
+                totalHours += dayData.hours || 0;
+                
+                // Используем индивидуальные настройки дня или общие
+                const dayHourlyRate = dayData.customHourlyRate || templateSettings.hourlyRate;
+                
+                totalEarnedWithoutTax += calculateHourlyEarnings(dayData.hours, dayHourlyRate);
+            }
         }
     }
     
@@ -54,30 +80,45 @@ function calculateMonthSummary(calendarData, year, month, templateSettings) {
     return {
         workDays,
         totalSales,
+        totalHours,
         totalEarned,
         salary,
-        balance
+        balance,
+        templateType
     };
 }
 
 // Расчет за день с учетом шаблона
-function calculateDayEarnings(dayData, templateSettings) {
-    if (!dayData.sales || dayData.sales <= 0) return 0;
-    
-    const dayPercent = dayData.customSalesPercent || templateSettings.salesPercent;
-    const dayShiftRate = dayData.customShiftRate || templateSettings.shiftRate;
-    
-    return calculateEarnings(dayData.sales, dayPercent) + dayShiftRate;
+function calculateDayEarnings(dayData, templateSettings, templateType) {
+    if (templateType === 'percentage') {
+        if (!dayData.sales || dayData.sales <= 0) return 0;
+        
+        const dayPercent = dayData.customSalesPercent || templateSettings.salesPercent;
+        const dayShiftRate = dayData.customShiftRate || templateSettings.shiftRate;
+        
+        return calculateEarnings(dayData.sales, dayPercent) + dayShiftRate;
+    } else if (templateType === 'hourly') {
+        if (!dayData.hours || dayData.hours <= 0) return 0;
+        
+        const dayHourlyRate = dayData.customHourlyRate || templateSettings.hourlyRate;
+        
+        return calculateHourlyEarnings(dayData.hours, dayHourlyRate);
+    }
+    return 0;
 }
 
 // Обновление функциональных обводок
-function updateFunctionalBorders(calendarData, newValue) {
+function updateFunctionalBorders(calendarData, newValue, templateType) {
     const updatedData = { ...calendarData };
     let updated = false;
     
     for (const dateKey in updatedData) {
         if (updatedData[dateKey].functionalBorder) {
-            updatedData[dateKey].sales = newValue;
+            if (templateType === 'percentage') {
+                updatedData[dateKey].sales = newValue;
+            } else if (templateType === 'hourly') {
+                updatedData[dateKey].hours = newValue;
+            }
             updatedData[dateKey].functionalBorderValue = newValue;
             updated = true;
         }
