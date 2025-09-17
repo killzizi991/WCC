@@ -173,7 +173,7 @@ function closeModal() {
     const modals = [
         'modal', 'summary-modal', 'period-modal', 'settings-modal',
         'calculation-variants-modal', 'export-modal', 'import-modal',
-        'help-modal'
+        'help-modal', 'template-selector-modal', 'add-template-modal'
     ];
     
     modals.forEach(modalId => {
@@ -380,8 +380,8 @@ function setupEventListeners() {
     });
     
     // Переключение шаблонов в настройках
-    document.getElementById('template-selector').addEventListener('change', function() {
-        updateSettingsUI();
+    document.getElementById('select-template-btn').addEventListener('click', function() {
+        showTemplateSelectorModal();
     });
     
     // Кнопка обновления версии
@@ -438,34 +438,29 @@ function setupEventListeners() {
     });
 
     // Кнопка добавления нового шаблона
-    document.getElementById('add-template-btn').addEventListener('click', addNewTemplate);
+    document.getElementById('add-template-modal-btn').addEventListener('click', function() {
+        document.getElementById('add-template-modal').style.display = 'block';
+    });
+
+    // Создание нового шаблона
+    document.getElementById('create-template-btn').addEventListener('click', addNewTemplate);
 }
 
 // Загрузка настроек в форму
 function loadSettingsToForm() {
-    updateTemplateSelector();
+    updateSelectedTemplateName();
     updateSettingsUI();
 }
 
-// Обновление селектора шаблонов
-function updateTemplateSelector() {
-    const templateSelector = document.getElementById('template-selector');
-    templateSelector.innerHTML = '';
-    
-    appSettings.templates.forEach(template => {
-        const option = document.createElement('option');
-        option.value = template.id;
-        option.textContent = template.name;
-        if (template.id === appSettings.currentTemplateId) {
-            option.selected = true;
-        }
-        templateSelector.appendChild(option);
-    });
+// Обновление имени выбранного шаблона
+function updateSelectedTemplateName() {
+    const currentTemplate = appSettings.templates.find(t => t.id === appSettings.currentTemplateId);
+    document.getElementById('selected-template-name').textContent = currentTemplate.name;
 }
 
 // Обновление интерфейса настроек в зависимости от выбранного шаблона
 function updateSettingsUI() {
-    const templateId = parseInt(document.getElementById('template-selector').value);
+    const templateId = appSettings.currentTemplateId;
     const template = appSettings.templates.find(t => t.id === templateId);
     
     if (!template) return;
@@ -492,7 +487,7 @@ function updateSettingsUI() {
 
 // Сохранение настроек
 function saveSettings() {
-    const templateId = parseInt(document.getElementById('template-selector').value);
+    const templateId = appSettings.currentTemplateId;
     const templateIndex = appSettings.templates.findIndex(t => t.id === templateId);
     
     if (templateIndex === -1) return;
@@ -525,10 +520,17 @@ function saveSettings() {
 
 // Добавление нового шаблона
 function addNewTemplate() {
+    const templateName = document.getElementById('new-template-name').value.trim();
+    
+    if (!templateName) {
+        showNotification('Введите название шаблона');
+        return;
+    }
+    
     const newId = Math.max(...appSettings.templates.map(t => t.id), 0) + 1;
     const newTemplate = {
         id: newId,
-        name: `Шаблон ${newId}`,
+        name: templateName,
         type: 'custom',
         settings: {}
     };
@@ -537,9 +539,36 @@ function addNewTemplate() {
     appSettings.currentTemplateId = newId;
     
     saveToStorage('appSettings', appSettings);
-    updateTemplateSelector();
+    updateSelectedTemplateName();
     updateSettingsUI();
+    closeModal();
     showNotification('Новый шаблон добавлен');
+}
+
+// Показать модальное окно выбора шаблона
+function showTemplateSelectorModal() {
+    const templateList = document.getElementById('template-list');
+    templateList.innerHTML = '';
+    
+    appSettings.templates.forEach(template => {
+        const templateElement = document.createElement('div');
+        templateElement.className = 'period-option';
+        templateElement.textContent = template.name;
+        templateElement.dataset.templateId = template.id;
+        templateElement.addEventListener('click', () => selectTemplate(template.id));
+        templateList.appendChild(templateElement);
+    });
+    
+    document.getElementById('template-selector-modal').style.display = 'block';
+}
+
+// Выбор шаблона
+function selectTemplate(templateId) {
+    appSettings.currentTemplateId = templateId;
+    saveToStorage('appSettings', appSettings);
+    updateSelectedTemplateName();
+    updateSettingsUI();
+    closeModal();
 }
 
 // Обновление значений функциональных обводок
