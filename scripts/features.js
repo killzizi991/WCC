@@ -2,6 +2,7 @@
 function toggleFunctionalBorder(day) {
     const dateKey = `${currentYear}-${currentMonth+1}-${day}`;
     let dayData = calendarData[dateKey] || {};
+    const currentTemplate = appSettings.templates.find(t => t.id === appSettings.currentTemplateId);
     
     if (dayData.functionalBorder) {
         // Снятие обводки
@@ -12,9 +13,9 @@ function toggleFunctionalBorder(day) {
     } else {
         // Установка обводки
         dayData.functionalBorder = true;
-        dayData.sales = appSettings[appSettings.mode].functionalBorderValue;
-        dayData.functionalBorderValue = appSettings[appSettings.mode].functionalBorderValue;
-        showNotification(`Обводка установлена, продажи: ${appSettings[appSettings.mode].functionalBorderValue} руб`);
+        dayData.sales = currentTemplate.settings.functionalBorderValue;
+        dayData.functionalBorderValue = currentTemplate.settings.functionalBorderValue;
+        showNotification(`Обводка установлена, продажи: ${currentTemplate.settings.functionalBorderValue} руб`);
     }
     
     calendarData[dateKey] = dayData;
@@ -147,36 +148,7 @@ function importFromText() {
         }
         
         if (data.appSettings) {
-            // Миграция старых данных
-            if (data.appSettings.hasOwnProperty('useTax') && !data.appSettings.hasOwnProperty('mode')) {
-                appSettings = {
-                    mode: 'official',
-                    official: {
-                        salesPercent: data.appSettings.salesPercent,
-                        shiftRate: data.appSettings.shiftRate,
-                        fixedDeduction: data.appSettings.fixedDeduction,
-                        advance: data.appSettings.advance,
-                        fixedSalaryPart: data.appSettings.fixedSalaryPart,
-                        functionalBorderValue: 30000
-                    },
-                    unofficial: {
-                        salesPercent: 7,
-                        shiftRate: 1000,
-                        advance: 0,
-                        functionalBorderValue: 30000
-                    }
-                };
-            } else {
-                appSettings = data.appSettings;
-                // Добавляем значение по умолчанию для функциональной обводки, если его нет
-                if (!appSettings.official.hasOwnProperty('functionalBorderValue')) {
-                    appSettings.official.functionalBorderValue = 30000;
-                }
-                if (!appSettings.unofficial.hasOwnProperty('functionalBorderValue')) {
-                    appSettings.unofficial.functionalBorderValue = 30000;
-                }
-            }
-            
+            appSettings = data.appSettings;
             saveToStorage('appSettings', appSettings);
             loadSettingsToForm();
         }
@@ -255,36 +227,7 @@ function importData(event) {
             }
             
             if (data.appSettings) {
-                // Миграция старых данных
-                if (data.appSettings.hasOwnProperty('useTax') && !data.appSettings.hasOwnProperty('mode')) {
-                    appSettings = {
-                        mode: 'official',
-                        official: {
-                            salesPercent: data.appSettings.salesPercent,
-                            shiftRate: data.appSettings.shiftRate,
-                            fixedDeduction: data.appSettings.fixedDeduction,
-                            advance: data.appSettings.advance,
-                            fixedSalaryPart: data.appSettings.fixedSalaryPart,
-                            functionalBorderValue: 30000
-                        },
-                        unofficial: {
-                            salesPercent: 7,
-                            shiftRate: 1000,
-                            advance: 0,
-                            functionalBorderValue: 30000
-                        }
-                    };
-                } else {
-                    appSettings = data.appSettings;
-                    // Добавляем значение по умолчанию для функциональной обводки, если его нет
-                    if (!appSettings.official.hasOwnProperty('functionalBorderValue')) {
-                        appSettings.official.functionalBorderValue = 30000;
-                    }
-                    if (!appSettings.unofficial.hasOwnProperty('functionalBorderValue')) {
-                        appSettings.unofficial.functionalBorderValue = 30000;
-                    }
-                }
-                
+                appSettings = data.appSettings;
                 saveToStorage('appSettings', appSettings);
                 loadSettingsToForm();
             }
