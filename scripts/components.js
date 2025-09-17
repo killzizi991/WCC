@@ -764,12 +764,17 @@ function deleteTemplate(templateId) {
 
 // Выбор шаблона
 function selectTemplate(templateId) {
-    appSettings.currentTemplateId = templateId;
-    saveToStorage('appSettings', appSettings);
-    updateSelectedTemplateName();
-    updateSettingsUI();
-    document.getElementById('template-selector-modal').style.display = 'none';
-    document.getElementById('calculation-variants-modal').style.display = 'block';
+    if (confirm("ВНИМАНИЕ! При смене шаблона все данные календаря будут очищены. Это необходимо для предотвращения конфликтов между разными типами расчетов. Продолжить?")) {
+        clearCalendarDataWithoutConfirmation();
+        appSettings.currentTemplateId = templateId;
+        saveToStorage('appSettings', appSettings);
+        generateCalendar();
+        updateSelectedTemplateName();
+        updateSettingsUI();
+        document.getElementById('template-selector-modal').style.display = 'none';
+        document.getElementById('calculation-variants-modal').style.display = 'block';
+        showNotification('Шаблон изменен, данные очищены');
+    }
 }
 
 // Обработка нажатий клавиш
