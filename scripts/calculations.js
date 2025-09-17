@@ -23,9 +23,13 @@ const DEFAULT_TEMPLATES = [
     },
     {
         id: 3,
-        name: "Новый шаблон",
-        type: "custom",
-        settings: {}
+        name: "Фиксированная ставка за смену",
+        type: "fixed_rate",
+        settings: {
+            shiftRate: 1500,
+            advance: 0,
+            functionalBorderValue: 1
+        }
     }
 ];
 
@@ -51,7 +55,7 @@ function calculateMonthSummary(calendarData, year, month, templateSettings, temp
         const dateKey = `${year}-${month+1}-${day}`;
         const dayData = calendarData[dateKey] || {};
         
-        if (dayData.sales > 0 || (templateType === 'hourly' && dayData.hours > 0)) {
+        if (dayData.sales > 0 || (templateType === 'hourly' && dayData.hours > 0) || (templateType === 'fixed_rate' && dayData.workingDay)) {
             workDays++;
             
             if (templateType === 'percentage') {
@@ -69,6 +73,10 @@ function calculateMonthSummary(calendarData, year, month, templateSettings, temp
                 const dayHourlyRate = dayData.customHourlyRate || templateSettings.hourlyRate;
                 
                 totalEarnedWithoutTax += calculateHourlyEarnings(dayData.hours, dayHourlyRate);
+            } else if (templateType === 'fixed_rate') {
+                // Используем индивидуальные настройки дня или общие
+                const dayShiftRate = dayData.customShiftRate || templateSettings.shiftRate;
+                totalEarnedWithoutTax += dayShiftRate;
             }
         }
     }
@@ -103,6 +111,11 @@ function calculateDayEarnings(dayData, templateSettings, templateType) {
         const dayHourlyRate = dayData.customHourlyRate || templateSettings.hourlyRate;
         
         return calculateHourlyEarnings(dayData.hours, dayHourlyRate);
+    } else if (templateType === 'fixed_rate') {
+        if (!dayData.workingDay) return 0;
+        
+        const dayShiftRate = dayData.customShiftRate || templateSettings.shiftRate;
+        return dayShiftRate;
     }
     return 0;
 }
@@ -118,6 +131,8 @@ function updateFunctionalBorders(calendarData, newValue, templateType) {
                 updatedData[dateKey].sales = newValue;
             } else if (templateType === 'hourly') {
                 updatedData[dateKey].hours = newValue;
+            } else if (templateType === 'fixed_rate') {
+                updatedData[dateKey].workingDay = true;
             }
             updatedData[dateKey].functionalBorderValue = newValue;
             updated = true;
