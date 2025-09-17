@@ -188,54 +188,14 @@ function closeModal() {
 
 // Расчеты
 function calculateSummary() {
-    const monthDays = new Date(currentYear, currentMonth + 1, 0).getDate();
-    let workDays = 0;
-    let totalSales = 0;
-    let totalEarnedWithoutTax = 0;
-    
     const currentTemplate = appSettings.templates.find(t => t.id === appSettings.currentTemplateId);
+    const summary = calculateMonthSummary(calendarData, currentYear, currentMonth, currentTemplate.settings);
     
-    for (let day = 1; day <= monthDays; day++) {
-        const dateKey = `${currentYear}-${currentMonth+1}-${day}`;
-        const dayData = calendarData[dateKey] || {};
-        
-        if (dayData.sales > 0) {
-            workDays++;
-            totalSales += dayData.sales;
-            
-            if (currentTemplate.type === 'percentage') {
-                // Используем индивидуальные настройки дня или общие
-                const dayPercent = dayData.customSalesPercent || currentTemplate.settings.salesPercent;
-                const dayShiftRate = dayData.customShiftRate || currentTemplate.settings.shiftRate;
-                
-                totalEarnedWithoutTax += calculateEarnings(dayData.sales, dayPercent) + dayShiftRate;
-            } else if (currentTemplate.type === 'custom') {
-                // Пользовательский шаблон - пока просто 0
-                totalEarnedWithoutTax += 0;
-            }
-        }
-    }
-    
-    let totalEarned = 0;
-    let salary = 0;
-    let balance = 0;
-    
-    if (currentTemplate.type === 'percentage') {
-        totalEarned = totalEarnedWithoutTax;
-        salary = totalEarned - currentTemplate.settings.advance;
-        balance = salary;
-    } else if (currentTemplate.type === 'custom') {
-        // Пользовательский шаблон - пока просто 0
-        totalEarned = 0;
-        salary = 0;
-        balance = 0;
-    }
-    
-    document.getElementById('modal-work-days').textContent = workDays;
-    document.getElementById('modal-total-sales').textContent = totalSales.toLocaleString();
-    document.getElementById('modal-total-earned').textContent = totalEarned.toLocaleString();
-    document.getElementById('modal-salary').textContent = salary.toLocaleString();
-    document.getElementById('modal-balance').textContent = balance.toLocaleString();
+    document.getElementById('modal-work-days').textContent = summary.workDays;
+    document.getElementById('modal-total-sales').textContent = summary.totalSales.toLocaleString();
+    document.getElementById('modal-total-earned').textContent = summary.totalEarned.toLocaleString();
+    document.getElementById('modal-salary').textContent = summary.salary.toLocaleString();
+    document.getElementById('modal-balance').textContent = summary.balance.toLocaleString();
     document.getElementById('summary-month-year').textContent = 
         `${new Date(currentYear, currentMonth).toLocaleString('ru', { month: 'long' })} ${currentYear}`;
 }
@@ -522,7 +482,13 @@ function saveSettings() {
     // Обновляем установленные функциональные обводки, если значение изменилось
     const newFunctionalBorderValue = appSettings.templates[templateIndex].settings.functionalBorderValue;
     if (oldFunctionalBorderValue !== newFunctionalBorderValue) {
-        updateFunctionalBorders(newFunctionalBorderValue);
+        const result = updateFunctionalBorders(calendarData, newFunctionalBorderValue);
+        calendarData = result.updatedData;
+        if (result.updated) {
+            saveToStorage('calendarData', calendarData);
+            generateCalendar();
+            showNotification('Значения обводок обновлены');
+        }
     }
     
     saveToStorage('appSettings', appSettings);
@@ -675,25 +641,6 @@ function selectTemplate(templateId) {
     updateSettingsUI();
     document.getElementById('template-selector-modal').style.display = 'none';
     document.getElementById('calculation-variants-modal').style.display = 'block';
-}
-
-// Обновление значений функциональных обводок
-function updateFunctionalBorders(newValue) {
-    let updated = false;
-    
-    for (const dateKey in calendarData) {
-        if (calendarData[dateKey].functionalBorder) {
-            calendarData[dateKey].sales = newValue;
-            calendarData[dateKey].functionalBorderValue = newValue;
-            updated = true;
-        }
-    }
-    
-    if (updated) {
-        saveToStorage('calendarData', calendarData);
-        generateCalendar();
-        showNotification('Значения обводок обновлены');
-    }
 }
 
 // Обработка нажатий клавиш
