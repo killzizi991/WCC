@@ -8,7 +8,7 @@ function toggleFunctionalBorder(day) {
         dayData.functionalBorder = false;
         dayData.functionalBorderValue = undefined;
         dayData.sales = 0;
-        showNotification('Обводка снята');
+        showNotification('Обводки снята');
     } else {
         // Установка обводки
         dayData.functionalBorder = true;
@@ -141,12 +141,14 @@ function importFromText() {
     try {
         const data = JSON.parse(jsonString);
         
-        if (data.calendarData) {
+        if (data.calendarData && typeof data.calendarData === 'object') {
             calendarData = data.calendarData;
             saveToStorage('calendarData', calendarData);
+        } else {
+            showNotification('Данные календаря в импортированном файле имеют неверный формат');
         }
         
-        if (data.appSettings) {
+        if (data.appSettings && typeof data.appSettings === 'object') {
             // Миграция старых данных
             if (data.appSettings.hasOwnProperty('useTax') && !data.appSettings.hasOwnProperty('mode')) {
                 appSettings = {
@@ -179,6 +181,8 @@ function importFromText() {
             
             saveToStorage('appSettings', appSettings);
             loadSettingsToForm();
+        } else {
+            showNotification('Настройки в импортированном файле имеют неверный формат');
         }
         
         generateCalendar();
@@ -186,7 +190,7 @@ function importFromText() {
         closeModal();
     } catch (error) {
         console.error('Ошибка импорта:', error);
-        showNotification('Ошибка импорта данных: неверный формат');
+        showNotification('Ошибка импорта данных: ' + error.message);
     }
 }
 
@@ -249,12 +253,14 @@ function importData(event) {
         try {
             const data = JSON.parse(e.target.result);
             
-            if (data.calendarData) {
+            if (data.calendarData && typeof data.calendarData === 'object') {
                 calendarData = data.calendarData;
                 saveToStorage('calendarData', calendarData);
+            } else {
+                showNotification('Данные календаря в импортированном файле имеют неверный формат');
             }
             
-            if (data.appSettings) {
+            if (data.appSettings && typeof data.appSettings === 'object') {
                 // Миграция старых данных
                 if (data.appSettings.hasOwnProperty('useTax') && !data.appSettings.hasOwnProperty('mode')) {
                     appSettings = {
@@ -287,18 +293,20 @@ function importData(event) {
                 
                 saveToStorage('appSettings', appSettings);
                 loadSettingsToForm();
+            } else {
+                showNotification('Настройки в импортированном файле имеют неверный формат');
             }
             
             generateCalendar();
             showNotification('Данные импортированы');
+            closeModal();
         } catch (error) {
             console.error('Ошибка импорта:', error);
-            showNotification('Ошибка импорта данных');
+            showNotification('Ошибка импорта данных: ' + error.message);
         }
     };
     reader.readAsText(file);
     event.target.value = ''; // Сброс input
-    closeModal();
 }
 
 // Показать подтверждение очистки данных
