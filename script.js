@@ -23,7 +23,8 @@ let appSettings = loadFromStorage('appSettings') || {
       shiftRate: 1000,
       advance: 10875,
       fixedSalaryPart: 10875,
-      functionalBorderValue: 30000
+      functionalBorderValue: 30000,
+      ruleBlocks: [] // Новое поле для хранения блоков правил
     }
   }
 };
@@ -307,6 +308,7 @@ function closeModal() {
     document.getElementById('summary-modal').style.display = 'none';
     document.getElementById('period-modal').style.display = 'none';
     document.getElementById('settings-modal').style.display = 'none';
+    document.getElementById('templates-modal').style.display = 'none';
     document.getElementById('export-modal').style.display = 'none';
     document.getElementById('import-modal').style.display = 'none';
     document.getElementById('help-modal').style.display = 'none';
@@ -443,6 +445,9 @@ function setupEventListeners() {
     
     document.getElementById('save-settings').addEventListener('click', saveSettings);
     
+    // Шаблоны
+    document.getElementById('templates-btn').addEventListener('click', showTemplatesModal);
+    
     // Экспорт/импорт
     document.getElementById('export-btn').addEventListener('click', showExportModal);
     document.getElementById('import-btn').addEventListener('click', showImportModal);
@@ -484,6 +489,165 @@ function setupEventListeners() {
         document.getElementById('import-file').click();
     });
     document.getElementById('import-text-btn').addEventListener('click', importFromText);
+}
+
+// Показать модальное окно шаблонов
+function showTemplatesModal() {
+    const modal = document.getElementById('templates-modal');
+    const currentTemplate = getCurrentTemplate();
+    
+    // Заполняем название текущего шаблона
+    document.getElementById('current-template-name').textContent = currentTemplate.name;
+    
+    // Показываем модальное окно
+    modal.style.display = 'block';
+    document.body.classList.add('modal-open');
+    
+    // Обработчики для модального окна шаблонов
+    setupTemplatesModalListeners();
+}
+
+// Настройка обработчиков для модального окна шаблонов
+function setupTemplatesModalListeners() {
+    // Обработчик для закрытия модального окна
+    document.querySelector('#templates-modal .close').addEventListener('click', closeModal);
+    
+    // Обработчик для клика вне модального окна
+    document.getElementById('templates-modal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
+    
+    // Обработчик для редактирования названия шаблона
+    document.getElementById('edit-template-name').addEventListener('click', editTemplateName);
+    
+    // Обработчик для показа выпадающего списка шаблонов
+    document.getElementById('current-template-name').addEventListener('click', showTemplatesDropdown);
+    
+    // Обработчик для кнопки "Добавить блок правил"
+    document.getElementById('add-rule-block').addEventListener('click', addRuleBlock);
+    
+    // Обработчики для кнопок сохранения и отмены
+    document.getElementById('save-template-changes').addEventListener('click', saveTemplateChanges);
+    document.getElementById('cancel-template-changes').addEventListener('click', closeModal);
+}
+
+// Редактирование названия шаблона
+function editTemplateName() {
+    const currentTemplate = getCurrentTemplate();
+    const newName = prompt('Введите новое название шаблона:', currentTemplate.name);
+    
+    if (newName && newName.trim() !== '') {
+        currentTemplate.name = newName.trim();
+        document.getElementById('current-template-name').textContent = currentTemplate.name;
+        saveToStorage('appSettings', appSettings);
+        showNotification('Название шаблона изменено');
+    }
+}
+
+// Показать выпадающий список шаблонов
+function showTemplatesDropdown() {
+    const dropdown = document.getElementById('template-dropdown');
+    dropdown.innerHTML = '';
+    
+    // Добавляем существующие шаблоны
+    Object.values(appSettings.templates).forEach(template => {
+        const option = document.createElement('div');
+        option.style.padding = '10px';
+        option.style.cursor = 'pointer';
+        option.textContent = template.name;
+        option.addEventListener('click', () => switchTemplate(template.id));
+        dropdown.appendChild(option);
+    });
+    
+    // Добавляем опцию "Новый шаблон"
+    const newTemplateOption = document.createElement('div');
+    newTemplateOption.style.padding = '10px';
+    newTemplateOption.style.cursor = 'pointer';
+    newTemplateOption.style.fontWeight = 'bold';
+    newTemplateOption.textContent = 'Новый шаблон';
+    newTemplateOption.addEventListener('click', createNewTemplate);
+    dropdown.appendChild(newTemplateOption);
+    
+    // Позиционируем и показываем dropdown
+    const templateNameElement = document.getElementById('current-template-name');
+    const rect = templateNameElement.getBoundingClientRect();
+    dropdown.style.top = (rect.bottom + window.scrollY) + 'px';
+    dropdown.style.left = rect.left + 'px';
+    dropdown.style.display = 'block';
+    
+    // Обработчик для скрытия dropdown при клике вне его
+    const clickHandler = function(e) {
+        if (!dropdown.contains(e.target) && e.target !== templateNameElement) {
+            dropdown.style.display = 'none';
+            document.removeEventListener('click', clickHandler);
+        }
+    };
+    
+    setTimeout(() => {
+        document.addEventListener('click', clickHandler);
+    }, 0);
+}
+
+// Переключение шаблона
+function switchTemplate(templateId) {
+    if (appSettings.currentTemplateId === templateId) return;
+    
+    if (confirm('При переключении шаблона все несохраненные данные будут потеряны. Продолжить?')) {
+        appSettings.currentTemplateId = templateId;
+        saveToStorage('appSettings', appSettings);
+        loadSettingsToForm();
+        generateCalendar();
+        
+        const template = getCurrentTemplate();
+        document.getElementById('current-template-name').textContent = template.name;
+        
+        showNotification('Шаблон изменен: ' + template.name);
+    }
+}
+
+// Создание нового шаблона
+function createNewTemplate() {
+    const newTemplateName = prompt('Введите название нового шаблона:');
+    if (!newTemplateName || newTemplateName.trim() === '') return;
+    
+    const newTemplateId = 'template_' + Date.now();
+    const currentTemplate = getCurrentTemplate();
+    
+    // Создаем новый шаблон на основе текущего
+    appSettings.templates[newTemplateId] = {
+        id: newTemplateId,
+        name: newTemplateName.trim(),
+        salesPercent: currentTemplate.salesPercent,
+        shiftRate: currentTemplate.shiftRate,
+        advance: currentTemplate.advance,
+        fixedSalaryPart: currentTemplate.fixedSalaryPart,
+        functionalBorderValue: currentTemplate.functionalBorderValue,
+        ruleBlocks: []
+    };
+    
+    // Переключаемся на новый шаблон
+    appSettings.currentTemplateId = newTemplateId;
+    saveToStorage('appSettings', appSettings);
+    loadSettingsToForm();
+    
+    document.getElementById('current-template-name').textContent = newTemplateName.trim();
+    document.getElementById('template-dropdown').style.display = 'none';
+    
+    showNotification('Создан новый шаблон: ' + newTemplateName.trim());
+}
+
+// Добавление блока правил
+function addRuleBlock() {
+    showNotification('Функция добавления блоков правил будет реализована на следующем этапе');
+}
+
+// Сохранение изменений шаблона
+function saveTemplateChanges() {
+    saveToStorage('appSettings', appSettings);
+    closeModal();
+    showNotification('Изменения шаблона сохранены');
 }
 
 // Показать модальное окно помощи
