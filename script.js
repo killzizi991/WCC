@@ -4,8 +4,8 @@ let currentYear = currentDate.getFullYear();
 let currentMonth = currentDate.getMonth();
 let selectedDay = null;
 let massColoringMode = null;
-let isKeyboardOpen = false; // Флаг для отслеживания состояния клавиатуры
-let lastWindowHeight = window.innerHeight; // Запоминаем начальную высоту окна
+let isKeyboardOpen = false;
+let lastWindowHeight = window.innerHeight;
 let originalHasFunctionalBorder = false;
 let originalSalesValue = 0;
 
@@ -24,7 +24,7 @@ let appSettings = loadFromStorage('appSettings') || {
       advance: 10875,
       fixedSalaryPart: 10875,
       functionalBorderValue: 30000,
-      ruleBlocks: [] // Новое поле для хранения блоков правил
+      ruleBlocks: []
     }
   }
 };
@@ -59,7 +59,6 @@ function getCurrentTemplate() {
 
 // Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', () => {
-    // Миграция данных: добавление functionalBorderValue если отсутствует
     let needSave = false;
     for (const dateKey in calendarData) {
         const dayData = calendarData[dateKey];
@@ -77,18 +76,15 @@ document.addEventListener('DOMContentLoaded', () => {
     initPeriodSelector();
     loadSettingsToForm();
     
-    // Проверка первого запуска
     if (!localStorage.getItem('firstRun')) {
         localStorage.setItem('firstRun', 'true');
         showWelcomeMessage();
     }
     
-    // Отслеживание изменения размера для определения клавиатуры
     window.addEventListener('resize', function() {
         const newHeight = window.innerHeight;
         const heightDifference = Math.abs(lastWindowHeight - newHeight);
         
-        // Если изменение высоты значительное, считаем что клавиатура открыта/закрыта
         if (heightDifference > 200) {
             isKeyboardOpen = (newHeight < lastWindowHeight);
             lastWindowHeight = newHeight;
@@ -101,7 +97,6 @@ function generateCalendar() {
     const calendar = document.getElementById('calendar');
     calendar.innerHTML = '';
     
-    // Заголовки дней недели
     const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
     daysOfWeek.forEach(day => {
         const dayElement = document.createElement('div');
@@ -110,12 +105,9 @@ function generateCalendar() {
         calendar.appendChild(dayElement);
     });
     
-    // Первый день месяца
     const firstDay = new Date(currentYear, currentMonth, 1);
-    // Последний день месяца
     const lastDay = new Date(currentYear, currentMonth + 1, 0);
     
-    // Пустые ячейки для дней предыдущего месяца
     const startOffset = (firstDay.getDay() || 7) - 1;
     for (let i = 0; i < startOffset; i++) {
         const empty = document.createElement('div');
@@ -123,7 +115,6 @@ function generateCalendar() {
         calendar.appendChild(empty);
     }
     
-    // Дни текущего месяца
     for (let day = 1; day <= lastDay.getDate(); day++) {
         const dayElement = document.createElement('div');
         dayElement.className = 'day';
@@ -131,19 +122,16 @@ function generateCalendar() {
         const dateKey = `${currentYear}-${currentMonth+1}-${day}`;
         const dayData = calendarData[dateKey] || {};
         
-        // Форматирование чисел для отображения
         const formatSalesNumber = (value) => {
             if (value >= 10000) return Math.floor(value / 1000);
             return value;
         };
         
-        // Форматирование содержимого
         dayElement.innerHTML = `
             <div class="day-number">${day}</div>
             ${dayData.sales ? `<div class="day-sales">${formatSalesNumber(dayData.sales)}</div>` : ''}
         `;
         
-        // Цвет фона - белый цвет удаляет заливку
         if (dayData.color) {
             if (dayData.color === '#ffffff') {
                 dayElement.style.backgroundColor = '';
@@ -152,12 +140,10 @@ function generateCalendar() {
             }
         }
         
-        // Функциональная обводка
         if (dayData.functionalBorder) {
             dayElement.classList.add('functional-border');
         }
         
-        // Иконка комментария
         if (dayData.comment) {
             const commentIcon = document.createElement('div');
             commentIcon.className = 'day-comment';
@@ -169,7 +155,6 @@ function generateCalendar() {
             dayElement.appendChild(commentIcon);
         }
         
-        // Проверка на текущий день
         const today = new Date();
         if (currentYear === today.getFullYear() && 
             currentMonth === today.getMonth() && 
@@ -177,19 +162,30 @@ function generateCalendar() {
             dayElement.classList.add('today');
         }
         
-        // Обработчик клика
         dayElement.addEventListener('click', () => handleDayClick(day));
         calendar.appendChild(dayElement);
     }
     
-    // Обновление заголовка
     const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
       "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
     document.getElementById('current-month-year').textContent = 
         `${monthNames[currentMonth]} ${currentYear}`;
     
-    // Расчеты
-    calculateSummary();
+    calculateSummaryDisplay();
+}
+
+// Расчеты для отображения
+function calculateSummaryDisplay() {
+    const template = getCurrentTemplate();
+    const summary = calculateSummary(calendarData, currentYear, currentMonth, template);
+    
+    document.getElementById('modal-work-days').textContent = summary.workDays;
+    document.getElementById('modal-total-sales').textContent = summary.totalSales.toLocaleString();
+    document.getElementById('modal-total-earned').textContent = summary.totalEarned.toLocaleString();
+    document.getElementById('modal-salary').textContent = summary.salary.toLocaleString();
+    document.getElementById('modal-balance').textContent = summary.balance.toLocaleString();
+    document.getElementById('summary-month-year').textContent = 
+        `${new Date(currentYear, currentMonth).toLocaleString('ru', { month: 'long' })} ${currentYear}`;
 }
 
 // Обработчик клика по дню
@@ -207,19 +203,18 @@ function handleDayClick(day) {
 function toggleFunctionalBorder(day) {
     const dateKey = `${currentYear}-${currentMonth+1}-${day}`;
     let dayData = calendarData[dateKey] || {};
+    const template = getCurrentTemplate();
     
     if (dayData.functionalBorder) {
-        // Снятие обводки
         dayData.functionalBorder = false;
         dayData.functionalBorderValue = undefined;
         dayData.sales = 0;
         showNotification('Обводка снята');
     } else {
-        // Установка обводки
         dayData.functionalBorder = true;
-        dayData.sales = getCurrentTemplate().functionalBorderValue;
-        dayData.functionalBorderValue = getCurrentTemplate().functionalBorderValue;
-        showNotification(`Обводка установлена, продажи: ${getCurrentTemplate().functionalBorderValue} руб`);
+        dayData.sales = template.functionalBorderValue;
+        dayData.functionalBorderValue = template.functionalBorderValue;
+        showNotification(`Обводка установлена, продажи: ${template.functionalBorderValue} руб`);
     }
     
     calendarData[dateKey] = dayData;
@@ -245,7 +240,6 @@ function openModal(day) {
     const dateKey = `${currentYear}-${currentMonth+1}-${day}`;
     const dayData = calendarData[dateKey] || {};
     
-    // Сохраняем исходное состояние обводки и значения продаж
     originalHasFunctionalBorder = dayData.functionalBorder || false;
     originalSalesValue = dayData.functionalBorderValue || (originalHasFunctionalBorder ? dayData.sales : 0);
     
@@ -253,7 +247,6 @@ function openModal(day) {
     document.getElementById('sales-input').value = dayData.sales || '';
     document.getElementById('comment-input').value = dayData.comment || '';
     
-    // Выбор цвета
     document.querySelectorAll('.color-option').forEach(option => {
         option.classList.remove('selected');
         if (option.dataset.color === dayData.color) {
@@ -261,11 +254,9 @@ function openModal(day) {
         }
     });
     
-    // Заполнение настроек дня
     document.getElementById('day-sales-percent').value = dayData.customSalesPercent || '';
     document.getElementById('day-shift-rate').value = dayData.customShiftRate || '';
     
-    // Сброс видимости настроек дня
     document.getElementById('day-settings').style.display = 'none';
     
     document.getElementById('modal').style.display = 'block';
@@ -284,7 +275,6 @@ function saveDayData() {
     
     const dateKey = `${currentYear}-${currentMonth+1}-${selectedDay}`;
     
-    // Определяем, нужно ли сохранять функциональную обводку
     const shouldKeepFunctionalBorder = originalHasFunctionalBorder && sales === originalSalesValue;
     
     calendarData[dateKey] = {
@@ -315,51 +305,8 @@ function closeModal() {
     document.body.classList.remove('modal-open');
 }
 
-// Расчеты
-function calculateSummary() {
-    const monthDays = new Date(currentYear, currentMonth + 1, 0).getDate();
-    let workDays = 0;
-    let totalSales = 0;
-    let totalEarnedWithoutTax = 0;
-    
-    for (let day = 1; day <= monthDays; day++) {
-        const dateKey = `${currentYear}-${currentMonth+1}-${day}`;
-        const dayData = calendarData[dateKey] || {};
-        
-        if (dayData.sales > 0) {
-            workDays++;
-            totalSales += dayData.sales;
-            
-            // Используем индивидуальные настройки дня или общие
-            const dayPercent = dayData.customSalesPercent || getCurrentTemplate().salesPercent;
-            const dayShiftRate = dayData.customShiftRate || getCurrentTemplate().shiftRate;
-            
-            totalEarnedWithoutTax += calculateEarnings(dayData.sales, dayPercent) + dayShiftRate;
-        }
-    }
-    
-    const tax = 25000 * 0.13; // Фиксированный вычет
-    const totalEarned = totalEarnedWithoutTax - tax;
-    const salary = totalEarned - getCurrentTemplate().advance;
-    const balance = salary - getCurrentTemplate().fixedSalaryPart;
-    
-    document.getElementById('modal-work-days').textContent = workDays;
-    document.getElementById('modal-total-sales').textContent = totalSales.toLocaleString();
-    document.getElementById('modal-total-earned').textContent = totalEarned.toLocaleString();
-    document.getElementById('modal-salary').textContent = salary.toLocaleString();
-    document.getElementById('modal-balance').textContent = balance.toLocaleString();
-    document.getElementById('summary-month-year').textContent = 
-        `${new Date(currentYear, currentMonth).toLocaleString('ru', { month: 'long' })} ${currentYear}`;
-}
-
-// Расчет заработка за день с учетом индивидуального процента
-function calculateEarnings(sales, percent) {
-    return sales * (percent / 100);
-}
-
 // Настройка обработчиков событий
 function setupEventListeners() {
-    // Навигация по месяцам
     document.getElementById('prev-month').addEventListener('click', () => {
         currentMonth--;
         if (currentMonth < 0) {
@@ -378,13 +325,11 @@ function setupEventListeners() {
         generateCalendar();
     });
     
-    // Выбор месяца/года
     document.getElementById('month-year-selector').addEventListener('click', () => {
         document.getElementById('period-modal').style.display = 'block';
         document.body.classList.add('modal-open');
     });
     
-    // Палитра
     document.getElementById('palette-btn').addEventListener('click', () => {
         const palettePanel = document.getElementById('palette-panel');
         const isOpen = palettePanel.style.display === 'flex';
@@ -402,7 +347,6 @@ function setupEventListeners() {
         }
     });
     
-    // Инструменты палитры
     document.querySelectorAll('.palette-tool.fill').forEach(tool => {
         tool.addEventListener('click', () => {
             document.querySelectorAll('.palette-tool.fill').forEach(t => t.classList.remove('active'));
@@ -416,7 +360,6 @@ function setupEventListeners() {
         document.getElementById('palette-border').classList.toggle('active');
     });
     
-    // Модальные окна
     document.querySelectorAll('.close').forEach(closeBtn => {
         closeBtn.addEventListener('click', closeModal);
     });
@@ -427,16 +370,13 @@ function setupEventListeners() {
         }
     });
     
-    // Сохранение данных
     document.getElementById('save-data').addEventListener('click', saveDayData);
     
-    // Расчеты
     document.getElementById('summary-btn').addEventListener('click', () => {
         document.getElementById('summary-modal').style.display = 'block';
         document.body.classList.add('modal-open');
     });
     
-    // Настройки
     document.getElementById('settings-btn').addEventListener('click', () => {
         document.getElementById('settings-modal').style.display = 'block';
         document.body.classList.add('modal-open');
@@ -445,16 +385,13 @@ function setupEventListeners() {
     
     document.getElementById('save-settings').addEventListener('click', saveSettings);
     
-    // Шаблоны
     document.getElementById('templates-btn').addEventListener('click', showTemplatesModal);
     
-    // Экспорт/импорт
     document.getElementById('export-btn').addEventListener('click', showExportModal);
     document.getElementById('import-btn').addEventListener('click', showImportModal);
     
     document.getElementById('import-file').addEventListener('change', importData);
     
-    // Выбор цвета в модальном окне
     document.querySelectorAll('.color-option').forEach(option => {
         option.addEventListener('click', () => {
             document.querySelectorAll('.color-option').forEach(o => o.classList.remove('selected'));
@@ -462,7 +399,6 @@ function setupEventListeners() {
         });
     });
     
-    // Настройки дня
     document.getElementById('day-settings-btn').addEventListener('click', function() {
         const settingsPanel = document.getElementById('day-settings');
         settingsPanel.style.display = settingsPanel.style.display === 'none' ? 'block' : 'none';
@@ -473,16 +409,12 @@ function setupEventListeners() {
         document.getElementById('day-shift-rate').value = '';
     });
     
-    // Кнопка обновления версии
     document.getElementById('update-btn').addEventListener('click', forceUpdate);
     
-    // Кнопка помощи
     document.getElementById('help-btn').addEventListener('click', showHelpModal);
     
-    // Обработка клавиш
     document.addEventListener('keydown', handleKeyPress);
     
-    // Новые обработчики для экспорта/импорта
     document.getElementById('copy-data-btn').addEventListener('click', copyDataToClipboard);
     document.getElementById('save-file-btn').addEventListener('click', exportData);
     document.getElementById('import-file-btn').addEventListener('click', () => {
@@ -496,39 +428,30 @@ function showTemplatesModal() {
     const modal = document.getElementById('templates-modal');
     const currentTemplate = getCurrentTemplate();
     
-    // Заполняем название текущего шаблона
     document.getElementById('current-template-name').textContent = currentTemplate.name;
     
-    // Показываем модальное окно
     modal.style.display = 'block';
     document.body.classList.add('modal-open');
     
-    // Обработчики для модального окна шаблонов
     setupTemplatesModalListeners();
 }
 
 // Настройка обработчиков для модального окна шаблонов
 function setupTemplatesModalListeners() {
-    // Обработчик для закрытия модального окна
     document.querySelector('#templates-modal .close').addEventListener('click', closeModal);
     
-    // Обработчик для клика вне модального окна
     document.getElementById('templates-modal').addEventListener('click', function(e) {
         if (e.target === this) {
             closeModal();
         }
     });
     
-    // Обработчик для редактирования названия шаблона
     document.getElementById('edit-template-name').addEventListener('click', editTemplateName);
     
-    // Обработчик для показа выпадающего списка шаблонов
     document.getElementById('current-template-name').addEventListener('click', showTemplatesDropdown);
     
-    // Обработчик для кнопки "Добавить блок правил"
     document.getElementById('add-rule-block').addEventListener('click', addRuleBlock);
     
-    // Обработчики для кнопок сохранения и отмены
     document.getElementById('save-template-changes').addEventListener('click', saveTemplateChanges);
     document.getElementById('cancel-template-changes').addEventListener('click', closeModal);
 }
@@ -551,7 +474,6 @@ function showTemplatesDropdown() {
     const dropdown = document.getElementById('template-dropdown');
     dropdown.innerHTML = '';
     
-    // Добавляем существующие шаблоны
     Object.values(appSettings.templates).forEach(template => {
         const option = document.createElement('div');
         option.style.padding = '10px';
@@ -561,7 +483,6 @@ function showTemplatesDropdown() {
         dropdown.appendChild(option);
     });
     
-    // Добавляем опцию "Новый шаблон"
     const newTemplateOption = document.createElement('div');
     newTemplateOption.style.padding = '10px';
     newTemplateOption.style.cursor = 'pointer';
@@ -570,10 +491,8 @@ function showTemplatesDropdown() {
     newTemplateOption.addEventListener('click', createNewTemplate);
     dropdown.appendChild(newTemplateOption);
     
-    // Показываем dropdown
     dropdown.style.display = 'block';
     
-    // Обработчик для скрытия dropdown при клике вне его
     const clickHandler = function(e) {
         if (!dropdown.contains(e.target) && e.target !== document.getElementById('current-template-name')) {
             dropdown.style.display = 'none';
@@ -611,7 +530,6 @@ function createNewTemplate() {
     const newTemplateId = 'template_' + Date.now();
     const currentTemplate = getCurrentTemplate();
     
-    // Создаем новый шаблон на основе текущего
     appSettings.templates[newTemplateId] = {
         id: newTemplateId,
         name: newTemplateName.trim(),
@@ -623,7 +541,6 @@ function createNewTemplate() {
         ruleBlocks: []
     };
     
-    // Переключаемся на новый шаблон
     appSettings.currentTemplateId = newTemplateId;
     saveToStorage('appSettings', appSettings);
     loadSettingsToForm();
@@ -670,12 +587,10 @@ function showHelpModal() {
             const answer = questionDiv.querySelector('.help-answer');
             const isVisible = answer.style.display === 'block';
             
-            // Скрываем все ответы
             document.querySelectorAll('.help-answer').forEach(ans => {
                 ans.style.display = 'none';
             });
             
-            // Показываем/скрываем текущий ответ
             answer.style.display = isVisible ? 'none' : 'block';
         });
         
@@ -700,7 +615,6 @@ function showHelpModal() {
 
 // Показать модальное окно экспорта
 function showExportModal() {
-    // Проверяем, iOS ли это
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     document.getElementById('ios-export-text').style.display = isIOS ? 'block' : 'none';
     document.getElementById('export-modal').style.display = 'block';
@@ -772,22 +686,18 @@ function importFromText() {
 async function forceUpdate() {
     showNotification('Обновление...');
     
-    // Удаляем все кэши
     const cacheKeys = await caches.keys();
     for (const key of cacheKeys) {
         await caches.delete(key);
     }
     
-    // Удаляем сервис-воркер
     const registrations = await navigator.serviceWorker.getRegistrations();
     for (let registration of registrations) {
         await registration.unregister();
     }
     
-    // Удаляем версию из localStorage
     localStorage.removeItem('sw_version');
     
-    // Перезагружаем страницу
     setTimeout(() => {
         window.location.reload(true);
     }, 1000);
@@ -805,7 +715,6 @@ function initPeriodSelector() {
     const currentYear = new Date().getFullYear();
     const yearOptions = document.getElementById('year-options');
     
-    // Годы от 2020 до текущего + 5 лет вперед
     for (let year = 2020; year <= currentYear + 5; year++) {
         const option = document.createElement('div');
         option.className = 'period-option';
@@ -815,7 +724,6 @@ function initPeriodSelector() {
         yearOptions.appendChild(option);
     }
     
-    // Месяцы
     const monthOptions = document.getElementById('month-options');
     const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
       "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
@@ -829,7 +737,6 @@ function initPeriodSelector() {
         monthOptions.appendChild(option);
     });
     
-    // Кнопка назад
     document.getElementById('period-back').addEventListener('click', () => {
         document.getElementById('month-step').style.display = 'none';
         document.getElementById('year-step').style.display = 'block';
@@ -873,34 +780,19 @@ function saveSettings() {
     template.fixedSalaryPart = parseInt(document.getElementById('fixed-salary-part').value);
     template.functionalBorderValue = parseInt(document.getElementById('functional-border-value').value);
     
-    // Обновляем установленные функциональные обводки, если значение изменилось
     if (oldFunctionalBorderValue !== template.functionalBorderValue) {
-        updateFunctionalBorders(template.functionalBorderValue);
+        const updated = updateFunctionalBorders(calendarData, template.functionalBorderValue);
+        if (updated) {
+            saveToStorage('calendarData', calendarData);
+            generateCalendar();
+            showNotification('Значения обводок обновлены');
+        }
     }
     
     saveToStorage('appSettings', appSettings);
     closeModal();
-    calculateSummary();
+    calculateSummaryDisplay();
     showNotification('Настройки сохранены');
-}
-
-// Обновление значений функциональных обводок
-function updateFunctionalBorders(newValue) {
-    let updated = false;
-    
-    for (const dateKey in calendarData) {
-        if (calendarData[dateKey].functionalBorder) {
-            calendarData[dateKey].sales = newValue;
-            calendarData[dateKey].functionalBorderValue = newValue;
-            updated = true;
-        }
-    }
-    
-    if (updated) {
-        saveToStorage('calendarData', calendarData);
-        generateCalendar();
-        showNotification('Значения обводок обновлены');
-    }
 }
 
 // Экспорт данных
@@ -956,7 +848,7 @@ function importData(event) {
         }
     };
     reader.readAsText(file);
-    event.target.value = ''; // Сброс input
+    event.target.value = '';
     closeModal();
 }
 
@@ -967,13 +859,11 @@ function showNotification(message) {
     notification.textContent = message;
     document.body.appendChild(notification);
     
-    // Анимация появления
     setTimeout(() => {
         notification.style.opacity = '1';
         notification.style.transform = 'translateX(-50%) translateY(0)';
     }, 100);
     
-    // Автоматическое скрытие
     setTimeout(() => {
         notification.style.opacity = '0';
         notification.style.transform = 'translateX(-50%) translateY(20px)';
@@ -990,14 +880,12 @@ function showWelcomeMessage() {
 
 // Оптимизация для мобильных устройств
 function optimizeForMobile() {
-    // Предотвращение масштабирования при фокусе
     document.addEventListener('focusin', function() {
         if (window.innerWidth < 768) {
             document.body.style.zoom = '100%';
         }
     });
     
-    // Восстановление после потери фокуса
     document.addEventListener('focusout', function() {
         setTimeout(() => {
             document.body.style.zoom = '';
