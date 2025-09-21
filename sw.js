@@ -1,9 +1,10 @@
-const CACHE_NAME = 'sales-calendar-v5';
+const CACHE_NAME = 'sales-calendar-v6';
 const urlsToCache = [
   './',
   './index.html',
   './style.css',
   './script.js',
+  './rules.js',
   './help.js',
   './icon-192.png',
   './icon-512.png'
@@ -35,4 +36,4 @@ self.addEventListener('activate', event => {
       );
     })
   );
-}
+});
