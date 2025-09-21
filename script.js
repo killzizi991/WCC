@@ -570,16 +570,12 @@ function showTemplatesDropdown() {
     newTemplateOption.addEventListener('click', createNewTemplate);
     dropdown.appendChild(newTemplateOption);
     
-    // Позиционируем и показываем dropdown
-    const templateNameElement = document.getElementById('current-template-name');
-    const rect = templateNameElement.getBoundingClientRect();
-    dropdown.style.top = (rect.bottom + window.scrollY) + 'px';
-    dropdown.style.left = rect.left + 'px';
+    // Показываем dropdown
     dropdown.style.display = 'block';
     
     // Обработчик для скрытия dropdown при клике вне его
     const clickHandler = function(e) {
-        if (!dropdown.contains(e.target) && e.target !== templateNameElement) {
+        if (!dropdown.contains(e.target) && e.target !== document.getElementById('current-template-name')) {
             dropdown.style.display = 'none';
             document.removeEventListener('click', clickHandler);
         }
