@@ -29,6 +29,7 @@
                 <h2 id="current-month-year">Июль 2025</h2>
             </button>
             <button id="next-month">&gt;</button>
+            <button id="templates-btn">Шаблоны</button>
             <button id="help-btn">?</button>
             <button id="settings-btn">⚙️</button>
         </div>
@@ -164,6 +165,33 @@
             </div>
             
             <button id="save-settings">Сохранить настройки</button>
+        </div>
+    </div>
+
+    <!-- Модальное окно шаблонов -->
+    <div id="templates-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; text-align: center; flex: 1;">Шаблоны</h3>
+            </div>
+            
+            <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 20px;">
+                <div id="current-template-name" style="font-weight: bold; font-size: 1.1em; cursor: pointer; margin-right: 10px;"></div>
+                <button id="edit-template-name" style="padding: 5px 10px;">✏️</button>
+            </div>
+            
+            <div id="template-dropdown" style="display: none; position: absolute; background: white; border: 1px solid #ccc; z-index: 1000; width: 80%; max-height: 200px; overflow-y: auto;"></div>
+            
+            <div style="margin-bottom: 20px;">
+                <button id="add-rule-block" style="width: 100%;">Добавить блок правил</button>
+                <div id="rule-blocks-list" style="margin-top: 10px;"></div>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button id="save-template-changes" style="flex: 1;">Сохранить изменения</button>
+                <button id="cancel-template-changes" style="flex: 1; background: #6c757d;">Отменить</button>
+            </div>
         </div>
     </div>
 
