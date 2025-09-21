@@ -237,10 +237,11 @@
     <input type="file" id="import-file" accept=".json" style="display: none;">
 
     <script src="help.js"></script>
+    <script src="rules.js"></script>
     <script src="script.js"></script>
     <script>
         // Принудительное обновление кэша при новой версии
-        const SW_VERSION = 'v5'; // Должно совпадать с версией в sw.js
+        const SW_VERSION = 'v5';
         if (localStorage.getItem('sw_version') !== SW_VERSION) {
           caches.keys().then(cacheNames => {
             cacheNames.forEach(cacheName => caches.delete(cacheName));
@@ -253,7 +254,6 @@
         window.addEventListener('load', () => {
             document.getElementById('app-loading').style.display = 'none';
             
-            // Регистрация Service Worker
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('sw.js')
                     .then(reg => console.log('SW registered'))
