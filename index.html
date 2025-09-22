@@ -196,6 +196,176 @@
         </div>
     </div>
 
+    <!-- Модальные окна для настройки блоков правил -->
+    <div id="sales-percent-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Настройка процента с продаж</h3>
+            <div id="sales-percent-ranges">
+                <!-- Динамически добавляемые диапазоны -->
+            </div>
+            <button id="add-sales-range" style="margin: 10px 0;">+ Добавить диапазон</button>
+            <div style="display: flex; gap: 10px;">
+                <button id="save-sales-percent" style="flex: 1;">Сохранить</button>
+                <button class="close-block-modal" style="flex: 1; background: #6c757d;">Отменить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="shift-rate-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Настройка ставки за смену</h3>
+            <h4>Дневные смены</h4>
+            <div id="day-shift-ranges">
+                <!-- Динамически добавляемые диапазоны -->
+            </div>
+            <button id="add-day-shift-range" style="margin: 10px 0;">+ Добавить диапазон</button>
+            
+            <h4>Ночные смены</h4>
+            <div id="night-shift-ranges">
+                <!-- Динамически добавляемые диапазоны -->
+            </div>
+            <button id="add-night-shift-range" style="margin: 10px 0;">+ Добавить диапазон</button>
+            
+            <div style="display: flex; gap: 10px;">
+                <button id="save-shift-rate" style="flex: 1;">Сохранить</button>
+                <button class="close-block-modal" style="flex: 1; background: #6c757d;">Отменить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="hourly-rate-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Настройка ставки за час</h3>
+            <h4>Дневные часы</h4>
+            <div id="day-hourly-ranges">
+                <!-- Динамически добавляемые диапазоны -->
+            </div>
+            <button id="add-day-hourly-range" style="margin: 10px 0;">+ Добавить диапазон</button>
+            
+            <h4>Ночные часы</h4>
+            <div id="night-hourly-ranges">
+                <!-- Динамически добавляемые диапазоны -->
+            </div>
+            <button id="add-night-hourly-range" style="margin: 10px 0;">+ Добавить диапазон</button>
+            
+            <div style="display: flex; gap: 10px;">
+                <button id="save-hourly-rate" style="flex: 1;">Сохранить</button>
+                <button class="close-block-modal" style="flex: 1; background: #6c757d;">Отменить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="advance-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Настройка аванса</h3>
+            <div class="setting-group">
+                <label>Тип расчета:</label>
+                <select id="advance-type">
+                    <option value="fixed">Фиксированная сумма</option>
+                    <option value="percent">Процент от заработка</option>
+                </select>
+            </div>
+            <div class="setting-group" id="advance-fixed-container">
+                <label>Сумма аванса (руб):</label>
+                <input type="number" id="advance-fixed" min="0" step="100">
+            </div>
+            <div class="setting-group" id="advance-percent-container" style="display: none;">
+                <label>Процент аванса (%):</label>
+                <input type="number" id="advance-percent" min="0" max="100" step="1">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button id="save-advance" style="flex: 1;">Сохранить</button>
+                <button class="close-block-modal" style="flex: 1; background: #6c757d;">Отменить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tax-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Настройка налога</h3>
+            <div class="setting-group">
+                <label>Источник налога:</label>
+                <select id="tax-source">
+                    <option value="total">Со всего заработка</option>
+                    <option value="fixed">С фиксированной суммы</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label>Процент налога (%):</label>
+                <input type="number" id="tax-percent" min="0" max="100" step="0.1">
+            </div>
+            <div class="setting-group" id="tax-fixed-container" style="display: none;">
+                <label>Фиксированная сумма для налога (руб):</label>
+                <input type="number" id="tax-fixed" min="0" step="100">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button id="save-tax" style="flex: 1;">Сохранить</button>
+                <button class="close-block-modal" style="flex: 1; background: #6c757d;">Отменить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="bonus-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Настройка бонуса</h3>
+            <div class="setting-group">
+                <label>Сумма бонуса (руб):</label>
+                <input type="number" id="bonus-amount" min="0" step="100">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button id="save-bonus" style="flex: 1;">Сохранить</button>
+                <button class="close-block-modal" style="flex: 1; background: #6c757d;">Отменить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="overtime-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Настройка сверхурочных</h3>
+            <div class="setting-group">
+                <label>Тип расчета:</label>
+                <select id="overtime-type">
+                    <option value="shifts">Смены</option>
+                    <option value="hours">Часы</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label>Предел для сверхурочных:</label>
+                <input type="number" id="overtime-limit" min="0" step="1">
+            </div>
+            <div class="setting-group">
+                <label>Множитель сверхурочных:</label>
+                <input type="number" id="overtime-multiplier" min="1" step="0.1" value="1.5">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button id="save-overtime" style="flex: 1;">Сохранить</button>
+                <button class="close-block-modal" style="flex: 1; background: #6c757d;">Отменить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="fixed-deduction-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Настройка фиксированного вычета</h3>
+            <div class="setting-group">
+                <label>Сумма вычета (руб):</label>
+                <input type="number" id="deduction-amount" min="0" step="100">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button id="save-deduction" style="flex: 1;">Сохранить</button>
+                <button class="close-block-modal" style="flex: 1; background: #6c757d;">Отменить</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Новые модальные окна для экспорта/импорта -->
     <div id="export-modal" class="modal">
         <div class="modal-content">
@@ -237,10 +407,11 @@
     <input type="file" id="import-file" accept=".json" style="display: none;">
 
     <script src="help.js"></script>
+    <script src="rules.js"></script>
     <script src="script.js"></script>
     <script>
         // Принудительное обновление кэша при новой версии
-        const SW_VERSION = 'v5'; // Должно совпадать с версией в sw.js
+        const SW_VERSION = 'v5';
         if (localStorage.getItem('sw_version') !== SW_VERSION) {
           caches.keys().then(cacheNames => {
             cacheNames.forEach(cacheName => caches.delete(cacheName));
@@ -253,7 +424,6 @@
         window.addEventListener('load', () => {
             document.getElementById('app-loading').style.display = 'none';
             
-            // Регистрация Service Worker
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('sw.js')
                     .then(reg => console.log('SW registered'))
