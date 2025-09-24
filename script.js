@@ -9,7 +9,8 @@ let lastWindowHeight = window.innerHeight;
 let originalHasFunctionalBorder = false;
 let originalSalesValue = 0;
 
-// Новая структура настроек приложения
+// Хранение данных - новая структура с изоляцией по шаблонам
+let calendarData = loadFromStorage('calendarData') || {};
 let appSettings = loadFromStorage('appSettings') || {
   currentTemplateId: 'default',
   templates: {
@@ -22,44 +23,11 @@ let appSettings = loadFromStorage('appSettings') || {
       fixedSalaryPart: 10875,
       functionalBorderValue: 30000,
       ruleBlocks: [],
-      calendarData: {}  // Добавляем поле для хранения данных календаря
+      // Новое поле для хранения данных календаря этого шаблона
+      calendarData: {}
     }
   }
 };
-
-// Функция получения данных календаря для текущего шаблона
-function getCurrentCalendarData() {
-  const template = getCurrentTemplate();
-  if (!template.calendarData) {
-    template.calendarData = {};
-  }
-  return template.calendarData;
-}
-
-// Функция установки данных календаря для текущего шаблона
-function setCurrentCalendarData(data) {
-  const template = getCurrentTemplate();
-  template.calendarData = data;
-}
-
-// Миграция существующих данных в новую структуру
-function migrateCalendarData() {
-  // Загружаем старые данные календаря
-  const oldCalendarData = loadFromStorage('calendarData');
-  
-  if (oldCalendarData && Object.keys(oldCalendarData).length > 0) {
-    // Переносим данные в шаблон по умолчанию
-    const defaultTemplate = appSettings.templates['default'];
-    if (defaultTemplate) {
-      defaultTemplate.calendarData = oldCalendarData;
-    }
-    
-    // Удаляем старые данные
-    localStorage.removeItem('calendarData');
-    saveToStorage('appSettings', appSettings);
-    console.log('Миграция данных календаря завершена');
-  }
-}
 
 // Функция безопасной загрузки из localStorage
 function loadFromStorage(key) {
@@ -89,15 +57,43 @@ function getCurrentTemplate() {
   return appSettings.templates[appSettings.currentTemplateId];
 }
 
+// Получение данных календаря для текущего шаблона
+function getCurrentCalendarData() {
+  const template = getCurrentTemplate();
+  if (!template.calendarData) {
+    template.calendarData = {};
+  }
+  return template.calendarData;
+}
+
+// Миграция существующих данных в новую структуру
+function migrateToTemplateStructure() {
+  // Если есть старые данные calendarData в корне, переносим их в текущий шаблон
+  if (calendarData && Object.keys(calendarData).length > 0 && 
+      Object.keys(calendarData).some(key => key.includes('-'))) {
+    
+    const currentTemplate = getCurrentTemplate();
+    currentTemplate.calendarData = {...calendarData};
+    
+    // Очищаем старые данные
+    calendarData = {};
+    saveToStorage('calendarData', calendarData);
+    saveToStorage('appSettings', appSettings);
+    
+    console.log('Миграция данных календаря завершена');
+    return true;
+  }
+  return false;
+}
+
 // Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', () => {
-    // Выполняем миграцию данных при первой загрузке
-    migrateCalendarData();
+    // Выполняем миграцию данных при необходимости
+    migrateToTemplateStructure();
     
-    // Загружаем данные календаря для текущего шаблона
     const currentCalendarData = getCurrentCalendarData();
-    
     let needSave = false;
+    
     for (const dateKey in currentCalendarData) {
         const dayData = currentCalendarData[dateKey];
         if (dayData.functionalBorder && dayData.functionalBorderValue === undefined) {
@@ -105,8 +101,8 @@ document.addEventListener('DOMContentLoaded', () => {
             needSave = true;
         }
     }
+    
     if (needSave) {
-        setCurrentCalendarData(currentCalendarData);
         saveToStorage('appSettings', appSettings);
     }
 
@@ -261,7 +257,6 @@ function toggleFunctionalBorder(day) {
     }
     
     currentCalendarData[dateKey] = dayData;
-    setCurrentCalendarData(currentCalendarData);
     saveToStorage('appSettings', appSettings);
     generateCalendar();
 }
@@ -275,7 +270,6 @@ function applyFillColor(day) {
     
     dayData.color = color;
     currentCalendarData[dateKey] = dayData;
-    setCurrentCalendarData(currentCalendarData);
     saveToStorage('appSettings', appSettings);
     generateCalendar();
 }
@@ -335,7 +329,6 @@ function saveDayData() {
         functionalBorderValue: shouldKeepFunctionalBorder ? originalSalesValue : undefined
     };
     
-    setCurrentCalendarData(currentCalendarData);
     saveToStorage('appSettings', appSettings);
     closeModal();
     generateCalendar();
@@ -559,30 +552,16 @@ function showTemplatesDropdown() {
 function switchTemplate(templateId) {
     if (appSettings.currentTemplateId === templateId) return;
     
-    // Закрываем все модальные окна перед переключением
-    closeModal();
-    
-    if (confirm('При переключении шаблона все несохраненные данные будут потеряны. Продолжить?')) {
-        // Сохраняем текущие данные календаря в старый шаблон
-        const oldTemplate = getCurrentTemplate();
-        oldTemplate.calendarData = getCurrentCalendarData();
-        
-        // Переключаемся на новый шаблон
+    if (confirm('При переключении шаблона все несохраненные данные текущего шаблона будут потеряны. Продолжить?')) {
         appSettings.currentTemplateId = templateId;
-        
-        // Загружаем данные календаря из нового шаблона
-        const newTemplate = getCurrentTemplate();
-        if (!newTemplate.calendarData) {
-            newTemplate.calendarData = {};
-        }
-        
         saveToStorage('appSettings', appSettings);
         loadSettingsToForm();
         generateCalendar();
         
-        document.getElementById('current-template-name').textContent = newTemplate.name;
+        const template = getCurrentTemplate();
+        document.getElementById('current-template-name').textContent = template.name;
         
-        showNotification('Шаблон изменен: ' + newTemplate.name);
+        showNotification('Шаблон изменен: ' + template.name);
     }
 }
 
@@ -603,7 +582,8 @@ function createNewTemplate() {
         fixedSalaryPart: currentTemplate.fixedSalaryPart,
         functionalBorderValue: currentTemplate.functionalBorderValue,
         ruleBlocks: [],
-        calendarData: {}  // Новый шаблон начинается с пустых данных календаря
+        // Создаем новый пустой календарь для этого шаблона
+        calendarData: {}
     };
     
     appSettings.currentTemplateId = newTemplateId;
@@ -1139,7 +1119,8 @@ function showImportModal() {
 // Копирование данных в буфер обмена
 function copyDataToClipboard() {
     const data = {
-        appSettings: appSettings,  // Теперь экспортируем только appSettings
+        calendarData: calendarData,
+        appSettings: appSettings,
         exportDate: new Date().toISOString(),
         version: '1.2'  // Обновляем версию для новой структуры
     };
@@ -1169,20 +1150,21 @@ function importFromText() {
     try {
         const data = JSON.parse(jsonString);
         
-        // Поддержка старого формата (миграция)
+        // Обработка миграции данных при импорте
         if (data.calendarData && data.appSettings) {
-            // Старый формат: переносим calendarData в шаблон по умолчанию
-            if (data.appSettings.templates && data.appSettings.templates.default) {
-                data.appSettings.templates.default.calendarData = data.calendarData;
-            }
-        }
-        
-        if (data.appSettings) {
+            // Новая структура данных (версия 1.2+)
+            calendarData = data.calendarData;
             appSettings = data.appSettings;
-            saveToStorage('appSettings', appSettings);
-            loadSettingsToForm();
+        } else if (data.calendarData && !data.appSettings) {
+            // Старая структура данных (версия 1.1) - выполняем миграцию
+            const currentTemplate = getCurrentTemplate();
+            currentTemplate.calendarData = {...data.calendarData};
+            calendarData = {};
         }
         
+        saveToStorage('calendarData', calendarData);
+        saveToStorage('appSettings', appSettings);
+        loadSettingsToForm();
         generateCalendar();
         showNotification('Данные импортированы');
         closeModal();
@@ -1283,6 +1265,7 @@ function loadSettingsToForm() {
 function saveSettings() {
     const template = getCurrentTemplate();
     const oldFunctionalBorderValue = template.functionalBorderValue;
+    const currentCalendarData = getCurrentCalendarData();
     
     template.salesPercent = parseFloat(document.getElementById('sales-percent').value);
     template.shiftRate = parseInt(document.getElementById('shift-rate').value);
@@ -1291,10 +1274,8 @@ function saveSettings() {
     template.functionalBorderValue = parseInt(document.getElementById('functional-border-value').value);
     
     if (oldFunctionalBorderValue !== template.functionalBorderValue) {
-        const currentCalendarData = getCurrentCalendarData();
         const updated = updateFunctionalBorders(currentCalendarData, template.functionalBorderValue);
         if (updated) {
-            setCurrentCalendarData(currentCalendarData);
             saveToStorage('appSettings', appSettings);
             generateCalendar();
             showNotification('Значения обводок обновлены');
@@ -1310,7 +1291,8 @@ function saveSettings() {
 // Экспорт данных
 function exportData() {
     const data = {
-        appSettings: appSettings,  // Теперь экспортируем только appSettings
+        calendarData: calendarData,
+        appSettings: appSettings,
         exportDate: new Date().toISOString(),
         version: '1.2'  // Обновляем версию для новой структуры
     };
@@ -1340,20 +1322,21 @@ function importData(event) {
         try {
             const data = JSON.parse(e.target.result);
             
-            // Поддержка старого формата (миграция)
+            // Обработка миграции данных при импорте
             if (data.calendarData && data.appSettings) {
-                // Старый формат: переносим calendarData в шаблон по умолчанию
-                if (data.appSettings.templates && data.appSettings.templates.default) {
-                    data.appSettings.templates.default.calendarData = data.calendarData;
-                }
-            }
-            
-            if (data.appSettings) {
+                // Новая структура данных (версия 1.2+)
+                calendarData = data.calendarData;
                 appSettings = data.appSettings;
-                saveToStorage('appSettings', appSettings);
-                loadSettingsToForm();
+            } else if (data.calendarData && !data.appSettings) {
+                // Старая структура данных (версия 1.1) - выполняем миграцию
+                const currentTemplate = getCurrentTemplate();
+                currentTemplate.calendarData = {...data.calendarData};
+                calendarData = {};
             }
             
+            saveToStorage('calendarData', calendarData);
+            saveToStorage('appSettings', appSettings);
+            loadSettingsToForm();
             generateCalendar();
             showNotification('Данные импортированы');
         } catch (error) {
