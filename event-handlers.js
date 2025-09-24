@@ -98,8 +98,20 @@ function setupEventListeners() {
     });
     
     document.getElementById('reset-day-settings').addEventListener('click', function() {
-        document.getElementById('day-sales-percent').value = '';
-        document.getElementById('day-shift-rate').value = '';
+        const template = getCurrentTemplate();
+        const hasSalesPercent = template.ruleBlocks.some(block => block.type === 'salesPercent');
+        const hasShiftRate = template.ruleBlocks.some(block => block.type === 'shiftRate');
+        const hasHourlyRate = template.ruleBlocks.some(block => block.type === 'hourlyRate');
+        
+        if (hasSalesPercent) {
+            document.getElementById('day-sales-percent').value = '';
+        }
+        if (hasShiftRate) {
+            document.getElementById('day-shift-rate').value = '';
+        }
+        if (hasHourlyRate) {
+            document.getElementById('day-hourly-rate').value = '';
+        }
     });
     
     document.getElementById('update-btn').addEventListener('click', forceUpdate);
