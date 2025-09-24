@@ -86,13 +86,14 @@ function generateCalendar() {
 function calculateSummaryDisplay() {
     const template = getCurrentTemplate();
     const currentCalendarData = getCurrentCalendarData();
-    const summary = calculateSummary(currentCalendarData, currentYear, currentMonth, template);
+    const summary = calculateMonthlySummary(currentCalendarData, template, currentYear, currentMonth);
     
+    // Обновляем отображение с новыми данными
     document.getElementById('modal-work-days').textContent = summary.workDays;
     document.getElementById('modal-total-sales').textContent = summary.totalSales.toLocaleString();
-    document.getElementById('modal-total-earned').textContent = summary.totalEarned.toLocaleString();
-    document.getElementById('modal-salary').textContent = summary.salary.toLocaleString();
-    document.getElementById('modal-balance').textContent = summary.balance.toLocaleString();
+    document.getElementById('modal-total-earned').textContent = summary.totalIncome.toLocaleString();
+    document.getElementById('modal-salary').textContent = summary.finalSalary.toLocaleString();
+    document.getElementById('modal-balance').textContent = summary.finalSalary.toLocaleString();
     document.getElementById('summary-month-year').textContent = 
         `${new Date(currentYear, currentMonth).toLocaleString('ru', { month: 'long' })} ${currentYear}`;
 }
