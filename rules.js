@@ -64,8 +64,8 @@ function calculateSummary(calendarData, currentYear, currentMonth, template) {
             
             // Добавляем оплату за часы если есть блок часов
             if (template.ruleBlocks.some(block => block.type === 'hourlyRate')) {
-                // Базовая ставка за час (в дальнейшем будет из блоков)
-                const hourlyRate = 150;
+                // Используем индивидуальные настройки дня или общие
+                const hourlyRate = dayData.customHourlyRate || 150;
                 
                 if (dayData.dayHours && dayData.dayHours > 0) {
                     totalEarnedWithoutTax += dayData.dayHours * hourlyRate;
