@@ -411,7 +411,7 @@
     <script src="script.js"></script>
     <script>
         // Принудительное обновление кэша при новой версии
-        const SW_VERSION = 'v5';
+        const SW_VERSION = 'v6';
         if (localStorage.getItem('sw_version') !== SW_VERSION) {
           caches.keys().then(cacheNames => {
             cacheNames.forEach(cacheName => caches.delete(cacheName));
