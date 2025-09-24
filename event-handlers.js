@@ -114,6 +114,10 @@ function setupEventListeners() {
         document.getElementById('import-file').click();
     });
     document.getElementById('import-text-btn').addEventListener('click', importFromText);
+    
+    // Новые обработчики для кнопок очистки данных
+    document.getElementById('clear-all-data-btn').addEventListener('click', clearAllData);
+    document.getElementById('clear-template-data-btn').addEventListener('click', clearCurrentTemplateData);
 }
 
 // Обработка нажатий клавиш
@@ -130,4 +134,57 @@ function saveSettings() {
     closeModal();
     calculateSummaryDisplay();
     showNotification('Настройки сохранены');
+}
+
+// Функция очистки всех данных
+function clearAllData() {
+    if (confirm('Вы уверены, что хотите удалить все данные? Это действие нельзя отменить. Будут удалены все шаблоны (кроме основного) и все данные календаря.')) {
+        // Оставляем только шаблон по умолчанию
+        const defaultTemplate = appSettings.templates['default'];
+        
+        // Очищаем все шаблоны, оставляя только default
+        appSettings.templates = {
+            'default': {
+                ...defaultTemplate,
+                calendarData: {} // Очищаем данные календаря
+            }
+        };
+        
+        // Устанавливаем текущий шаблон как default
+        appSettings.currentTemplateId = 'default';
+        
+        // Очищаем старые данные calendarData
+        calendarData = {};
+        
+        // Сохраняем изменения
+        saveToStorage('appSettings', appSettings);
+        saveToStorage('calendarData', calendarData);
+        
+        // Перезагружаем календарь
+        generateCalendar();
+        
+        // Закрываем модальное окно
+        closeModal();
+        
+        showNotification('Все данные успешно очищены');
+    }
+}
+
+// Функция очистки данных текущего шаблона
+function clearCurrentTemplateData() {
+    const currentTemplate = getCurrentTemplate();
+    const templateName = currentTemplate.name;
+    
+    if (confirm(`Вы уверены, что хотите удалить все данные шаблона "${templateName}"? Это действие нельзя отменить.`)) {
+        // Очищаем данные календаря текущего шаблона
+        currentTemplate.calendarData = {};
+        
+        // Сохраняем изменения
+        saveToStorage('appSettings', appSettings);
+        
+        // Перезагружаем календарь
+        generateCalendar();
+        
+        showNotification(`Данные шаблона "${templateName}" успешно очищены`);
+    }
 }
