@@ -721,9 +721,14 @@ function deleteRuleBlock(index) {
     showNotification('Блок правил удален');
 }
 
+// Преобразование camelCase в kebab-case
+function camelToKebab(str) {
+    return str.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
+}
+
 // Редактирование блока правил
 function editRuleBlock(block, index) {
-    const modalId = block.type + '-modal';
+    const modalId = camelToKebab(block.type) + '-modal';
     const modal = document.getElementById(modalId);
     
     if (!modal) {
@@ -945,25 +950,8 @@ function saveShiftRateChanges(modal, block) {
 
 // Настройка модального окна для ставки за час
 function setupHourlyRateModal(modal, block) {
-    setupHourlyRateSection(modal, block, 'day', 'day-hourly-ranges', 'add-day-hourly-range');
-    setupHourlyRateSection(modal, block, 'night', 'night-hourly-ranges', 'add-night-hourly-range');
-}
-
-function setupHourlyRateSection(modal, block, type, rangesId, addButtonId) {
-    const rangesContainer = modal.querySelector('#' + rangesId);
-    rangesContainer.innerHTML = '';
-    
-    block[type + 'Ranges'].forEach((range, rangeIndex) => {
-        const rangeElement = createRangeElement(range, rangeIndex, 'rate');
-        rangesContainer.appendChild(rangeElement);
-    });
-    
-    modal.querySelector('#' + addButtonId).onclick = () => {
-        const newRange = { from: 0, to: null, rate: 150 };
-        block[type + 'Ranges'].push(newRange);
-        const rangeElement = createRangeElement(newRange, block[type + 'Ranges'].length - 1, 'rate');
-        rangesContainer.appendChild(rangeElement);
-    };
+    setupShiftRateSection(modal, block, 'day', 'day-hourly-ranges', 'add-day-hourly-range');
+    setupShiftRateSection(modal, block, 'night', 'night-hourly-ranges', 'add-night-hourly-range');
 }
 
 // Сохранение изменений ставки за час
