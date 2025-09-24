@@ -730,6 +730,7 @@ function switchTemplate(templateId) {
         document.getElementById('current-template-name').textContent = template.name;
         document.getElementById('template-dropdown').style.display = 'none';
         renderRuleBlocksList();
+        generateFunctionalBorderFields(template);
         
         showNotification('Шаблон изменен: ' + template.name);
     }
@@ -764,6 +765,7 @@ function createNewTemplate() {
     document.getElementById('current-template-name').textContent = newTemplateName.trim();
     document.getElementById('template-dropdown').style.display = 'none';
     renderRuleBlocksList();
+    generateFunctionalBorderFields(appSettings.templates[newTemplateId]);
     
     showNotification('Создан новый шаблон: ' + newTemplateName.trim());
 }
@@ -838,6 +840,7 @@ function addRuleBlock(blockType) {
     
     saveToStorage('appSettings', appSettings);
     renderRuleBlocksList();
+    generateFunctionalBorderFields(currentTemplate);
     showNotification('Блок правил добавлен: ' + getDefaultBlockName(blockType));
 }
 
@@ -887,6 +890,7 @@ function deleteRuleBlock(index) {
     
     saveToStorage('appSettings', appSettings);
     renderRuleBlocksList();
+    generateFunctionalBorderFields(currentTemplate);
     showNotification('Блок правил удален');
 }
 
@@ -1040,6 +1044,7 @@ function saveBlockChanges(modal, block, index) {
     
     modal.style.display = 'none';
     document.body.classList.remove('modal-open');
+    generateFunctionalBorderFields(currentTemplate);
     showNotification('Изменения блока сохранены');
     return true;
 }
