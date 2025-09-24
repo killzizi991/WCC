@@ -189,23 +189,66 @@ function hasConflict(newBlock, existingBlocks) {
 
 // Валидация диапазонов
 function validateRanges(ranges) {
+    // Проверка на пустые диапазоны
+    if (!ranges || ranges.length === 0) {
+        return false;
+    }
+
+    // Проверка каждого диапазона на корректность
     for (let i = 0; i < ranges.length; i++) {
+        const range = ranges[i];
+        
+        // Проверка корректности значений
+        if (range.from === null || range.from === undefined || range.from < 0) {
+            return false;
+        }
+        
+        if (range.to !== null && range.to !== undefined) {
+            if (range.to < 0 || range.to <= range.from) {
+                return false;
+            }
+        }
+        
+        // Проверка значения процента/ставки
+        if (range.percent !== undefined && (range.percent < 0 || range.percent > 100)) {
+            return false;
+        }
+        
+        if (range.rate !== undefined && range.rate < 0) {
+            return false;
+        }
+
+        // Проверка пересечения с другими диапазонами
         for (let j = i + 1; j < ranges.length; j++) {
-            const rangeA = ranges[i];
-            const rangeB = ranges[j];
+            const otherRange = ranges[j];
             
-            if (rangeA.to === null || rangeB.to === null) {
+            // Если один из диапазонов бесконечный, они не должны пересекаться по началу
+            if (range.to === null || otherRange.to === null) {
+                if (range.from === otherRange.from) {
+                    return false;
+                }
                 continue;
             }
             
-            if ((rangeA.from >= rangeB.from && rangeA.from <= rangeB.to) ||
-                (rangeA.to >= rangeB.from && rangeA.to <= rangeB.to) ||
-                (rangeB.from >= rangeA.from && rangeB.from <= rangeA.to) ||
-                (rangeB.to >= rangeA.from && rangeB.to <= rangeA.to)) {
+            // Проверка пересечения конечных диапазонов
+            if ((range.from >= otherRange.from && range.from < otherRange.to) ||
+                (range.to > otherRange.from && range.to <= otherRange.to) ||
+                (otherRange.from >= range.from && otherRange.from < range.to) ||
+                (otherRange.to > range.from && otherRange.to <= range.to)) {
                 return false;
             }
         }
     }
+    
+    // Проверка покрытия всех значений (от 0 до бесконечности)
+    let coveredFrom = 0;
+    for (const range of ranges.sort((a, b) => a.from - b.from)) {
+        if (range.from > coveredFrom) {
+            return false; // Есть непокрытый промежуток
+        }
+        coveredFrom = range.to === null ? Infinity : range.to;
+    }
+    
     return true;
 }
 
@@ -222,6 +265,44 @@ function getDefaultBlockName(blockType) {
         'fixedDeduction': 'Фиксированный вычет'
     };
     return names[blockType] || 'Неизвестный блок';
+}
+
+// Валидация параметров блока аванса
+function validateAdvance(block) {
+    if (block.advanceType === 'fixed') {
+        return block.value >= 0;
+    } else if (block.advanceType === 'percent') {
+        return block.value >= 0 && block.value <= 100;
+    }
+    return false;
+}
+
+// Валидация параметров блока налога
+function validateTax(block) {
+    if (block.taxPercent < 0 || block.taxPercent > 100) {
+        return false;
+    }
+    
+    if (block.taxSource === 'fixed' && block.fixedAmount < 0) {
+        return false;
+    }
+    
+    return true;
+}
+
+// Валидация параметров блока бонуса
+function validateBonus(block) {
+    return block.amount >= 0;
+}
+
+// Валидация параметров блока сверхурочных
+function validateOvertime(block) {
+    return block.limit >= 0 && block.multiplier >= 1;
+}
+
+// Валидация параметров блока фиксированного вычета
+function validateFixedDeduction(block) {
+    return block.amount >= 0;
 }
 
 // Функции для работы с блоками правил
