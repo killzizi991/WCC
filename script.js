@@ -560,6 +560,8 @@ function switchTemplate(templateId) {
         
         const template = getCurrentTemplate();
         document.getElementById('current-template-name').textContent = template.name;
+        document.getElementById('template-dropdown').style.display = 'none';
+        renderRuleBlocksList();
         
         showNotification('Шаблон изменен: ' + template.name);
     }
@@ -592,6 +594,7 @@ function createNewTemplate() {
     
     document.getElementById('current-template-name').textContent = newTemplateName.trim();
     document.getElementById('template-dropdown').style.display = 'none';
+    renderRuleBlocksList();
     
     showNotification('Создан новый шаблон: ' + newTemplateName.trim());
 }
