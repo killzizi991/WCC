@@ -406,7 +406,7 @@
     <script src="event-handlers.js"></script>
     <script>
         // Принудительное обновление кэша при новой версии
-        const SW_VERSION = 'v6';
+        const SW_VERSION = 'v8';
         if (localStorage.getItem('sw_version') !== SW_VERSION) {
           caches.keys().then(cacheNames => {
             cacheNames.forEach(cacheName => caches.delete(cacheName));
