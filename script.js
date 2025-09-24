@@ -285,7 +285,6 @@ function openModal(day) {
     originalSalesValue = dayData.functionalBorderValue || (originalHasFunctionalBorder ? dayData.sales : 0);
     
     document.getElementById('modal-day').textContent = day;
-    document.getElementById('sales-input').value = dayData.sales || '';
     document.getElementById('comment-input').value = dayData.comment || '';
     
     document.querySelectorAll('.color-option').forEach(option => {
@@ -300,13 +299,97 @@ function openModal(day) {
     
     document.getElementById('day-settings').style.display = 'none';
     
+    // Генерация динамических полей на основе активных блоков правил
+    generateDynamicFields(dayData);
+    
     document.getElementById('modal').style.display = 'block';
     document.body.classList.add('modal-open');
 }
 
+// Генерация динамических полей на основе активных блоков правил
+function generateDynamicFields(dayData) {
+    const dynamicFields = document.getElementById('dynamic-fields');
+    dynamicFields.innerHTML = '';
+    
+    const template = getCurrentTemplate();
+    const hasSalesPercent = template.ruleBlocks.some(block => block.type === 'salesPercent');
+    const hasShiftRate = template.ruleBlocks.some(block => block.type === 'shiftRate');
+    const hasHourlyRate = template.ruleBlocks.some(block => block.type === 'hourlyRate');
+    
+    // Поле продаж (если есть блок процента с продаж)
+    if (hasSalesPercent) {
+        const salesGroup = document.createElement('div');
+        salesGroup.className = 'setting-group';
+        salesGroup.innerHTML = `
+            <label>Сумма продаж (руб):</label>
+            <input type="number" id="sales-input" value="${dayData.sales || ''}" min="0" step="100">
+        `;
+        dynamicFields.appendChild(salesGroup);
+    }
+    
+    // Поля смен (если есть блок ставки за смену)
+    if (hasShiftRate) {
+        const shiftGroup = document.createElement('div');
+        shiftGroup.className = 'setting-group';
+        shiftGroup.innerHTML = `
+            <label style="display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" id="day-shift-checkbox" ${dayData.dayShift ? 'checked' : ''}>
+                Дневная смена
+            </label>
+        `;
+        dynamicFields.appendChild(shiftGroup);
+        
+        // Проверяем, есть ли настройки для ночных смен в блоке
+        const shiftBlock = template.ruleBlocks.find(block => block.type === 'shiftRate');
+        if (shiftBlock && shiftBlock.nightRanges && shiftBlock.nightRanges.length > 0) {
+            const nightShiftGroup = document.createElement('div');
+            nightShiftGroup.className = 'setting-group';
+            nightShiftGroup.innerHTML = `
+                <label style="display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="night-shift-checkbox" ${dayData.nightShift ? 'checked' : ''}>
+                    Ночная смена
+                </label>
+            `;
+            dynamicFields.appendChild(nightShiftGroup);
+        }
+    }
+    
+    // Поля часов (если есть блок ставки за час)
+    if (hasHourlyRate) {
+        const hoursGroup = document.createElement('div');
+        hoursGroup.className = 'setting-group';
+        hoursGroup.innerHTML = `
+            <label>Дневные часы:</label>
+            <input type="number" id="day-hours-input" value="${dayData.dayHours || ''}" min="0" step="0.5">
+        `;
+        dynamicFields.appendChild(hoursGroup);
+        
+        // Проверяем, есть ли настройки для ночных часов в блоке
+        const hourlyBlock = template.ruleBlocks.find(block => block.type === 'hourlyRate');
+        if (hourlyBlock && hourlyBlock.nightRanges && hourlyBlock.nightRanges.length > 0) {
+            const nightHoursGroup = document.createElement('div');
+            nightHoursGroup.className = 'setting-group';
+            nightHoursGroup.innerHTML = `
+                <label>Ночные часы:</label>
+                <input type="number" id="night-hours-input" value="${dayData.nightHours || ''}" min="0" step="0.5">
+            `;
+            dynamicFields.appendChild(nightHoursGroup);
+        }
+    }
+    
+    // Если нет ни одного блока, отображаем сообщение
+    if (!hasSalesPercent && !hasShiftRate && !hasHourlyRate) {
+        const message = document.createElement('div');
+        message.style.padding = '10px';
+        message.style.textAlign = 'center';
+        message.style.color = '#666';
+        message.textContent = 'Добавьте блоки правил в шаблон для ввода данных';
+        dynamicFields.appendChild(message);
+    }
+}
+
 // Сохранение данных дня
 function saveDayData() {
-    const sales = parseInt(document.getElementById('sales-input').value) || 0;
     const comment = document.getElementById('comment-input').value;
     const selectedColor = document.querySelector('.color-option.selected')?.dataset.color;
     const customSalesPercent = document.getElementById('day-sales-percent').value ? 
@@ -317,18 +400,47 @@ function saveDayData() {
     const dateKey = `${currentYear}-${currentMonth+1}-${selectedDay}`;
     const currentCalendarData = getCurrentCalendarData();
     
-    const shouldKeepFunctionalBorder = originalHasFunctionalBorder && sales === originalSalesValue;
+    const template = getCurrentTemplate();
+    const hasSalesPercent = template.ruleBlocks.some(block => block.type === 'salesPercent');
+    const hasShiftRate = template.ruleBlocks.some(block => block.type === 'shiftRate');
+    const hasHourlyRate = template.ruleBlocks.some(block => block.type === 'hourlyRate');
     
-    currentCalendarData[dateKey] = {
-        sales: sales,
+    const dayData = {
         comment: comment,
         color: selectedColor,
         customSalesPercent: customSalesPercent,
-        customShiftRate: customShiftRate,
-        functionalBorder: shouldKeepFunctionalBorder,
-        functionalBorderValue: shouldKeepFunctionalBorder ? originalSalesValue : undefined
+        customShiftRate: customShiftRate
     };
     
+    // Сохраняем данные в зависимости от активных блоков
+    if (hasSalesPercent) {
+        dayData.sales = parseInt(document.getElementById('sales-input').value) || 0;
+    }
+    
+    if (hasShiftRate) {
+        dayData.dayShift = document.getElementById('day-shift-checkbox')?.checked || false;
+        const nightCheckbox = document.getElementById('night-shift-checkbox');
+        if (nightCheckbox) {
+            dayData.nightShift = nightCheckbox.checked;
+        }
+    }
+    
+    if (hasHourlyRate) {
+        dayData.dayHours = parseFloat(document.getElementById('day-hours-input').value) || 0;
+        const nightHoursInput = document.getElementById('night-hours-input');
+        if (nightHoursInput) {
+            dayData.nightHours = parseFloat(nightHoursInput.value) || 0;
+        }
+    }
+    
+    const shouldKeepFunctionalBorder = originalHasFunctionalBorder && 
+        hasSalesPercent && 
+        dayData.sales === originalSalesValue;
+    
+    dayData.functionalBorder = shouldKeepFunctionalBorder;
+    dayData.functionalBorderValue = shouldKeepFunctionalBorder ? originalSalesValue : undefined;
+    
+    currentCalendarData[dateKey] = dayData;
     saveToStorage('appSettings', appSettings);
     closeModal();
     generateCalendar();
