@@ -57,17 +57,133 @@ function updateFunctionalBorders(calendarData, newValue) {
     return updated;
 }
 
-// Функции для работы с блоками правил (заглушки для следующих этапов)
-function addRuleBlock() {
-    console.log('Функция добавления блоков правил будет реализована на следующем этапе');
+// Создание блока правил по типу
+function createRuleBlock(blockType) {
+    const defaultBlock = {
+        id: 'block_' + Date.now(),
+        type: blockType,
+        name: getDefaultBlockName(blockType)
+    };
+
+    switch (blockType) {
+        case 'salesPercent':
+            return {
+                ...defaultBlock,
+                ranges: [{ from: 0, to: null, percent: 7 }]
+            };
+        case 'shiftRate':
+            return {
+                ...defaultBlock,
+                dayRanges: [{ from: 0, to: null, rate: 1000 }],
+                nightRanges: []
+            };
+        case 'hourlyRate':
+            return {
+                ...defaultBlock,
+                dayRanges: [{ from: 0, to: null, rate: 150 }],
+                nightRanges: []
+            };
+        case 'advance':
+            return {
+                ...defaultBlock,
+                advanceType: 'fixed',
+                value: 10875
+            };
+        case 'tax':
+            return {
+                ...defaultBlock,
+                taxSource: 'total',
+                taxPercent: 13,
+                fixedAmount: 25000
+            };
+        case 'bonus':
+            return {
+                ...defaultBlock,
+                amount: 0
+            };
+        case 'overtime':
+            return {
+                ...defaultBlock,
+                overtimeType: 'shifts',
+                limit: 20,
+                multiplier: 1.5
+            };
+        case 'fixedDeduction':
+            return {
+                ...defaultBlock,
+                amount: 0
+            };
+        default:
+            return defaultBlock;
+    }
+}
+
+// Проверка конфликтов между блоками
+function hasConflict(newBlock, existingBlocks) {
+    const conflictGroups = [
+        ['shiftRate', 'hourlyRate']
+    ];
+
+    for (const group of conflictGroups) {
+        if (group.includes(newBlock.type)) {
+            for (const existingBlock of existingBlocks) {
+                if (group.includes(existingBlock.type)) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+// Валидация диапазонов
+function validateRanges(ranges) {
+    for (let i = 0; i < ranges.length; i++) {
+        for (let j = i + 1; j < ranges.length; j++) {
+            const rangeA = ranges[i];
+            const rangeB = ranges[j];
+            
+            if (rangeA.to === null || rangeB.to === null) {
+                continue;
+            }
+            
+            if ((rangeA.from >= rangeB.from && rangeA.from <= rangeB.to) ||
+                (rangeA.to >= rangeB.from && rangeA.to <= rangeB.to) ||
+                (rangeB.from >= rangeA.from && rangeB.from <= rangeA.to) ||
+                (rangeB.to >= rangeA.from && rangeB.to <= rangeA.to)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+// Получение названия блока по умолчанию
+function getDefaultBlockName(blockType) {
+    const names = {
+        'salesPercent': 'Процент с продаж',
+        'shiftRate': 'Ставка за смену',
+        'hourlyRate': 'Ставка за час',
+        'advance': 'Аванс',
+        'tax': 'Налог',
+        'bonus': 'Бонус',
+        'overtime': 'Сверхурочные',
+        'fixedDeduction': 'Фиксированный вычет'
+    };
+    return names[blockType] || 'Неизвестный блок';
+}
+
+// Функции для работы с блоками правил
+function addRuleBlock(blockType) {
+    console.log('Добавление блока правил типа:', blockType);
 }
 
 function validateRuleBlocks(ruleBlocks) {
-    console.log('Функция валидации блоков правил будет реализована на следующем этапе');
+    console.log('Валидация блоков правил');
     return true;
 }
 
 function calculateWithRuleBlocks(calendarData, template) {
-    console.log('Функция расчета с блоками правил будет реализована на следующем этапе');
+    console.log('Расчет с блоками правил');
     return calculateSummary(calendarData, new Date().getFullYear(), new Date().getMonth(), template);
 }
