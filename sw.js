@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sales-calendar-v6';
+const CACHE_NAME = 'sales-calendar-v7';
 const urlsToCache = [
   './',
   './index.html',
