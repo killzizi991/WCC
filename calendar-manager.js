@@ -197,8 +197,8 @@ function openModal(day) {
         }
     });
     
-    document.getElementById('day-sales-percent').value = dayData.customSalesPercent || '';
-    document.getElementById('day-shift-rate').value = dayData.customShiftRate || '';
+    // Генерация динамических полей настроек дня на основе активных блоков
+    generateDaySettingsFields(dayData);
     
     document.getElementById('day-settings').style.display = 'none';
     
@@ -207,6 +207,82 @@ function openModal(day) {
     
     document.getElementById('modal').style.display = 'block';
     document.body.classList.add('modal-open');
+}
+
+// Генерация динамических полей настроек дня
+function generateDaySettingsFields(dayData) {
+    const daySettings = document.getElementById('day-settings');
+    const settingsContent = daySettings.querySelector('.setting-group')?.parentNode || daySettings;
+    
+    // Очищаем старые поля настроек
+    const existingSettings = settingsContent.querySelectorAll('.setting-group');
+    existingSettings.forEach(setting => {
+        if (!setting.querySelector('#reset-day-settings')) {
+            setting.remove();
+        }
+    });
+    
+    const template = getCurrentTemplate();
+    const hasSalesPercent = template.ruleBlocks.some(block => block.type === 'salesPercent');
+    const hasShiftRate = template.ruleBlocks.some(block => block.type === 'shiftRate');
+    const hasHourlyRate = template.ruleBlocks.some(block => block.type === 'hourlyRate');
+    
+    // Создаем контейнер для новых настроек
+    const newSettingsContainer = document.createElement('div');
+    
+    // Поле для индивидуального процента с продаж (если активен блок)
+    if (hasSalesPercent) {
+        const percentGroup = document.createElement('div');
+        percentGroup.className = 'setting-group';
+        percentGroup.innerHTML = `
+            <label>Процент с продаж (%):</label>
+            <input type="number" id="day-sales-percent" min="0" max="100" step="0.1" 
+                   value="${dayData.customSalesPercent || ''}">
+        `;
+        newSettingsContainer.appendChild(percentGroup);
+    }
+    
+    // Поле для индивидуальной ставки за смену (если активен блок)
+    if (hasShiftRate) {
+        const shiftGroup = document.createElement('div');
+        shiftGroup.className = 'setting-group';
+        shiftGroup.innerHTML = `
+            <label>Ставка за смену (руб):</label>
+            <input type="number" id="day-shift-rate" min="0" step="100" 
+                   value="${dayData.customShiftRate || ''}">
+        `;
+        newSettingsContainer.appendChild(shiftGroup);
+    }
+    
+    // Поле для индивидуальной ставки за час (если активен блок)
+    if (hasHourlyRate) {
+        const hourlyGroup = document.createElement('div');
+        hourlyGroup.className = 'setting-group';
+        hourlyGroup.innerHTML = `
+            <label>Ставка за час (руб):</label>
+            <input type="number" id="day-hourly-rate" min="0" step="10" 
+                   value="${dayData.customHourlyRate || ''}">
+        `;
+        newSettingsContainer.appendChild(hourlyGroup);
+    }
+    
+    // Если нет активных блоков, отображаем сообщение
+    if (!hasSalesPercent && !hasShiftRate && !hasHourlyRate) {
+        const message = document.createElement('div');
+        message.style.padding = '10px';
+        message.style.textAlign = 'center';
+        message.style.color = '#666';
+        message.textContent = 'Добавьте блоки правил в шаблон для индивидуальных настроек дня';
+        newSettingsContainer.appendChild(message);
+    }
+    
+    // Вставляем новые настройки перед кнопкой сброса
+    const resetButton = settingsContent.querySelector('#reset-day-settings');
+    if (resetButton) {
+        settingsContent.insertBefore(newSettingsContainer, resetButton);
+    } else {
+        settingsContent.appendChild(newSettingsContainer);
+    }
 }
 
 // Генерация динамических полей на основе активных блоков правил
@@ -285,10 +361,6 @@ function generateDynamicFields(dayData) {
 function saveDayData() {
     const comment = document.getElementById('comment-input').value;
     const selectedColor = document.querySelector('.color-option.selected')?.dataset.color;
-    const customSalesPercent = document.getElementById('day-sales-percent').value ? 
-        parseFloat(document.getElementById('day-sales-percent').value) : null;
-    const customShiftRate = document.getElementById('day-shift-rate').value ? 
-        parseInt(document.getElementById('day-shift-rate').value) : null;
     
     const dateKey = `${currentYear}-${currentMonth+1}-${selectedDay}`;
     const currentCalendarData = getCurrentCalendarData();
@@ -300,17 +372,19 @@ function saveDayData() {
     
     const dayData = {
         comment: comment,
-        color: selectedColor,
-        customSalesPercent: customSalesPercent,
-        customShiftRate: customShiftRate
+        color: selectedColor
     };
     
-    // Сохраняем данные в зависимости от активных блоков
+    // Сохраняем индивидуальные настройки дня в зависимости от активных блоков
     if (hasSalesPercent) {
+        const customPercent = document.getElementById('day-sales-percent')?.value;
+        dayData.customSalesPercent = customPercent ? parseFloat(customPercent) : null;
         dayData.sales = parseInt(document.getElementById('sales-input').value) || 0;
     }
     
     if (hasShiftRate) {
+        const customRate = document.getElementById('day-shift-rate')?.value;
+        dayData.customShiftRate = customRate ? parseInt(customRate) : null;
         dayData.dayShift = document.getElementById('day-shift-checkbox')?.checked || false;
         const nightCheckbox = document.getElementById('night-shift-checkbox');
         if (nightCheckbox) {
@@ -319,6 +393,8 @@ function saveDayData() {
     }
     
     if (hasHourlyRate) {
+        const customHourly = document.getElementById('day-hourly-rate')?.value;
+        dayData.customHourlyRate = customHourly ? parseFloat(customHourly) : null;
         dayData.dayHours = parseFloat(document.getElementById('day-hours-input').value) || 0;
         const nightHoursInput = document.getElementById('night-hours-input');
         if (nightHoursInput) {
