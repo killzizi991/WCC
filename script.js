@@ -6,8 +6,7 @@ let selectedDay = null;
 let massColoringMode = null;
 let isKeyboardOpen = false;
 let lastWindowHeight = window.innerHeight;
-let originalHasFunctionalBorder = false;
-let originalSalesValue = 0;
+let originalFunctionalBorderData = null;
 
 // Хранение данных - новая структура с изоляцией по шаблонам
 let calendarData = loadFromStorage('calendarData') || {};
@@ -17,13 +16,14 @@ let appSettings = loadFromStorage('appSettings') || {
     'default': {
       id: 'default',
       name: 'Основной',
-      salesPercent: 7,
-      shiftRate: 1000,
-      advance: 10875,
-      fixedSalaryPart: 10875,
-      functionalBorderValue: 30000,
       ruleBlocks: [],
-      // Новое поле для хранения данных календаря этого шаблона
+      functionalBorderData: {
+        sales: 30000,
+        dayShift: false,
+        nightShift: false,
+        dayHours: 0,
+        nightHours: 0
+      },
       calendarData: {}
     }
   }
@@ -91,18 +91,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Выполняем миграцию данных при необходимости
     migrateToTemplateStructure();
     
-    const currentCalendarData = getCurrentCalendarData();
-    let needSave = false;
-    
-    for (const dateKey in currentCalendarData) {
-        const dayData = currentCalendarData[dateKey];
-        if (dayData.functionalBorder && dayData.functionalBorderValue === undefined) {
-            dayData.functionalBorderValue = dayData.sales;
-            needSave = true;
-        }
-    }
-    
-    if (needSave) {
+    const currentTemplate = getCurrentTemplate();
+    // Миграция старого формата functionalBorderValue
+    if (currentTemplate.functionalBorderValue && typeof currentTemplate.functionalBorderValue === 'number') {
+        currentTemplate.functionalBorderData = {
+            sales: currentTemplate.functionalBorderValue,
+            dayShift: false,
+            nightShift: false,
+            dayHours: 0,
+            nightHours: 0
+        };
+        delete currentTemplate.functionalBorderValue;
         saveToStorage('appSettings', appSettings);
     }
 
@@ -245,15 +244,47 @@ function toggleFunctionalBorder(day) {
     const template = getCurrentTemplate();
     
     if (dayData.functionalBorder) {
+        // Снимаем обводку
         dayData.functionalBorder = false;
-        dayData.functionalBorderValue = undefined;
-        dayData.sales = 0;
+        dayData.functionalBorderData = undefined;
+        
+        // Сбрасываем значения в зависимости от активных блоков
+        const hasSalesPercent = template.ruleBlocks.some(block => block.type === 'salesPercent');
+        const hasShiftRate = template.ruleBlocks.some(block => block.type === 'shiftRate');
+        const hasHourlyRate = template.ruleBlocks.some(block => block.type === 'hourlyRate');
+        
+        if (hasSalesPercent) dayData.sales = 0;
+        if (hasShiftRate) {
+            dayData.dayShift = false;
+            dayData.nightShift = false;
+        }
+        if (hasHourlyRate) {
+            dayData.dayHours = 0;
+            dayData.nightHours = 0;
+        }
+        
         showNotification('Обводка снята');
     } else {
+        // Устанавливаем обводку
         dayData.functionalBorder = true;
-        dayData.sales = template.functionalBorderValue;
-        dayData.functionalBorderValue = template.functionalBorderValue;
-        showNotification(`Обводка установлена, продажи: ${template.functionalBorderValue} руб`);
+        dayData.functionalBorderData = {...template.functionalBorderData};
+        
+        // Устанавливаем значения в зависимости от активных блоков
+        const hasSalesPercent = template.ruleBlocks.some(block => block.type === 'salesPercent');
+        const hasShiftRate = template.ruleBlocks.some(block => block.type === 'shiftRate');
+        const hasHourlyRate = template.ruleBlocks.some(block => block.type === 'hourlyRate');
+        
+        if (hasSalesPercent) dayData.sales = template.functionalBorderData.sales;
+        if (hasShiftRate) {
+            dayData.dayShift = template.functionalBorderData.dayShift;
+            dayData.nightShift = template.functionalBorderData.nightShift;
+        }
+        if (hasHourlyRate) {
+            dayData.dayHours = template.functionalBorderData.dayHours;
+            dayData.nightHours = template.functionalBorderData.nightHours;
+        }
+        
+        showNotification('Обводка установлена');
     }
     
     currentCalendarData[dateKey] = dayData;
@@ -281,8 +312,8 @@ function openModal(day) {
     const currentCalendarData = getCurrentCalendarData();
     const dayData = currentCalendarData[dateKey] || {};
     
-    originalHasFunctionalBorder = dayData.functionalBorder || false;
-    originalSalesValue = dayData.functionalBorderValue || (originalHasFunctionalBorder ? dayData.sales : 0);
+    // Сохраняем оригинальные данные ФО для проверки изменений
+    originalFunctionalBorderData = dayData.functionalBorder ? {...dayData.functionalBorderData} : null;
     
     document.getElementById('modal-day').textContent = day;
     document.getElementById('comment-input').value = dayData.comment || '';
@@ -329,6 +360,9 @@ function generateDynamicFields(dayData) {
     
     // Поля смен (если есть блок ставки за смену)
     if (hasShiftRate) {
+        const shiftBlock = template.ruleBlocks.find(block => block.type === 'shiftRate');
+        const hasNightShifts = shiftBlock && shiftBlock.nightRanges && shiftBlock.nightRanges.length > 0;
+        
         const shiftGroup = document.createElement('div');
         shiftGroup.className = 'setting-group';
         shiftGroup.innerHTML = `
@@ -336,45 +370,32 @@ function generateDynamicFields(dayData) {
                 <input type="checkbox" id="day-shift-checkbox" ${dayData.dayShift ? 'checked' : ''}>
                 Дневная смена
             </label>
+            ${hasNightShifts ? `
+            <label style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                <input type="checkbox" id="night-shift-checkbox" ${dayData.nightShift ? 'checked' : ''}>
+                Ночная смена
+            </label>
+            ` : ''}
         `;
         dynamicFields.appendChild(shiftGroup);
-        
-        // Проверяем, есть ли настройки для ночных смен в блоке
-        const shiftBlock = template.ruleBlocks.find(block => block.type === 'shiftRate');
-        if (shiftBlock && shiftBlock.nightRanges && shiftBlock.nightRanges.length > 0) {
-            const nightShiftGroup = document.createElement('div');
-            nightShiftGroup.className = 'setting-group';
-            nightShiftGroup.innerHTML = `
-                <label style="display: flex; align-items: center; gap: 10px;">
-                    <input type="checkbox" id="night-shift-checkbox" ${dayData.nightShift ? 'checked' : ''}>
-                    Ночная смена
-                </label>
-            `;
-            dynamicFields.appendChild(nightShiftGroup);
-        }
     }
     
     // Поля часов (если есть блок ставки за час)
     if (hasHourlyRate) {
+        const hourlyBlock = template.ruleBlocks.find(block => block.type === 'hourlyRate');
+        const hasNightHours = hourlyBlock && hourlyBlock.nightRanges && hourlyBlock.nightRanges.length > 0;
+        
         const hoursGroup = document.createElement('div');
         hoursGroup.className = 'setting-group';
         hoursGroup.innerHTML = `
             <label>Дневные часы:</label>
             <input type="number" id="day-hours-input" value="${dayData.dayHours || ''}" min="0" step="0.5">
+            ${hasNightHours ? `
+            <label style="margin-top: 10px;">Ночные часы:</label>
+            <input type="number" id="night-hours-input" value="${dayData.nightHours || ''}" min="0" step="0.5">
+            ` : ''}
         `;
         dynamicFields.appendChild(hoursGroup);
-        
-        // Проверяем, есть ли настройки для ночных часов в блоке
-        const hourlyBlock = template.ruleBlocks.find(block => block.type === 'hourlyRate');
-        if (hourlyBlock && hourlyBlock.nightRanges && hourlyBlock.nightRanges.length > 0) {
-            const nightHoursGroup = document.createElement('div');
-            nightHoursGroup.className = 'setting-group';
-            nightHoursGroup.innerHTML = `
-                <label>Ночные часы:</label>
-                <input type="number" id="night-hours-input" value="${dayData.nightHours || ''}" min="0" step="0.5">
-            `;
-            dynamicFields.appendChild(nightHoursGroup);
-        }
     }
     
     // Если нет ни одного блока, отображаем сообщение
@@ -433,17 +454,49 @@ function saveDayData() {
         }
     }
     
-    const shouldKeepFunctionalBorder = originalHasFunctionalBorder && 
-        hasSalesPercent && 
-        dayData.sales === originalSalesValue;
-    
-    dayData.functionalBorder = shouldKeepFunctionalBorder;
-    dayData.functionalBorderValue = shouldKeepFunctionalBorder ? originalSalesValue : undefined;
+    // Проверяем, нужно ли сохранить функциональную обводку
+    if (originalFunctionalBorderData) {
+        const shouldKeepFunctionalBorder = checkFunctionalBorderPreservation(dayData, originalFunctionalBorderData, template);
+        if (shouldKeepFunctionalBorder) {
+            dayData.functionalBorder = true;
+            dayData.functionalBorderData = {...originalFunctionalBorderData};
+        } else {
+            dayData.functionalBorder = false;
+            dayData.functionalBorderData = undefined;
+        }
+    }
     
     currentCalendarData[dateKey] = dayData;
     saveToStorage('appSettings', appSettings);
     closeModal();
     generateCalendar();
+}
+
+// Проверка сохранения функциональной обводки
+function checkFunctionalBorderPreservation(dayData, originalData, template) {
+    const hasSalesPercent = template.ruleBlocks.some(block => block.type === 'salesPercent');
+    const hasShiftRate = template.ruleBlocks.some(block => block.type === 'shiftRate');
+    const hasHourlyRate = template.ruleBlocks.some(block => block.type === 'hourlyRate');
+    
+    let isPreserved = true;
+    
+    if (hasSalesPercent) {
+        isPreserved = isPreserved && (dayData.sales === originalData.sales);
+    }
+    
+    if (hasShiftRate) {
+        isPreserved = isPreserved && 
+            (dayData.dayShift === originalData.dayShift) && 
+            (dayData.nightShift === originalData.nightShift);
+    }
+    
+    if (hasHourlyRate) {
+        isPreserved = isPreserved && 
+            (dayData.dayHours === originalData.dayHours) && 
+            (dayData.nightHours === originalData.nightHours);
+    }
+    
+    return isPreserved;
 }
 
 // Закрытие модального окна
@@ -690,13 +743,14 @@ function createNewTemplate() {
     appSettings.templates[newTemplateId] = {
         id: newTemplateId,
         name: newTemplateName.trim(),
-        salesPercent: currentTemplate.salesPercent,
-        shiftRate: currentTemplate.shiftRate,
-        advance: currentTemplate.advance,
-        fixedSalaryPart: currentTemplate.fixedSalaryPart,
-        functionalBorderValue: currentTemplate.functionalBorderValue,
         ruleBlocks: [],
-        // Создаем новый пустой календарь для этого шаблона
+        functionalBorderData: {
+            sales: 30000,
+            dayShift: false,
+            nightShift: false,
+            dayHours: 0,
+            nightHours: 0
+        },
         calendarData: {}
     };
     
@@ -1318,7 +1372,7 @@ function copyDataToClipboard() {
         calendarData: calendarData,
         appSettings: appSettings,
         exportDate: new Date().toISOString(),
-        version: '1.2'  // Обновляем версию для новой структуры
+        version: '1.2'
     };
     
     const jsonString = JSON.stringify(data, null, 2);
@@ -1450,27 +1504,121 @@ function selectMonth(month) {
 // Загрузка настроек в форму
 function loadSettingsToForm() {
     const template = getCurrentTemplate();
-    document.getElementById('sales-percent').value = template.salesPercent;
-    document.getElementById('shift-rate').value = template.shiftRate;
-    document.getElementById('advance').value = template.advance;
-    document.getElementById('fixed-salary-part').value = template.fixedSalaryPart;
-    document.getElementById('functional-border-value').value = template.functionalBorderValue;
+    
+    // Очищаем контейнер настроек ФО
+    const functionalBorderContainer = document.getElementById('functional-border-container');
+    if (functionalBorderContainer) {
+        functionalBorderContainer.innerHTML = '';
+    }
+    
+    // Генерируем поля ФО в зависимости от активных блоков
+    generateFunctionalBorderFields(template);
+}
+
+// Генерация полей для настройки функциональной обводки
+function generateFunctionalBorderFields(template) {
+    const container = document.getElementById('functional-border-container');
+    if (!container) return;
+    
+    container.innerHTML = '<h4>Настройка функциональной обводки</h4>';
+    
+    const hasSalesPercent = template.ruleBlocks.some(block => block.type === 'salesPercent');
+    const hasShiftRate = template.ruleBlocks.some(block => block.type === 'shiftRate');
+    const hasHourlyRate = template.ruleBlocks.some(block => block.type === 'hourlyRate');
+    
+    if (hasSalesPercent) {
+        const salesGroup = document.createElement('div');
+        salesGroup.className = 'setting-group';
+        salesGroup.innerHTML = `
+            <label>Значение продаж для обводки (руб):</label>
+            <input type="number" id="functional-border-sales" value="${template.functionalBorderData.sales || 30000}" min="0" step="1000">
+        `;
+        container.appendChild(salesGroup);
+    }
+    
+    if (hasShiftRate) {
+        const shiftBlock = template.ruleBlocks.find(block => block.type === 'shiftRate');
+        const hasNightShifts = shiftBlock && shiftBlock.nightRanges && shiftBlock.nightRanges.length > 0;
+        
+        const shiftGroup = document.createElement('div');
+        shiftGroup.className = 'setting-group';
+        shiftGroup.innerHTML = `
+            <label style="display: flex; align-items: center; gap: 10px;">
+                <input type="checkbox" id="functional-border-day-shift" ${template.functionalBorderData.dayShift ? 'checked' : ''}>
+                Дневная смена
+            </label>
+            ${hasNightShifts ? `
+            <label style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+                <input type="checkbox" id="functional-border-night-shift" ${template.functionalBorderData.nightShift ? 'checked' : ''}>
+                Ночная смена
+            </label>
+            ` : ''}
+        `;
+        container.appendChild(shiftGroup);
+    }
+    
+    if (hasHourlyRate) {
+        const hourlyBlock = template.ruleBlocks.find(block => block.type === 'hourlyRate');
+        const hasNightHours = hourlyBlock && hourlyBlock.nightRanges && hourlyBlock.nightRanges.length > 0;
+        
+        const hoursGroup = document.createElement('div');
+        hoursGroup.className = 'setting-group';
+        hoursGroup.innerHTML = `
+            <label>Дневные часы для обводки:</label>
+            <input type="number" id="functional-border-day-hours" value="${template.functionalBorderData.dayHours || 0}" min="0" step="0.5">
+            ${hasNightHours ? `
+            <label style="margin-top: 10px;">Ночные часы для обводки:</label>
+            <input type="number" id="functional-border-night-hours" value="${template.functionalBorderData.nightHours || 0}" min="0" step="0.5">
+            ` : ''}
+        `;
+        container.appendChild(hoursGroup);
+    }
+    
+    // Если нет активных блоков, отображаем сообщение
+    if (!hasSalesPercent && !hasShiftRate && !hasHourlyRate) {
+        const message = document.createElement('div');
+        message.style.padding = '10px';
+        message.style.textAlign = 'center';
+        message.style.color = '#666';
+        message.textContent = 'Добавьте блоки правил для настройки функциональной обводки';
+        container.appendChild(message);
+    }
 }
 
 // Сохранение настроек
 function saveSettings() {
     const template = getCurrentTemplate();
-    const oldFunctionalBorderValue = template.functionalBorderValue;
+    const oldFunctionalBorderData = {...template.functionalBorderData};
     const currentCalendarData = getCurrentCalendarData();
     
-    template.salesPercent = parseFloat(document.getElementById('sales-percent').value);
-    template.shiftRate = parseInt(document.getElementById('shift-rate').value);
-    template.advance = parseInt(document.getElementById('advance').value);
-    template.fixedSalaryPart = parseInt(document.getElementById('fixed-salary-part').value);
-    template.functionalBorderValue = parseInt(document.getElementById('functional-border-value').value);
+    // Обновляем настройки ФО
+    const hasSalesPercent = template.ruleBlocks.some(block => block.type === 'salesPercent');
+    const hasShiftRate = template.ruleBlocks.some(block => block.type === 'shiftRate');
+    const hasHourlyRate = template.ruleBlocks.some(block => block.type === 'hourlyRate');
     
-    if (oldFunctionalBorderValue !== template.functionalBorderValue) {
-        const updated = updateFunctionalBorders(currentCalendarData, template.functionalBorderValue);
+    if (hasSalesPercent) {
+        template.functionalBorderData.sales = parseInt(document.getElementById('functional-border-sales').value) || 30000;
+    }
+    
+    if (hasShiftRate) {
+        template.functionalBorderData.dayShift = document.getElementById('functional-border-day-shift')?.checked || false;
+        const nightCheckbox = document.getElementById('functional-border-night-shift');
+        if (nightCheckbox) {
+            template.functionalBorderData.nightShift = nightCheckbox.checked;
+        }
+    }
+    
+    if (hasHourlyRate) {
+        template.functionalBorderData.dayHours = parseFloat(document.getElementById('functional-border-day-hours').value) || 0;
+        const nightHoursInput = document.getElementById('functional-border-night-hours');
+        if (nightHoursInput) {
+            template.functionalBorderData.nightHours = parseFloat(nightHoursInput.value) || 0;
+        }
+    }
+    
+    // Обновляем обводки, если данные изменились
+    if (JSON.stringify(oldFunctionalBorderData) !== JSON.stringify(template.functionalBorderData)) {
+        const updated = updateFunctionalBorders(currentCalendarData, template.functionalBorderData);
         if (updated) {
             saveToStorage('appSettings', appSettings);
             generateCalendar();
@@ -1490,7 +1638,7 @@ function exportData() {
         calendarData: calendarData,
         appSettings: appSettings,
         exportDate: new Date().toISOString(),
-        version: '1.2'  // Обновляем версию для новой структуры
+        version: '1.2'
     };
     
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
