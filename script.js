@@ -909,6 +909,48 @@ function setupBlockModal(modal, block, index) {
 function saveBlockChanges(modal, block, index) {
     const currentTemplate = getCurrentTemplate();
     
+    // Валидация блока перед сохранением
+    let isValid = true;
+    switch (block.type) {
+        case 'salesPercent':
+            isValid = validateRanges(block.ranges);
+            if (!isValid) showNotification('Ошибка валидации: некорректные диапазоны процента с продаж');
+            break;
+        case 'shiftRate':
+            isValid = validateRanges(block.dayRanges) && validateRanges(block.nightRanges);
+            if (!isValid) showNotification('Ошибка валидации: некорректные диапазоны ставки за смену');
+            break;
+        case 'hourlyRate':
+            isValid = validateRanges(block.dayRanges) && validateRanges(block.nightRanges);
+            if (!isValid) showNotification('Ошибка валидации: некорректные диапазоны ставки за час');
+            break;
+        case 'advance':
+            isValid = validateAdvance(block);
+            if (!isValid) showNotification('Ошибка валидации: некорректные параметры аванса');
+            break;
+        case 'tax':
+            isValid = validateTax(block);
+            if (!isValid) showNotification('Ошибка валидации: некорректные параметры налога');
+            break;
+        case 'bonus':
+            isValid = validateBonus(block);
+            if (!isValid) showNotification('Ошибка валидации: некорректная сумма бонуса');
+            break;
+        case 'overtime':
+            isValid = validateOvertime(block);
+            if (!isValid) showNotification('Ошибка валидации: некорректные параметры сверхурочных');
+            break;
+        case 'fixedDeduction':
+            isValid = validateFixedDeduction(block);
+            if (!isValid) showNotification('Ошибка валидации: некорректная сумма вычета');
+            break;
+    }
+    
+    if (!isValid) {
+        return false;
+    }
+    
+    // Обновление данных блока из модального окна
     switch (block.type) {
         case 'salesPercent':
             if (!saveSalesPercentChanges(modal, block)) return;
@@ -942,6 +984,7 @@ function saveBlockChanges(modal, block, index) {
     modal.style.display = 'none';
     document.body.classList.remove('modal-open');
     showNotification('Изменения блока сохранены');
+    return true;
 }
 
 // Настройка модального окна для процента с продаж
@@ -950,20 +993,20 @@ function setupSalesPercentModal(modal, block) {
     rangesContainer.innerHTML = '';
     
     block.ranges.forEach((range, rangeIndex) => {
-        const rangeElement = createRangeElement(range, rangeIndex, 'percent');
+        const rangeElement = createRangeElement(range, rangeIndex, 'percent', block.ranges);
         rangesContainer.appendChild(rangeElement);
     });
     
     modal.querySelector('#add-sales-range').onclick = () => {
         const newRange = { from: 0, to: null, percent: 7 };
         block.ranges.push(newRange);
-        const rangeElement = createRangeElement(newRange, block.ranges.length - 1, 'percent');
+        const rangeElement = createRangeElement(newRange, block.ranges.length - 1, 'percent', block.ranges);
         rangesContainer.appendChild(rangeElement);
     };
 }
 
 // Создание элемента диапазона
-function createRangeElement(range, index, type) {
+function createRangeElement(range, index, type, rangesArray) {
     const div = document.createElement('div');
     div.style.display = 'flex';
     div.style.gap = '10px';
@@ -1008,7 +1051,7 @@ function createRangeElement(range, index, type) {
     deleteButton.style.cursor = 'pointer';
     deleteButton.addEventListener('click', () => {
         div.remove();
-        block.ranges.splice(index, 1);
+        rangesArray.splice(index, 1);
     });
     
     div.appendChild(fromInput);
@@ -1022,7 +1065,7 @@ function createRangeElement(range, index, type) {
 // Сохранение изменений процента с продаж
 function saveSalesPercentChanges(modal, block) {
     if (!validateRanges(block.ranges)) {
-        showNotification('Диапазоны не должны пересекаться');
+        showNotification('Диапазоны не должны пересекаться и должны покрывать все значения от 0');
         return false;
     }
     return true;
@@ -1038,15 +1081,17 @@ function setupShiftRateSection(modal, block, type, rangesId, addButtonId) {
     const rangesContainer = modal.querySelector('#' + rangesId);
     rangesContainer.innerHTML = '';
     
-    block[type + 'Ranges'].forEach((range, rangeIndex) => {
-        const rangeElement = createRangeElement(range, rangeIndex, 'rate');
+    const rangesArray = block[type + 'Ranges'];
+    
+    rangesArray.forEach((range, rangeIndex) => {
+        const rangeElement = createRangeElement(range, rangeIndex, 'rate', rangesArray);
         rangesContainer.appendChild(rangeElement);
     });
     
     modal.querySelector('#' + addButtonId).onclick = () => {
         const newRange = { from: 0, to: null, rate: 1000 };
-        block[type + 'Ranges'].push(newRange);
-        const rangeElement = createRangeElement(newRange, block[type + 'Ranges'].length - 1, 'rate');
+        rangesArray.push(newRange);
+        const rangeElement = createRangeElement(newRange, rangesArray.length - 1, 'rate', rangesArray);
         rangesContainer.appendChild(rangeElement);
     };
 }
@@ -1054,7 +1099,7 @@ function setupShiftRateSection(modal, block, type, rangesId, addButtonId) {
 // Сохранение изменений ставки за смену
 function saveShiftRateChanges(modal, block) {
     if (!validateRanges(block.dayRanges) || !validateRanges(block.nightRanges)) {
-        showNotification('Диапазоны не должны пересекаться');
+        showNotification('Диапазоны не должны пересекаться и должны покрывать все значения от 0');
         return false;
     }
     return true;
@@ -1069,7 +1114,7 @@ function setupHourlyRateModal(modal, block) {
 // Сохранение изменений ставки за час
 function saveHourlyRateChanges(modal, block) {
     if (!validateRanges(block.dayRanges) || !validateRanges(block.nightRanges)) {
-        showNotification('Диапазоны не должны пересекаться');
+        showNotification('Диапазоны не должны пересекаться и должны покрывать все значения от 0');
         return false;
     }
     return true;
@@ -1096,7 +1141,14 @@ function toggleAdvanceType(type) {
 // Сохранение изменений аванса
 function saveAdvanceChanges(modal, block) {
     block.advanceType = modal.querySelector('#advance-type').value;
-    block.value = parseFloat(modal.querySelector(block.advanceType === 'fixed' ? '#advance-fixed' : '#advance-percent').value);
+    const valueInput = modal.querySelector(block.advanceType === 'fixed' ? '#advance-fixed' : '#advance-percent');
+    block.value = parseFloat(valueInput.value) || 0;
+    
+    if (!validateAdvance(block)) {
+        showNotification('Некорректные параметры аванса');
+        return false;
+    }
+    
     return true;
 }
 
@@ -1120,10 +1172,16 @@ function toggleTaxSource(source) {
 // Сохранение изменений налога
 function saveTaxChanges(modal, block) {
     block.taxSource = modal.querySelector('#tax-source').value;
-    block.taxPercent = parseFloat(modal.querySelector('#tax-percent').value);
+    block.taxPercent = parseFloat(modal.querySelector('#tax-percent').value) || 0;
     if (block.taxSource === 'fixed') {
-        block.fixedAmount = parseFloat(modal.querySelector('#tax-fixed').value);
+        block.fixedAmount = parseFloat(modal.querySelector('#tax-fixed').value) || 0;
     }
+    
+    if (!validateTax(block)) {
+        showNotification('Некорректные параметры налога');
+        return false;
+    }
+    
     return true;
 }
 
@@ -1134,7 +1192,13 @@ function setupBonusModal(modal, block) {
 
 // Сохранение изменений бонуса
 function saveBonusChanges(modal, block) {
-    block.amount = parseFloat(modal.querySelector('#bonus-amount').value);
+    block.amount = parseFloat(modal.querySelector('#bonus-amount').value) || 0;
+    
+    if (!validateBonus(block)) {
+        showNotification('Некорректная сумма бонуса');
+        return false;
+    }
+    
     return true;
 }
 
@@ -1148,8 +1212,14 @@ function setupOvertimeModal(modal, block) {
 // Сохранение изменений сверхурочных
 function saveOvertimeChanges(modal, block) {
     block.overtimeType = modal.querySelector('#overtime-type').value;
-    block.limit = parseFloat(modal.querySelector('#overtime-limit').value);
-    block.multiplier = parseFloat(modal.querySelector('#overtime-multiplier').value);
+    block.limit = parseFloat(modal.querySelector('#overtime-limit').value) || 0;
+    block.multiplier = parseFloat(modal.querySelector('#overtime-multiplier').value) || 1.5;
+    
+    if (!validateOvertime(block)) {
+        showNotification('Некорректные параметры сверхурочных');
+        return false;
+    }
+    
     return true;
 }
 
@@ -1160,7 +1230,13 @@ function setupFixedDeductionModal(modal, block) {
 
 // Сохранение изменений фиксированного вычета
 function saveFixedDeductionChanges(modal, block) {
-    block.amount = parseFloat(modal.querySelector('#deduction-amount').value);
+    block.amount = parseFloat(modal.querySelector('#deduction-amount').value) || 0;
+    
+    if (!validateFixedDeduction(block)) {
+        showNotification('Некорректная сумма вычета');
+        return false;
+    }
+    
     return true;
 }
 
