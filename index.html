@@ -132,10 +132,6 @@
             <span class="close">&times;</span>
             <h3>Настройки расчетов</h3>
             
-            <div id="functional-border-container">
-                <!-- Поля для настройки функциональной обводки будут генерироваться динамически -->
-            </div>
-
             <div class="setting-group" style="display: flex; gap: 10px; margin-top: 20px;">
                 <button id="export-btn" style="flex: 1;">Экспорт</button>
                 <button id="import-btn" style="flex: 1;">Импорт</button>
@@ -169,8 +165,14 @@
                 <button id="add-rule-block" style="width: 100%;">Добавить блок правил</button>
                 <div id="rule-blocks-list" style="margin-top: 10px;"></div>
             </div>
+
+            <!-- Настройки функциональной обводки -->
+            <div id="functional-border-container" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                <h4 style="margin-bottom: 15px;">Настройка функциональной обводки</h4>
+                <!-- Поля для настройки функциональной обводки будут генерироваться динамически -->
+            </div>
             
-            <div style="display: flex; gap: 10px;">
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button id="save-template-changes" style="flex: 1;">Сохранить изменения</button>
                 <button id="cancel-template-changes" style="flex: 1; background: #6c757d;">Отменить</button>
             </div>
