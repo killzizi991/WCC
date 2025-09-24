@@ -16,18 +16,69 @@ function calculateSummary(calendarData, currentYear, currentMonth, template) {
         const dateKey = `${currentYear}-${currentMonth+1}-${day}`;
         const dayData = calendarData[dateKey] || {};
         
-        if (dayData.sales > 0) {
+        // Проверяем, является ли день рабочим на основе активных блоков
+        let isWorkDay = false;
+        
+        // Если есть блок продаж и есть сумма продаж
+        if (template.ruleBlocks.some(block => block.type === 'salesPercent') && dayData.sales > 0) {
+            isWorkDay = true;
+        }
+        
+        // Если есть блок смен и отмечена дневная или ночная смена
+        if (template.ruleBlocks.some(block => block.type === 'shiftRate') && 
+            (dayData.dayShift || dayData.nightShift)) {
+            isWorkDay = true;
+        }
+        
+        // Если есть блок часов и есть дневные или ночные часы
+        if (template.ruleBlocks.some(block => block.type === 'hourlyRate') && 
+            ((dayData.dayHours && dayData.dayHours > 0) || (dayData.nightHours && dayData.nightHours > 0))) {
+            isWorkDay = true;
+        }
+        
+        if (isWorkDay) {
             workDays++;
-            totalSales += dayData.sales;
             
-            // Используем индивидуальные настройки дня или общие
-            const dayPercent = dayData.customSalesPercent || template.salesPercent;
-            const dayShiftRate = dayData.customShiftRate || template.shiftRate;
+            // Расчет заработка в зависимости от активных блоков
+            if (template.ruleBlocks.some(block => block.type === 'salesPercent') && dayData.sales) {
+                totalSales += dayData.sales;
+                
+                // Используем индивидуальные настройки дня или общие
+                const dayPercent = dayData.customSalesPercent || template.salesPercent;
+                totalEarnedWithoutTax += calculateEarnings(dayData.sales, dayPercent);
+            }
             
-            totalEarnedWithoutTax += calculateEarnings(dayData.sales, dayPercent) + dayShiftRate;
+            // Добавляем ставку за смену если есть блок смен
+            if (template.ruleBlocks.some(block => block.type === 'shiftRate')) {
+                const dayShiftRate = dayData.customShiftRate || template.shiftRate;
+                
+                if (dayData.dayShift) {
+                    totalEarnedWithoutTax += dayShiftRate;
+                }
+                
+                if (dayData.nightShift) {
+                    // Для ночных смен можно добавить дополнительную ставку если настроено
+                    totalEarnedWithoutTax += dayShiftRate;
+                }
+            }
+            
+            // Добавляем оплату за часы если есть блок часов
+            if (template.ruleBlocks.some(block => block.type === 'hourlyRate')) {
+                // Базовая ставка за час (в дальнейшем будет из блоков)
+                const hourlyRate = 150;
+                
+                if (dayData.dayHours && dayData.dayHours > 0) {
+                    totalEarnedWithoutTax += dayData.dayHours * hourlyRate;
+                }
+                
+                if (dayData.nightHours && dayData.nightHours > 0) {
+                    totalEarnedWithoutTax += dayData.nightHours * hourlyRate * 1.5; // Повышенная ставка для ночи
+                }
+            }
         }
     }
     
+    // Временная логика расчета (будет дорабатываться на этапе 7)
     const tax = 25000 * 0.13; // Фиксированный вычет
     const totalEarned = totalEarnedWithoutTax - tax;
     const salary = totalEarned - template.advance;
