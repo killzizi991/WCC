@@ -9,9 +9,6 @@ let lastWindowHeight = window.innerHeight;
 let originalHasFunctionalBorder = false;
 let originalSalesValue = 0;
 
-// Хранение данных
-let calendarData = loadFromStorage('calendarData') || {};
-
 // Новая структура настроек приложения
 let appSettings = loadFromStorage('appSettings') || {
   currentTemplateId: 'default',
@@ -24,10 +21,45 @@ let appSettings = loadFromStorage('appSettings') || {
       advance: 10875,
       fixedSalaryPart: 10875,
       functionalBorderValue: 30000,
-      ruleBlocks: []
+      ruleBlocks: [],
+      calendarData: {}  // Добавляем поле для хранения данных календаря
     }
   }
 };
+
+// Функция получения данных календаря для текущего шаблона
+function getCurrentCalendarData() {
+  const template = getCurrentTemplate();
+  if (!template.calendarData) {
+    template.calendarData = {};
+  }
+  return template.calendarData;
+}
+
+// Функция установки данных календаря для текущего шаблона
+function setCurrentCalendarData(data) {
+  const template = getCurrentTemplate();
+  template.calendarData = data;
+}
+
+// Миграция существующих данных в новую структуру
+function migrateCalendarData() {
+  // Загружаем старые данные календаря
+  const oldCalendarData = loadFromStorage('calendarData');
+  
+  if (oldCalendarData && Object.keys(oldCalendarData).length > 0) {
+    // Переносим данные в шаблон по умолчанию
+    const defaultTemplate = appSettings.templates['default'];
+    if (defaultTemplate) {
+      defaultTemplate.calendarData = oldCalendarData;
+    }
+    
+    // Удаляем старые данные
+    localStorage.removeItem('calendarData');
+    saveToStorage('appSettings', appSettings);
+    console.log('Миграция данных календаря завершена');
+  }
+}
 
 // Функция безопасной загрузки из localStorage
 function loadFromStorage(key) {
@@ -59,16 +91,23 @@ function getCurrentTemplate() {
 
 // Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', () => {
+    // Выполняем миграцию данных при первой загрузке
+    migrateCalendarData();
+    
+    // Загружаем данные календаря для текущего шаблона
+    const currentCalendarData = getCurrentCalendarData();
+    
     let needSave = false;
-    for (const dateKey in calendarData) {
-        const dayData = calendarData[dateKey];
+    for (const dateKey in currentCalendarData) {
+        const dayData = currentCalendarData[dateKey];
         if (dayData.functionalBorder && dayData.functionalBorderValue === undefined) {
             dayData.functionalBorderValue = dayData.sales;
             needSave = true;
         }
     }
     if (needSave) {
-        saveToStorage('calendarData', calendarData);
+        setCurrentCalendarData(currentCalendarData);
+        saveToStorage('appSettings', appSettings);
     }
 
     generateCalendar();
@@ -115,12 +154,14 @@ function generateCalendar() {
         calendar.appendChild(empty);
     }
     
+    const currentCalendarData = getCurrentCalendarData();
+    
     for (let day = 1; day <= lastDay.getDate(); day++) {
         const dayElement = document.createElement('div');
         dayElement.className = 'day';
         
         const dateKey = `${currentYear}-${currentMonth+1}-${day}`;
-        const dayData = calendarData[dateKey] || {};
+        const dayData = currentCalendarData[dateKey] || {};
         
         const formatSalesNumber = (value) => {
             if (value >= 10000) return Math.floor(value / 1000);
@@ -177,7 +218,8 @@ function generateCalendar() {
 // Расчеты для отображения
 function calculateSummaryDisplay() {
     const template = getCurrentTemplate();
-    const summary = calculateSummary(calendarData, currentYear, currentMonth, template);
+    const currentCalendarData = getCurrentCalendarData();
+    const summary = calculateSummary(currentCalendarData, currentYear, currentMonth, template);
     
     document.getElementById('modal-work-days').textContent = summary.workDays;
     document.getElementById('modal-total-sales').textContent = summary.totalSales.toLocaleString();
@@ -202,7 +244,8 @@ function handleDayClick(day) {
 // Установка/снятие функциональной обводки
 function toggleFunctionalBorder(day) {
     const dateKey = `${currentYear}-${currentMonth+1}-${day}`;
-    let dayData = calendarData[dateKey] || {};
+    const currentCalendarData = getCurrentCalendarData();
+    let dayData = currentCalendarData[dateKey] || {};
     const template = getCurrentTemplate();
     
     if (dayData.functionalBorder) {
@@ -217,8 +260,9 @@ function toggleFunctionalBorder(day) {
         showNotification(`Обводка установлена, продажи: ${template.functionalBorderValue} руб`);
     }
     
-    calendarData[dateKey] = dayData;
-    saveToStorage('calendarData', calendarData);
+    currentCalendarData[dateKey] = dayData;
+    setCurrentCalendarData(currentCalendarData);
+    saveToStorage('appSettings', appSettings);
     generateCalendar();
 }
 
@@ -226,11 +270,13 @@ function toggleFunctionalBorder(day) {
 function applyFillColor(day) {
     const color = document.querySelector('.palette-tool.fill.active')?.dataset.color || '#ffffff';
     const dateKey = `${currentYear}-${currentMonth+1}-${day}`;
-    let dayData = calendarData[dateKey] || {};
+    const currentCalendarData = getCurrentCalendarData();
+    let dayData = currentCalendarData[dateKey] || {};
     
     dayData.color = color;
-    calendarData[dateKey] = dayData;
-    saveToStorage('calendarData', calendarData);
+    currentCalendarData[dateKey] = dayData;
+    setCurrentCalendarData(currentCalendarData);
+    saveToStorage('appSettings', appSettings);
     generateCalendar();
 }
 
@@ -238,7 +284,8 @@ function applyFillColor(day) {
 function openModal(day) {
     selectedDay = day;
     const dateKey = `${currentYear}-${currentMonth+1}-${day}`;
-    const dayData = calendarData[dateKey] || {};
+    const currentCalendarData = getCurrentCalendarData();
+    const dayData = currentCalendarData[dateKey] || {};
     
     originalHasFunctionalBorder = dayData.functionalBorder || false;
     originalSalesValue = dayData.functionalBorderValue || (originalHasFunctionalBorder ? dayData.sales : 0);
@@ -274,10 +321,11 @@ function saveDayData() {
         parseInt(document.getElementById('day-shift-rate').value) : null;
     
     const dateKey = `${currentYear}-${currentMonth+1}-${selectedDay}`;
+    const currentCalendarData = getCurrentCalendarData();
     
     const shouldKeepFunctionalBorder = originalHasFunctionalBorder && sales === originalSalesValue;
     
-    calendarData[dateKey] = {
+    currentCalendarData[dateKey] = {
         sales: sales,
         comment: comment,
         color: selectedColor,
@@ -287,7 +335,8 @@ function saveDayData() {
         functionalBorderValue: shouldKeepFunctionalBorder ? originalSalesValue : undefined
     };
     
-    saveToStorage('calendarData', calendarData);
+    setCurrentCalendarData(currentCalendarData);
+    saveToStorage('appSettings', appSettings);
     closeModal();
     generateCalendar();
 }
@@ -510,16 +559,30 @@ function showTemplatesDropdown() {
 function switchTemplate(templateId) {
     if (appSettings.currentTemplateId === templateId) return;
     
+    // Закрываем все модальные окна перед переключением
+    closeModal();
+    
     if (confirm('При переключении шаблона все несохраненные данные будут потеряны. Продолжить?')) {
+        // Сохраняем текущие данные календаря в старый шаблон
+        const oldTemplate = getCurrentTemplate();
+        oldTemplate.calendarData = getCurrentCalendarData();
+        
+        // Переключаемся на новый шаблон
         appSettings.currentTemplateId = templateId;
+        
+        // Загружаем данные календаря из нового шаблона
+        const newTemplate = getCurrentTemplate();
+        if (!newTemplate.calendarData) {
+            newTemplate.calendarData = {};
+        }
+        
         saveToStorage('appSettings', appSettings);
         loadSettingsToForm();
         generateCalendar();
         
-        const template = getCurrentTemplate();
-        document.getElementById('current-template-name').textContent = template.name;
+        document.getElementById('current-template-name').textContent = newTemplate.name;
         
-        showNotification('Шаблон изменен: ' + template.name);
+        showNotification('Шаблон изменен: ' + newTemplate.name);
     }
 }
 
@@ -539,7 +602,8 @@ function createNewTemplate() {
         advance: currentTemplate.advance,
         fixedSalaryPart: currentTemplate.fixedSalaryPart,
         functionalBorderValue: currentTemplate.functionalBorderValue,
-        ruleBlocks: []
+        ruleBlocks: [],
+        calendarData: {}  // Новый шаблон начинается с пустых данных календаря
     };
     
     appSettings.currentTemplateId = newTemplateId;
@@ -1075,10 +1139,9 @@ function showImportModal() {
 // Копирование данных в буфер обмена
 function copyDataToClipboard() {
     const data = {
-        calendarData: calendarData,
-        appSettings: appSettings,
+        appSettings: appSettings,  // Теперь экспортируем только appSettings
         exportDate: new Date().toISOString(),
-        version: '1.1'
+        version: '1.2'  // Обновляем версию для новой структуры
     };
     
     const jsonString = JSON.stringify(data, null, 2);
@@ -1106,9 +1169,12 @@ function importFromText() {
     try {
         const data = JSON.parse(jsonString);
         
-        if (data.calendarData) {
-            calendarData = data.calendarData;
-            saveToStorage('calendarData', calendarData);
+        // Поддержка старого формата (миграция)
+        if (data.calendarData && data.appSettings) {
+            // Старый формат: переносим calendarData в шаблон по умолчанию
+            if (data.appSettings.templates && data.appSettings.templates.default) {
+                data.appSettings.templates.default.calendarData = data.calendarData;
+            }
         }
         
         if (data.appSettings) {
@@ -1225,9 +1291,11 @@ function saveSettings() {
     template.functionalBorderValue = parseInt(document.getElementById('functional-border-value').value);
     
     if (oldFunctionalBorderValue !== template.functionalBorderValue) {
-        const updated = updateFunctionalBorders(calendarData, template.functionalBorderValue);
+        const currentCalendarData = getCurrentCalendarData();
+        const updated = updateFunctionalBorders(currentCalendarData, template.functionalBorderValue);
         if (updated) {
-            saveToStorage('calendarData', calendarData);
+            setCurrentCalendarData(currentCalendarData);
+            saveToStorage('appSettings', appSettings);
             generateCalendar();
             showNotification('Значения обводок обновлены');
         }
@@ -1242,10 +1310,9 @@ function saveSettings() {
 // Экспорт данных
 function exportData() {
     const data = {
-        calendarData: calendarData,
-        appSettings: appSettings,
+        appSettings: appSettings,  // Теперь экспортируем только appSettings
         exportDate: new Date().toISOString(),
-        version: '1.1'
+        version: '1.2'  // Обновляем версию для новой структуры
     };
     
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -1273,9 +1340,12 @@ function importData(event) {
         try {
             const data = JSON.parse(e.target.result);
             
-            if (data.calendarData) {
-                calendarData = data.calendarData;
-                saveToStorage('calendarData', calendarData);
+            // Поддержка старого формата (миграция)
+            if (data.calendarData && data.appSettings) {
+                // Старый формат: переносим calendarData в шаблон по умолчанию
+                if (data.appSettings.templates && data.appSettings.templates.default) {
+                    data.appSettings.templates.default.calendarData = data.calendarData;
+                }
             }
             
             if (data.appSettings) {
