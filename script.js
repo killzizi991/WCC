@@ -642,6 +642,9 @@ function showTemplatesModal() {
     
     setupTemplatesModalListeners();
     renderRuleBlocksList();
+    
+    // Генерируем поля для настройки ФО
+    generateFunctionalBorderFields(currentTemplate);
 }
 
 // Настройка обработчиков для модального окна шаблонов
@@ -1296,6 +1299,33 @@ function saveFixedDeductionChanges(modal, block) {
 
 // Сохранение изменений шаблона
 function saveTemplateChanges() {
+    const template = getCurrentTemplate();
+    
+    // Обновляем настройки ФО из формы в модальном окне шаблонов
+    const hasSalesPercent = template.ruleBlocks.some(block => block.type === 'salesPercent');
+    const hasShiftRate = template.ruleBlocks.some(block => block.type === 'shiftRate');
+    const hasHourlyRate = template.ruleBlocks.some(block => block.type === 'hourlyRate');
+    
+    if (hasSalesPercent) {
+        template.functionalBorderData.sales = parseInt(document.getElementById('functional-border-sales').value) || 30000;
+    }
+    
+    if (hasShiftRate) {
+        template.functionalBorderData.dayShift = document.getElementById('functional-border-day-shift')?.checked || false;
+        const nightCheckbox = document.getElementById('functional-border-night-shift');
+        if (nightCheckbox) {
+            template.functionalBorderData.nightShift = nightCheckbox.checked;
+        }
+    }
+    
+    if (hasHourlyRate) {
+        template.functionalBorderData.dayHours = parseFloat(document.getElementById('functional-border-day-hours').value) || 0;
+        const nightHoursInput = document.getElementById('functional-border-night-hours');
+        if (nightHoursInput) {
+            template.functionalBorderData.nightHours = parseFloat(nightHoursInput.value) || 0;
+        }
+    }
+    
     saveToStorage('appSettings', appSettings);
     closeModal();
     showNotification('Изменения шаблона сохранены');
@@ -1503,16 +1533,7 @@ function selectMonth(month) {
 
 // Загрузка настроек в форму
 function loadSettingsToForm() {
-    const template = getCurrentTemplate();
-    
-    // Очищаем контейнер настроек ФО
-    const functionalBorderContainer = document.getElementById('functional-border-container');
-    if (functionalBorderContainer) {
-        functionalBorderContainer.innerHTML = '';
-    }
-    
-    // Генерируем поля ФО в зависимости от активных блоков
-    generateFunctionalBorderFields(template);
+    // Убрали генерацию полей ФО из настроек
 }
 
 // Генерация полей для настройки функциональной обводки
@@ -1520,7 +1541,12 @@ function generateFunctionalBorderFields(template) {
     const container = document.getElementById('functional-border-container');
     if (!container) return;
     
-    container.innerHTML = '<h4>Настройка функциональной обводки</h4>';
+    // Очищаем только содержимое, сохраняя заголовок
+    const existingContent = container.innerHTML;
+    const titleMatch = existingContent.match(/<h4[^>]*>.*?<\/h4>/);
+    const title = titleMatch ? titleMatch[0] : '<h4>Настройка функциональной обводки</h4>';
+    
+    container.innerHTML = title;
     
     const hasSalesPercent = template.ruleBlocks.some(block => block.type === 'salesPercent');
     const hasShiftRate = template.ruleBlocks.some(block => block.type === 'shiftRate');
@@ -1587,45 +1613,7 @@ function generateFunctionalBorderFields(template) {
 
 // Сохранение настроек
 function saveSettings() {
-    const template = getCurrentTemplate();
-    const oldFunctionalBorderData = {...template.functionalBorderData};
-    const currentCalendarData = getCurrentCalendarData();
-    
-    // Обновляем настройки ФО
-    const hasSalesPercent = template.ruleBlocks.some(block => block.type === 'salesPercent');
-    const hasShiftRate = template.ruleBlocks.some(block => block.type === 'shiftRate');
-    const hasHourlyRate = template.ruleBlocks.some(block => block.type === 'hourlyRate');
-    
-    if (hasSalesPercent) {
-        template.functionalBorderData.sales = parseInt(document.getElementById('functional-border-sales').value) || 30000;
-    }
-    
-    if (hasShiftRate) {
-        template.functionalBorderData.dayShift = document.getElementById('functional-border-day-shift')?.checked || false;
-        const nightCheckbox = document.getElementById('functional-border-night-shift');
-        if (nightCheckbox) {
-            template.functionalBorderData.nightShift = nightCheckbox.checked;
-        }
-    }
-    
-    if (hasHourlyRate) {
-        template.functionalBorderData.dayHours = parseFloat(document.getElementById('functional-border-day-hours').value) || 0;
-        const nightHoursInput = document.getElementById('functional-border-night-hours');
-        if (nightHoursInput) {
-            template.functionalBorderData.nightHours = parseFloat(nightHoursInput.value) || 0;
-        }
-    }
-    
-    // Обновляем обводки, если данные изменились
-    if (JSON.stringify(oldFunctionalBorderData) !== JSON.stringify(template.functionalBorderData)) {
-        const updated = updateFunctionalBorders(currentCalendarData, template.functionalBorderData);
-        if (updated) {
-            saveToStorage('appSettings', appSettings);
-            generateCalendar();
-            showNotification('Значения обводок обновлены');
-        }
-    }
-    
+    // Убрали сохранение настроек ФО из настроек приложения
     saveToStorage('appSettings', appSettings);
     closeModal();
     calculateSummaryDisplay();
