@@ -94,13 +94,32 @@ function calculateSummary(calendarData, currentYear, currentMonth, template) {
 }
 
 // Обновление значений функциональных обводок
-function updateFunctionalBorders(calendarData, newValue) {
+function updateFunctionalBorders(calendarData, newFunctionalBorderData) {
     let updated = false;
     
     for (const dateKey in calendarData) {
         if (calendarData[dateKey].functionalBorder) {
-            calendarData[dateKey].sales = newValue;
-            calendarData[dateKey].functionalBorderValue = newValue;
+            const dayData = calendarData[dateKey];
+            
+            // Обновляем данные дня в соответствии с активными блоками
+            if (newFunctionalBorderData.sales !== undefined) {
+                dayData.sales = newFunctionalBorderData.sales;
+            }
+            if (newFunctionalBorderData.dayShift !== undefined) {
+                dayData.dayShift = newFunctionalBorderData.dayShift;
+            }
+            if (newFunctionalBorderData.nightShift !== undefined) {
+                dayData.nightShift = newFunctionalBorderData.nightShift;
+            }
+            if (newFunctionalBorderData.dayHours !== undefined) {
+                dayData.dayHours = newFunctionalBorderData.dayHours;
+            }
+            if (newFunctionalBorderData.nightHours !== undefined) {
+                dayData.nightHours = newFunctionalBorderData.nightHours;
+            }
+            
+            // Обновляем данные функциональной обводки
+            dayData.functionalBorderData = {...newFunctionalBorderData};
             updated = true;
         }
     }
