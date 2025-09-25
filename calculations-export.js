@@ -1,7 +1,12 @@
-
 // Показать модальное окно помощи
 function showHelpModal() {
   try {
+    const helpModal = document.getElementById('help-modal');
+    if (!helpModal) {
+      console.error('Help modal element not found');
+      return;
+    }
+    
     const helpContent = document.getElementById('help-content');
     if (!helpContent) {
       console.error('Help content element not found');
@@ -62,6 +67,12 @@ function showHelpModal() {
 // Показать модальное окно экспорта
 function showExportModal() {
   try {
+    const exportModal = document.getElementById('export-modal');
+    if (!exportModal) {
+      console.error('Export modal element not found');
+      return;
+    }
+    
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     const iosExportText = document.getElementById('ios-export-text');
     if (iosExportText) {
@@ -77,6 +88,12 @@ function showExportModal() {
 // Показать модальное окно импорта
 function showImportModal() {
   try {
+    const importModal = document.getElementById('import-modal');
+    if (!importModal) {
+      console.error('Import modal element not found');
+      return;
+    }
+    
     const importTextInput = document.getElementById('import-text-input');
     if (importTextInput) {
       importTextInput.value = '';
@@ -90,46 +107,51 @@ function showImportModal() {
 
 // Валидация структуры импортируемых данных
 function validateImportedData(data) {
-  if (!data || typeof data !== 'object') {
-    return { isValid: false, error: 'Неверный формат данных' };
-  }
-  
-  // Проверка обязательных полей
-  if (!data.appSettings && !data.calendarData) {
-    return { isValid: false, error: 'Отсутствуют данные приложения' };
-  }
-  
-  // Проверка версии данных
-  if (data.version && typeof data.version !== 'string') {
-    return { isValid: false, error: 'Неверный формат версии данных' };
-  }
-  
-  // Проверка даты экспорта
-  if (data.exportDate) {
-    try {
-      new Date(data.exportDate);
-    } catch (e) {
-      return { isValid: false, error: 'Неверный формат даты экспорта' };
-    }
-  }
-  
-  // Валидация appSettings если присутствует
-  if (data.appSettings) {
-    if (!data.appSettings.currentTemplateId || typeof data.appSettings.currentTemplateId !== 'string') {
-      return { isValid: false, error: 'Неверный формат текущего шаблона' };
+  try {
+    if (!data || typeof data !== 'object') {
+      return { isValid: false, error: 'Неверный формат данных' };
     }
     
-    if (!data.appSettings.templates || typeof data.appSettings.templates !== 'object') {
-      return { isValid: false, error: 'Неверный формат шаблонов' };
+    // Проверка обязательных полей
+    if (!data.appSettings && !data.calendarData) {
+      return { isValid: false, error: 'Отсутствуют данные приложения' };
     }
+    
+    // Проверка версии данных
+    if (data.version && typeof data.version !== 'string') {
+      return { isValid: false, error: 'Неверный формат версии данных' };
+    }
+    
+    // Проверка даты экспорта
+    if (data.exportDate) {
+      try {
+        new Date(data.exportDate);
+      } catch (e) {
+        return { isValid: false, error: 'Неверный формат даты экспорта' };
+      }
+    }
+    
+    // Валидация appSettings если присутствует
+    if (data.appSettings) {
+      if (!data.appSettings.currentTemplateId || typeof data.appSettings.currentTemplateId !== 'string') {
+        return { isValid: false, error: 'Неверный формат текущего шаблона' };
+      }
+      
+      if (!data.appSettings.templates || typeof data.appSettings.templates !== 'object') {
+        return { isValid: false, error: 'Неверный формат шаблонов' };
+      }
+    }
+    
+    // Валидация calendarData если присутствует
+    if (data.calendarData && typeof data.calendarData !== 'object') {
+      return { isValid: false, error: 'Неверный формат данных календаря' };
+    }
+    
+    return { isValid: true };
+  } catch (error) {
+    console.error('Ошибка валидации импортируемых данных:', error);
+    return { isValid: false, error: 'Ошибка валидации данных' };
   }
-  
-  // Валидация calendarData если присутствует
-  if (data.calendarData && typeof data.calendarData !== 'object') {
-    return { isValid: false, error: 'Неверный формат данных календаря' };
-  }
-  
-  return { isValid: true };
 }
 
 // Обработка миграции данных при импорте
@@ -162,6 +184,11 @@ function processDataMigration(data) {
 // Копирование данных в буфер обмена
 function copyDataToClipboard() {
   try {
+    if (!document.body) {
+      console.error('Document body not found');
+      return;
+    }
+    
     const data = {
       appSettings: appSettings,
       exportDate: new Date().toISOString(),
@@ -194,6 +221,11 @@ function copyDataToClipboard() {
 // Резервный метод копирования для старых браузеров
 function fallbackCopyToClipboard(text) {
   try {
+    if (!document.body) {
+      console.error('Document body not found');
+      return;
+    }
+    
     const textArea = document.createElement('textarea');
     textArea.value = text;
     textArea.style.position = 'fixed';
@@ -223,18 +255,28 @@ function fallbackCopyToClipboard(text) {
 
 // Показ текста для ручного копирования
 function showManualCopyText(text) {
-  const manualCopyModal = document.createElement('div');
-  manualCopyModal.className = 'modal';
-  manualCopyModal.style.display = 'block';
-  manualCopyModal.innerHTML = `
-    <div class="modal-content">
-      <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
-      <h3>Скопируйте данные вручную</h3>
-      <textarea style="width: 100%; height: 200px; margin: 10px 0;">${text}</textarea>
-      <button onclick="this.parentElement.parentElement.remove()">Закрыть</button>
-    </div>
-  `;
-  document.body.appendChild(manualCopyModal);
+  try {
+    if (!document.body) {
+      console.error('Document body not found');
+      return;
+    }
+    
+    const manualCopyModal = document.createElement('div');
+    manualCopyModal.className = 'modal';
+    manualCopyModal.style.display = 'block';
+    manualCopyModal.innerHTML = `
+      <div class="modal-content">
+        <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+        <h3>Скопируйте данные вручную</h3>
+        <textarea style="width: 100%; height: 200px; margin: 10px 0;">${text}</textarea>
+        <button onclick="this.parentElement.parentElement.remove()">Закрыть</button>
+      </div>
+    `;
+    document.body.appendChild(manualCopyModal);
+  } catch (error) {
+    console.error('Ошибка показа текста для ручного копирования:', error);
+    showNotification('Ошибка отображения текста для копирования');
+  }
 }
 
 // Импорт данных из текстового поля
@@ -303,6 +345,11 @@ function importFromText() {
 // Принудительное обновление версии
 async function forceUpdate() {
   try {
+    if (!document.body) {
+      console.error('Document body not found');
+      return;
+    }
+    
     showNotification('Обновление...');
     
     const cacheKeys = await caches.keys();
@@ -329,6 +376,11 @@ async function forceUpdate() {
 // Экспорт данных
 function exportData() {
   try {
+    if (!document.body) {
+      console.error('Document body not found');
+      return;
+    }
+    
     const data = {
       appSettings: appSettings,
       exportDate: new Date().toISOString(),
@@ -364,6 +416,11 @@ function exportData() {
 // Импорт данных из файла
 function importData(event) {
   try {
+    if (!event || !event.target) {
+      showNotification('Ошибка обработки файла');
+      return;
+    }
+    
     const file = event.target.files[0];
     if (!file) return;
     
@@ -441,4 +498,4 @@ function importData(event) {
     console.error('Ошибка импорта файла:', error);
     showNotification('Ошибка импорта файла');
   }
-}
+          }
