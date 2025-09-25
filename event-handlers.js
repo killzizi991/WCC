@@ -70,7 +70,6 @@ function setupEventListeners() {
     
     document.getElementById('settings-btn').addEventListener('click', () => {
         showModal('settings-modal');
-        loadSettingsToForm();
     });
     
     document.getElementById('save-settings').addEventListener('click', saveSettings);
