@@ -525,8 +525,3 @@ function selectMonth(month) {
     closeModal();
     generateCalendar();
 }
-
-// Загрузка настроек в форму
-function loadSettingsToForm() {
-    // Убрали генерацию полей ФО из настроек
-}
