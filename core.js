@@ -1,4 +1,3 @@
-
 // Основные переменные
 let currentDate = new Date();
 let currentYear = currentDate.getFullYear();
