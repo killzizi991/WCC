@@ -5,8 +5,7 @@ function showTemplatesModal() {
     
     document.getElementById('current-template-name').textContent = currentTemplate.name;
     
-    modal.style.display = 'block';
-    document.body.classList.add('modal-open');
+    showModal('templates-modal');
     
     setupTemplatesModalListeners();
     renderRuleBlocksList();
@@ -317,8 +316,7 @@ function editRuleBlock(block, index) {
     }
     
     setupBlockModal(modal, block, index);
-    modal.style.display = 'block';
-    document.body.classList.add('modal-open');
+    showModal(modalId);
 }
 
 // Настройка модального окна блока
@@ -326,16 +324,14 @@ function setupBlockModal(modal, block, index) {
     const closeButtons = modal.querySelectorAll('.close, .close-block-modal');
     closeButtons.forEach(btn => {
         btn.onclick = () => {
-            modal.style.display = 'none';
-            document.body.classList.remove('modal-open');
+            closeModal();
         };
     });
     
     modal.querySelector('.modal-content').onclick = (e) => e.stopPropagation();
     modal.onclick = (e) => {
         if (e.target === modal) {
-            modal.style.display = 'none';
-            document.body.classList.remove('modal-open');
+            closeModal();
         }
     };
     
@@ -449,8 +445,7 @@ function saveBlockChanges(modal, block, index) {
     currentTemplate.ruleBlocks[index] = block;
     saveToStorage('appSettings', appSettings);
     
-    modal.style.display = 'none';
-    document.body.classList.remove('modal-open');
+    closeModal();
     generateFunctionalBorderFields(currentTemplate);
     showNotification('Изменения блока сохранены');
     return true;
