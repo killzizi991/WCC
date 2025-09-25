@@ -19,8 +19,7 @@ function setupEventListeners() {
     });
     
     document.getElementById('month-year-selector').addEventListener('click', () => {
-        document.getElementById('period-modal').style.display = 'block';
-        document.body.classList.add('modal-open');
+        showModal('period-modal');
     });
     
     document.getElementById('palette-btn').addEventListener('click', () => {
@@ -66,13 +65,11 @@ function setupEventListeners() {
     document.getElementById('save-data').addEventListener('click', saveDayData);
     
     document.getElementById('summary-btn').addEventListener('click', () => {
-        document.getElementById('summary-modal').style.display = 'block';
-        document.body.classList.add('modal-open');
+        showModal('summary-modal');
     });
     
     document.getElementById('settings-btn').addEventListener('click', () => {
-        document.getElementById('settings-modal').style.display = 'block';
-        document.body.classList.add('modal-open');
+        showModal('settings-modal');
         loadSettingsToForm();
     });
     
