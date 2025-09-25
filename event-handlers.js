@@ -165,12 +165,8 @@ function clearAllData() {
         // Устанавливаем текущий шаблон как default
         appSettings.currentTemplateId = 'default';
         
-        // Очищаем старые данные calendarData
-        calendarData = {};
-        
         // Сохраняем изменения
         saveToStorage('appSettings', appSettings);
-        saveToStorage('calendarData', calendarData);
         
         // Перезагружаем календарь
         generateCalendar();
