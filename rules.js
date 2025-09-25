@@ -265,6 +265,40 @@ function calculateTotalSales(calendarData, year, month) {
     return totalSales;
 }
 
+// Расчет суммы бонусов за дни
+function calculateDayBonuses(calendarData, year, month) {
+    const monthDays = new Date(year, month + 1, 0).getDate();
+    let totalBonuses = 0;
+    
+    for (let day = 1; day <= monthDays; day++) {
+        const dateKey = `${year}-${month+1}-${day}`;
+        const dayData = calendarData[dateKey] || {};
+        
+        if (dayData.bonus) {
+            totalBonuses += dayData.bonus;
+        }
+    }
+    
+    return totalBonuses;
+}
+
+// Расчет суммы фиксированных вычетов за дни
+function calculateDayDeductions(calendarData, year, month) {
+    const monthDays = new Date(year, month + 1, 0).getDate();
+    let totalDeductions = 0;
+    
+    for (let day = 1; day <= monthDays; day++) {
+        const dateKey = `${year}-${month+1}-${day}`;
+        const dayData = calendarData[dateKey] || {};
+        
+        if (dayData.fixedDeduction) {
+            totalDeductions += dayData.fixedDeduction;
+        }
+    }
+    
+    return totalDeductions;
+}
+
 // Основная функция расчета месяца
 function calculateMonthlySummary(calendarData, template, year, month) {
     let baseIncome = 0;
@@ -289,9 +323,10 @@ function calculateMonthlySummary(calendarData, template, year, month) {
         adjustments += calculateOvertimeAdjustment(calendarData, template, year, month, baseIncome);
     }
     
-    if (template.ruleBlocks.some(block => block.type === 'bonus')) {
-        adjustments += getBonusAmount(template);
-    }
+    // УЧИТЫВАЕМ БОНУСЫ ИЗ ШАБЛОНА И ИЗ ДНЕЙ
+    let totalBonusAmount = getBonusAmount(template);
+    totalBonusAmount += calculateDayBonuses(calendarData, year, month);
+    adjustments += totalBonusAmount;
     
     const totalIncome = baseIncome + adjustments;
     
@@ -304,9 +339,10 @@ function calculateMonthlySummary(calendarData, template, year, month) {
         deductions += calculateTaxDeduction(template, totalIncome);
     }
     
-    if (template.ruleBlocks.some(block => block.type === 'fixedDeduction')) {
-        deductions += getFixedDeductionAmount(template);
-    }
+    // УЧИТЫВАЕМ ФИКСИРОВАННЫЕ ВЫЧЕТЫ ИЗ ШАБЛОНА И ИЗ ДНЕЙ
+    let totalDeductionAmount = getFixedDeductionAmount(template);
+    totalDeductionAmount += calculateDayDeductions(calendarData, year, month);
+    deductions += totalDeductionAmount;
     
     // ИТОГОВЫЙ РАСЧЕТ
     const finalSalary = totalIncome - deductions;
