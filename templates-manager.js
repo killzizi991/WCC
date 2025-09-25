@@ -194,7 +194,11 @@ function showAddRuleBlockDropdown() {
             option.textContent = blockType.name;
             option.addEventListener('click', () => {
                 addRuleBlock(blockType.type);
-                document.body.removeChild(dropdown); // Закрываем выпадающий список после выбора
+                // Закрываем выпадающий список после выбора
+                if (dropdown.parentNode === document.body) {
+                    document.body.removeChild(dropdown);
+                }
+                document.removeEventListener('click', closeDropdown);
             });
             option.addEventListener('mouseover', () => {
                 option.style.backgroundColor = '#f0f0f0';
@@ -210,14 +214,15 @@ function showAddRuleBlockDropdown() {
 
     const closeDropdown = (e) => {
         if (!dropdown.contains(e.target) && e.target !== document.getElementById('add-rule-block')) {
-            document.body.removeChild(dropdown);
+            if (dropdown.parentNode === document.body) {
+                document.body.removeChild(dropdown);
+            }
             document.removeEventListener('click', closeDropdown);
         }
     };
 
-    setTimeout(() => {
-        document.addEventListener('click', closeDropdown);
-    }, 0);
+    // Используем capture phase чтобы обработать клик до того как он дойдет до других элементов
+    document.addEventListener('click', closeDropdown, true);
 }
 
 // Добавление блока правил
