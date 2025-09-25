@@ -224,7 +224,6 @@ document.addEventListener('DOMContentLoaded', () => {
     generateCalendar();
     setupEventListeners();
     initPeriodSelector();
-    loadSettingsToForm();
     
     if (!localStorage.getItem('firstRun')) {
       localStorage.setItem('firstRun', 'true');
