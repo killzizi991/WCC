@@ -90,12 +90,19 @@ function calculateSummaryDisplay() {
     
     // Обновляем отображение с новыми данными
     document.getElementById('modal-work-days').textContent = summary.workDays;
-    document.getElementById('modal-total-sales').textContent = summary.totalSales.toLocaleString();
     document.getElementById('modal-total-earned').textContent = summary.totalIncome.toLocaleString();
     document.getElementById('modal-salary').textContent = summary.finalSalary.toLocaleString();
-    document.getElementById('modal-balance').textContent = summary.finalSalary.toLocaleString();
     document.getElementById('summary-month-year').textContent = 
         `${new Date(currentYear, currentMonth).toLocaleString('ru', { month: 'long' })} ${currentYear}`;
+    
+    // Показываем/скрываем строку аванса в зависимости от наличия блока
+    const advanceRow = document.getElementById('advance-row');
+    const hasAdvance = template.ruleBlocks.some(block => block.type === 'advance');
+    advanceRow.style.display = hasAdvance ? 'block' : 'none';
+    
+    if (hasAdvance) {
+        document.getElementById('modal-advance').textContent = calculateAdvanceDeduction(template, summary.totalIncome).toLocaleString();
+    }
 }
 
 // Обработчик клика по дню
