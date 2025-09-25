@@ -267,6 +267,25 @@ function generateDaySettingsFields(dayData) {
         newSettingsContainer.appendChild(hourlyGroup);
     }
     
+    // УНИВЕРСАЛЬНЫЕ ПОЛЯ: БОНУС И ФИКСИРОВАННЫЙ ВЫЧЕТ (всегда доступны)
+    const bonusGroup = document.createElement('div');
+    bonusGroup.className = 'setting-group';
+    bonusGroup.innerHTML = `
+        <label>Бонус за день (руб):</label>
+        <input type="number" id="day-bonus" min="0" step="100" 
+               value="${dayData.bonus || ''}">
+    `;
+    newSettingsContainer.appendChild(bonusGroup);
+    
+    const deductionGroup = document.createElement('div');
+    deductionGroup.className = 'setting-group';
+    deductionGroup.innerHTML = `
+        <label>Фиксированный вычет за день (руб):</label>
+        <input type="number" id="day-deduction" min="0" step="100" 
+               value="${dayData.fixedDeduction || ''}">
+    `;
+    newSettingsContainer.appendChild(deductionGroup);
+    
     // Если нет активных блоков, отображаем сообщение
     if (!hasSalesPercent && !hasShiftRate && !hasHourlyRate) {
         const message = document.createElement('div');
@@ -401,6 +420,17 @@ function saveDayData() {
         if (nightHoursInput) {
             dayData.nightHours = parseFloat(nightHoursInput.value) || 0;
         }
+    }
+    
+    // УНИВЕРСАЛЬНЫЕ ПОЛЯ: сохраняем бонус и фиксированный вычет (всегда доступны)
+    const bonusInput = document.getElementById('day-bonus');
+    if (bonusInput) {
+        dayData.bonus = parseFloat(bonusInput.value) || 0;
+    }
+    
+    const deductionInput = document.getElementById('day-deduction');
+    if (deductionInput) {
+        dayData.fixedDeduction = parseFloat(deductionInput.value) || 0;
     }
     
     // Проверяем, нужно ли сохранить функциональную обводку
