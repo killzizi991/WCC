@@ -275,16 +275,13 @@ function updateDetailedReport(summary, template, calendarData) {
         
         const dayShiftsRow = document.getElementById('day-shifts-row');
         const nightShiftsRow = document.getElementById('night-shifts-row');
-        const totalShiftsRow = document.getElementById('total-shifts-row');
         
         dayShiftsRow.style.display = (hasShiftRate && hasShiftsData) ? 'block' : 'none';
         nightShiftsRow.style.display = (hasShiftRate && hasShiftsData && summary.shifts.night > 0) ? 'block' : 'none';
-        totalShiftsRow.style.display = hasShiftRate ? 'block' : 'none';
         
         if (hasShiftRate) {
             document.getElementById('modal-day-shifts').textContent = summary.shifts.day;
             document.getElementById('modal-night-shifts').textContent = summary.shifts.night;
-            document.getElementById('modal-total-shifts').textContent = summary.shifts.total;
         }
         
         // Сверхурочные
@@ -335,7 +332,4 @@ function toggleDetailedData() {
     const isVisible = detailedData.style.display === 'block';
     
     detailedData.style.display = isVisible ? 'none' : 'block';
-    
-    const button = document.getElementById('detailed-data-btn');
-    button.textContent = isVisible ? 'Подробные данные' : 'Скрыть подробности';
 }
