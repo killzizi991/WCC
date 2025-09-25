@@ -1,4 +1,3 @@
-
 // Показать модальное окно шаблонов
 function showTemplatesModal() {
   try {
