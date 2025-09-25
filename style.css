@@ -449,6 +449,29 @@ input:focus, textarea:focus {
     color: #4a6cf7;
 }
 
+/* Стили для подробных данных в отчете */
+#detailed-data {
+    transition: all 0.3s ease;
+}
+
+#detailed-data p {
+    margin: 8px 0;
+    font-size: 0.95rem;
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+#detailed-data p:last-child {
+    border-bottom: none;
+}
+
+#detailed-data span {
+    font-weight: 500;
+    color: #4a6cf7;
+}
+
 /* Адаптивность */
 @media (max-width: 768px) {
     body {
