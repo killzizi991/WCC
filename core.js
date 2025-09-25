@@ -9,7 +9,6 @@ let lastWindowHeight = window.innerHeight;
 let originalFunctionalBorderData = null;
 
 // Хранение данных - новая структура с изоляцией по шаблонам
-let calendarData = loadFromStorage('calendarData') || {};
 let appSettings = loadFromStorage('appSettings') || {
   currentTemplateId: 'default',
   templates: {
@@ -69,15 +68,15 @@ function getCurrentCalendarData() {
 // Миграция существующих данных в новую структуру
 function migrateToTemplateStructure() {
   // Если есть старые данные calendarData в корне, переносим их в текущий шаблон
-  if (calendarData && Object.keys(calendarData).length > 0 && 
-      Object.keys(calendarData).some(key => key.includes('-'))) {
+  const oldCalendarData = loadFromStorage('calendarData');
+  if (oldCalendarData && Object.keys(oldCalendarData).length > 0 && 
+      Object.keys(oldCalendarData).some(key => key.includes('-'))) {
     
     const currentTemplate = getCurrentTemplate();
-    currentTemplate.calendarData = {...calendarData};
+    currentTemplate.calendarData = {...oldCalendarData};
     
     // Очищаем старые данные
-    calendarData = {};
-    saveToStorage('calendarData', calendarData);
+    localStorage.removeItem('calendarData');
     saveToStorage('appSettings', appSettings);
     
     console.log('Миграция данных календаря завершена');
