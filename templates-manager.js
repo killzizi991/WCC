@@ -146,7 +146,6 @@ function switchTemplate(templateId) {
     if (confirm('При переключении шаблона все несохраненные данные текущего шаблона будут потеряны. Продолжить?')) {
       appSettings.currentTemplateId = templateId;
       saveToStorage('appSettings', appSettings);
-      loadSettingsToForm();
       generateCalendar();
       
       const template = getCurrentTemplate();
@@ -196,7 +195,6 @@ function createNewTemplate() {
     
     appSettings.currentTemplateId = newTemplateId;
     saveToStorage('appSettings', appSettings);
-    loadSettingsToForm();
     
     const currentTemplateName = document.getElementById('current-template-name');
     if (currentTemplateName) {
