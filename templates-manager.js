@@ -768,10 +768,16 @@ function generateFunctionalBorderFields(template) {
     if (hasSalesPercent) {
         const salesGroup = document.createElement('div');
         salesGroup.className = 'setting-group';
-        salesGroup.innerHTML = `
-            <label>Значение продаж для обводки (руб):</label>
-            <input type="number" id="functional-border-sales" value="${template.functionalBorderData.sales || 30000}" min="0" step="1000">
-        `;
+        const label = document.createElement('label');
+        label.textContent = 'Значение продаж для обводки (руб):';
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.id = 'functional-border-sales';
+        input.value = template.functionalBorderData.sales || 30000;
+        input.min = 0;
+        input.step = 1000;
+        salesGroup.appendChild(label);
+        salesGroup.appendChild(input);
         container.appendChild(salesGroup);
     }
     
@@ -781,18 +787,36 @@ function generateFunctionalBorderFields(template) {
         
         const shiftGroup = document.createElement('div');
         shiftGroup.className = 'setting-group';
-        shiftGroup.innerHTML = `
-            <label style="display: flex; align-items: center; gap: 10px;">
-                <input type="checkbox" id="functional-border-day-shift" ${template.functionalBorderData.dayShift ? 'checked' : ''}>
-                Дневная смена
-            </label>
-            ${hasNightShifts ? `
-            <label style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
-                <input type="checkbox" id="functional-border-night-shift" ${template.functionalBorderData.nightShift ? 'checked' : ''}>
-                Ночная смена
-            </label>
-            ` : ''}
-        `;
+        
+        const dayLabel = document.createElement('label');
+        dayLabel.style.display = 'flex';
+        dayLabel.style.alignItems = 'center';
+        dayLabel.style.gap = '10px';
+        const dayCheckbox = document.createElement('input');
+        dayCheckbox.type = 'checkbox';
+        dayCheckbox.id = 'functional-border-day-shift';
+        if (template.functionalBorderData.dayShift) dayCheckbox.checked = true;
+        const dayText = document.createTextNode('Дневная смена');
+        dayLabel.appendChild(dayCheckbox);
+        dayLabel.appendChild(dayText);
+        shiftGroup.appendChild(dayLabel);
+        
+        if (hasNightShifts) {
+            const nightLabel = document.createElement('label');
+            nightLabel.style.display = 'flex';
+            nightLabel.style.alignItems = 'center';
+            nightLabel.style.gap = '10px';
+            nightLabel.style.marginTop = '10px';
+            const nightCheckbox = document.createElement('input');
+            nightCheckbox.type = 'checkbox';
+            nightCheckbox.id = 'functional-border-night-shift';
+            if (template.functionalBorderData.nightShift) nightCheckbox.checked = true;
+            const nightText = document.createTextNode('Ночная смена');
+            nightLabel.appendChild(nightCheckbox);
+            nightLabel.appendChild(nightText);
+            shiftGroup.appendChild(nightLabel);
+        }
+        
         container.appendChild(shiftGroup);
     }
     
@@ -802,14 +826,32 @@ function generateFunctionalBorderFields(template) {
         
         const hoursGroup = document.createElement('div');
         hoursGroup.className = 'setting-group';
-        hoursGroup.innerHTML = `
-            <label>Дневные часы для обводки:</label>
-            <input type="number" id="functional-border-day-hours" value="${template.functionalBorderData.dayHours || 0}" min="0" step="0.5">
-            ${hasNightHours ? `
-            <label style="margin-top: 10px;">Ночные часы для обводки:</label>
-            <input type="number" id="functional-border-night-hours" value="${template.functionalBorderData.nightHours || 0}" min="0" step="0.5">
-            ` : ''}
-        `;
+        
+        const dayLabel = document.createElement('label');
+        dayLabel.textContent = 'Дневные часы для обводки:';
+        const dayInput = document.createElement('input');
+        dayInput.type = 'number';
+        dayInput.id = 'functional-border-day-hours';
+        dayInput.value = template.functionalBorderData.dayHours || 0;
+        dayInput.min = 0;
+        dayInput.step = 0.5;
+        hoursGroup.appendChild(dayLabel);
+        hoursGroup.appendChild(dayInput);
+        
+        if (hasNightHours) {
+            const nightLabel = document.createElement('label');
+            nightLabel.textContent = 'Ночные часы для обводки:';
+            nightLabel.style.marginTop = '10px';
+            const nightInput = document.createElement('input');
+            nightInput.type = 'number';
+            nightInput.id = 'functional-border-night-hours';
+            nightInput.value = template.functionalBorderData.nightHours || 0;
+            nightInput.min = 0;
+            nightInput.step = 0.5;
+            hoursGroup.appendChild(nightLabel);
+            hoursGroup.appendChild(nightInput);
+        }
+        
         container.appendChild(hoursGroup);
     }
     
