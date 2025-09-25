@@ -322,19 +322,6 @@ function calculateMonthlySummary(calendarData, template, year, month) {
     };
 }
 
-// Обновленная функция расчета для совместимости
-function calculateSummary(calendarData, currentYear, currentMonth, template) {
-    const summary = calculateMonthlySummary(calendarData, template, currentYear, currentMonth);
-    
-    return {
-        workDays: summary.workDays,
-        totalSales: summary.totalSales,
-        totalEarned: summary.totalIncome,
-        salary: summary.finalSalary,
-        balance: summary.finalSalary // Для совместимости с существующим интерфейсом
-    };
-}
-
 // Обновление значений функциональных обводок
 function updateFunctionalBorders(calendarData, newFunctionalBorderData) {
     let updated = false;
@@ -564,19 +551,4 @@ function validateOvertime(block) {
 // Валидация параметров блока фиксированного вычета
 function validateFixedDeduction(block) {
     return block.amount >= 0;
-}
-
-// Функции для работы с блоками правил
-function addRuleBlock(blockType) {
-    console.log('Добавление блока правил типа:', blockType);
-}
-
-function validateRuleBlocks(ruleBlocks) {
-    console.log('Валидация блоков правил');
-    return true;
-}
-
-function calculateWithRuleBlocks(calendarData, template) {
-    console.log('Расчет с блоками правил');
-    return calculateSummary(calendarData, new Date().getFullYear(), new Date().getMonth(), template);
 }
