@@ -7,6 +7,7 @@ let massColoringMode = null;
 let isKeyboardOpen = false;
 let lastWindowHeight = window.innerHeight;
 let originalFunctionalBorderData = null;
+let modalStack = [];
 
 // Хранение данных - новая структура с изоляцией по шаблонам
 let appSettings = loadFromStorage('appSettings') || {
@@ -197,15 +198,50 @@ if (!checkLocalStorageSupport()) {
     showNotification('Ваш браузер не поддерживает сохранение данных');
 }
 
-// Закрытие модального окна
+// Функция показа модального окна с управлением стеком
+function showModal(modalId) {
+    // Если есть текущее открытое модальное окно, скрываем его и добавляем в стек
+    const currentModal = document.querySelector('.modal[style*="display: block"]');
+    if (currentModal) {
+        currentModal.style.display = 'none';
+        modalStack.push(currentModal.id);
+    }
+    
+    // Показываем новое модальное окно
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'block';
+        document.body.classList.add('modal-open');
+    }
+}
+
+// Закрытие модального окна с управлением стеком
 function closeModal() {
-    document.getElementById('modal').style.display = 'none';
-    document.getElementById('summary-modal').style.display = 'none';
-    document.getElementById('period-modal').style.display = 'none';
-    document.getElementById('settings-modal').style.display = 'none';
-    document.getElementById('templates-modal').style.display = 'none';
-    document.getElementById('export-modal').style.display = 'none';
-    document.getElementById('import-modal').style.display = 'none';
-    document.getElementById('help-modal').style.display = 'none';
+    // Скрываем текущее модальное окно
+    const currentModal = document.querySelector('.modal[style*="display: block"]');
+    if (currentModal) {
+        currentModal.style.display = 'none';
+    }
+    
+    // Если в стеке есть предыдущее модальное окно, показываем его
+    if (modalStack.length > 0) {
+        const previousModalId = modalStack.pop();
+        const previousModal = document.getElementById(previousModalId);
+        if (previousModal) {
+            previousModal.style.display = 'block';
+            return; // Не снимаем класс modal-open, т.к. есть другое открытое окно
+        }
+    }
+    
+    // Если стек пуст, снимаем класс modal-open
+    document.body.classList.remove('modal-open');
+}
+
+// Закрытие всех модальных окон и очистка стека
+function closeAllModals() {
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.style.display = 'none';
+    });
+    modalStack = [];
     document.body.classList.remove('modal-open');
 }
