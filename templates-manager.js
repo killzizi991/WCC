@@ -143,6 +143,9 @@ function createNewTemplate() {
 
 // Показать выпадающий список для добавления блока правил
 function showAddRuleBlockDropdown() {
+    const currentTemplate = getCurrentTemplate();
+    const existingBlockTypes = currentTemplate.ruleBlocks.map(block => block.type);
+    
     const blockTypes = [
         { type: 'salesPercent', name: 'Процент с продаж' },
         { type: 'shiftRate', name: 'Ставка за смену' },
@@ -153,6 +156,14 @@ function showAddRuleBlockDropdown() {
         { type: 'overtime', name: 'Сверхурочные' },
         { type: 'fixedDeduction', name: 'Фиксированный вычет' }
     ];
+
+    // Фильтруем блоки: скрываем уже добавленные, кроме бонусов и вычетов
+    const availableBlockTypes = blockTypes.filter(blockType => {
+        if (blockType.type === 'bonus' || blockType.type === 'fixedDeduction') {
+            return true; // Бонусы и вычеты можно добавлять несколько раз
+        }
+        return !existingBlockTypes.includes(blockType.type);
+    });
 
     const dropdown = document.createElement('div');
     dropdown.style.position = 'absolute';
@@ -168,20 +179,32 @@ function showAddRuleBlockDropdown() {
     dropdown.style.left = (addButtonRect.left + window.scrollX) + 'px';
     dropdown.style.width = addButtonRect.width + 'px';
 
-    blockTypes.forEach(blockType => {
-        const option = document.createElement('div');
-        option.style.padding = '8px';
-        option.style.cursor = 'pointer';
-        option.textContent = blockType.name;
-        option.addEventListener('click', () => addRuleBlock(blockType.type));
-        option.addEventListener('mouseover', () => {
-            option.style.backgroundColor = '#f0f0f0';
+    if (availableBlockTypes.length === 0) {
+        const message = document.createElement('div');
+        message.style.padding = '8px';
+        message.style.textAlign = 'center';
+        message.style.color = '#666';
+        message.textContent = 'Все блоки уже добавлены';
+        dropdown.appendChild(message);
+    } else {
+        availableBlockTypes.forEach(blockType => {
+            const option = document.createElement('div');
+            option.style.padding = '8px';
+            option.style.cursor = 'pointer';
+            option.textContent = blockType.name;
+            option.addEventListener('click', () => {
+                addRuleBlock(blockType.type);
+                document.body.removeChild(dropdown); // Закрываем выпадающий список после выбора
+            });
+            option.addEventListener('mouseover', () => {
+                option.style.backgroundColor = '#f0f0f0';
+            });
+            option.addEventListener('mouseout', () => {
+                option.style.backgroundColor = 'transparent';
+            });
+            dropdown.appendChild(option);
         });
-        option.addEventListener('mouseout', () => {
-            option.style.backgroundColor = 'transparent';
-        });
-        dropdown.appendChild(option);
-    });
+    }
 
     document.body.appendChild(dropdown);
 
@@ -200,6 +223,14 @@ function showAddRuleBlockDropdown() {
 // Добавление блока правил
 function addRuleBlock(blockType) {
     const currentTemplate = getCurrentTemplate();
+    
+    // Проверка на уже существующий блок (кроме бонусов и вычетов)
+    if (blockType !== 'bonus' && blockType !== 'fixedDeduction') {
+        if (currentTemplate.ruleBlocks.some(block => block.type === blockType)) {
+            showNotification('Блок такого типа уже существует в шаблоне');
+            return;
+        }
+    }
     
     if (hasConflict({ type: blockType }, currentTemplate.ruleBlocks)) {
         showNotification('Нельзя добавить конфликтующий блок правил');
