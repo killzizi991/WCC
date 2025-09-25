@@ -135,6 +135,9 @@ function createNewTemplate() {
     renderRuleBlocksList();
     generateFunctionalBorderFields(appSettings.templates[newTemplateId]);
     
+    // ОБНОВЛЯЕМ КАЛЕНДАРЬ ПРИ СОЗДАНИИ НОВОГО ШАБЛОНА
+    generateCalendar();
+    
     showNotification('Создан новый шаблон: ' + newTemplateName.trim());
 }
 
