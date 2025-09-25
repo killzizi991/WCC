@@ -16,7 +16,9 @@ function showTemplatesModal() {
 
 // Настройка обработчиков для модального окна шаблонов
 function setupTemplatesModalListeners() {
-    document.querySelector('#templates-modal .close').addEventListener('click', closeModal);
+    document.querySelector('#templates-modal .close').addEventListener('click', function() {
+        closeModal();
+    });
     
     document.getElementById('templates-modal').addEventListener('click', function(e) {
         if (e.target === this) {
@@ -325,6 +327,8 @@ function setupBlockModal(modal, block, index) {
     closeButtons.forEach(btn => {
         btn.onclick = () => {
             closeModal();
+            // После закрытия окна блока правил показываем окно шаблонов
+            showModal('templates-modal');
         };
     });
     
@@ -332,12 +336,20 @@ function setupBlockModal(modal, block, index) {
     modal.onclick = (e) => {
         if (e.target === modal) {
             closeModal();
+            // После закрытия окна блока правил показываем окно шаблонов
+            showModal('templates-modal');
         }
     };
     
     const saveButton = modal.querySelector('button[id^="save-"]');
     if (saveButton) {
-        saveButton.onclick = () => saveBlockChanges(modal, block, index);
+        saveButton.onclick = () => {
+            if (saveBlockChanges(modal, block, index)) {
+                closeModal();
+                // После сохранения изменений показываем окно шаблонов
+                showModal('templates-modal');
+            }
+        };
     }
     
     // Заполнение полей в зависимости от типа блока
@@ -417,35 +429,34 @@ function saveBlockChanges(modal, block, index) {
     // Обновление данных блока из модального окна
     switch (block.type) {
         case 'salesPercent':
-            if (!saveSalesPercentChanges(modal, block)) return;
+            if (!saveSalesPercentChanges(modal, block)) return false;
             break;
         case 'shiftRate':
-            if (!saveShiftRateChanges(modal, block)) return;
+            if (!saveShiftRateChanges(modal, block)) return false;
             break;
         case 'hourlyRate':
-            if (!saveHourlyRateChanges(modal, block)) return;
+            if (!saveHourlyRateChanges(modal, block)) return false;
             break;
         case 'advance':
-            if (!saveAdvanceChanges(modal, block)) return;
+            if (!saveAdvanceChanges(modal, block)) return false;
             break;
         case 'tax':
-            if (!saveTaxChanges(modal, block)) return;
+            if (!saveTaxChanges(modal, block)) return false;
             break;
         case 'bonus':
-            if (!saveBonusChanges(modal, block)) return;
+            if (!saveBonusChanges(modal, block)) return false;
             break;
         case 'overtime':
-            if (!saveOvertimeChanges(modal, block)) return;
+            if (!saveOvertimeChanges(modal, block)) return false;
             break;
         case 'fixedDeduction':
-            if (!saveFixedDeductionChanges(modal, block)) return;
+            if (!saveFixedDeductionChanges(modal, block)) return false;
             break;
     }
     
     currentTemplate.ruleBlocks[index] = block;
     saveToStorage('appSettings', appSettings);
     
-    closeModal();
     generateFunctionalBorderFields(currentTemplate);
     showNotification('Изменения блока сохранены');
     return true;
