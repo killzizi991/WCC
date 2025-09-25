@@ -245,3 +245,14 @@ function closeAllModals() {
     modalStack = [];
     document.body.classList.remove('modal-open');
 }
+
+// Получение текущего открытого модального окна
+function getCurrentModal() {
+    const modals = document.querySelectorAll('.modal');
+    for (let modal of modals) {
+        if (modal.style.display === 'block') {
+            return modal;
+        }
+    }
+    return null;
+}
