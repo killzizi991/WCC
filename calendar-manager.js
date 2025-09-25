@@ -105,7 +105,7 @@ function handleDayClick(day) {
     } else if (massColoringMode === 'border') {
         toggleFunctionalBorder(day);
     } else {
-        openModal(day);
+        openDayModal(day);
     }
 }
 
@@ -178,8 +178,8 @@ function applyFillColor(day) {
     generateCalendar();
 }
 
-// Открытие модального окна
-function openModal(day) {
+// Открытие модального окна дня
+function openDayModal(day) {
     selectedDay = day;
     const dateKey = `${currentYear}-${currentMonth+1}-${day}`;
     const currentCalendarData = getCurrentCalendarData();
@@ -206,8 +206,7 @@ function openModal(day) {
     // Генерация динамических полей на основе активных блоков правил
     generateDynamicFields(dayData);
     
-    document.getElementById('modal').style.display = 'block';
-    document.body.classList.add('modal-open');
+    showModal('modal');
 }
 
 // Генерация динамических полей настроек дня
