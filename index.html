@@ -35,7 +35,7 @@
         
         <div class="tools-container">
             <button id="palette-btn" class="palette-btn">🎨</button>
-            <button id="summary-btn">Расчеты</button>
+            <button id="summary-btn">Отчёт</button>
             <button id="templates-btn">Шаблоны</button>
         </div>
     </div>
@@ -100,14 +100,55 @@
     <div id="summary-modal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <h3>Расчеты за <span id="summary-month-year">Июль 2025</span></h3>
+            <h3>Отчёт за <span id="summary-month-year">Июль 2025</span></h3>
             <div class="summary-results">
                 <p>Рабочих дней: <span id="modal-work-days">0</span></p>
-                <p>Сумма продаж: <span id="modal-total-sales">0</span> руб</p>
                 <p>Заработано всего: <span id="modal-total-earned">0</span> руб</p>
                 <p>Зарплата: <span id="modal-salary">0</span> руб</p>
-                <p id="balance-row">Остаток: <span id="modal-balance">0</span> руб</p>
+                <div id="advance-row" style="display: none;">
+                    <p>Аванс: <span id="modal-advance">0</span> руб</p>
+                </div>
             </div>
+            <button id="detailed-data-btn">Подробные данные</button>
+            <div id="detailed-data" style="display: none; margin-top: 15px;">
+                <div id="total-sales-row" style="display: none;">
+                    <p>Всего продаж: <span id="modal-total-sales">0</span> руб</p>
+                </div>
+                <div id="day-hours-row" style="display: none;">
+                    <p>Дневных часов: <span id="modal-day-hours">0</span></p>
+                </div>
+                <div id="night-hours-row" style="display: none;">
+                    <p>Ночных часов: <span id="modal-night-hours">0</span></p>
+                </div>
+                <div id="total-hours-row" style="display: none;">
+                    <p>Всего часов: <span id="modal-total-hours">0</span></p>
+                </div>
+                <div id="day-shifts-row" style="display: none;">
+                    <p>Дневных смен: <span id="modal-day-shifts">0</span></p>
+                </div>
+                <div id="night-shifts-row" style="display: none;">
+                    <p>Ночных смен: <span id="modal-night-shifts">0</span></p>
+                </div>
+                <div id="total-shifts-row" style="display: none;">
+                    <p>Всего смен: <span id="modal-total-shifts">0</span></p>
+                </div>
+                <div id="overtime-row" style="display: none;">
+                    <p>Сверхурочные: <span id="modal-overtime">0</span> руб</p>
+                </div>
+                <div id="bonus-row" style="display: none;">
+                    <p>Сумма бонуса: <span id="modal-bonus">0</span> руб</p>
+                </div>
+                <div id="deduction-row" style="display: none;">
+                    <p>Сумма вычета: <span id="modal-deduction">0</span> руб</p>
+                </div>
+                <div id="salary-before-bonuses-row" style="display: none;">
+                    <p>Зарплата до бонусов: <span id="modal-salary-before-bonuses">0</span> руб</p>
+                </div>
+                <div id="salary-before-deductions-row" style="display: none;">
+                    <p>Зарплата до вычетов: <span id="modal-salary-before-deductions">0</span> руб</p>
+                </div>
+            </div>
+            <button id="close-report" style="margin-top: 15px;">Назад</button>
         </div>
     </div>
     
