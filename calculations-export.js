@@ -66,10 +66,9 @@ function showImportModal() {
 // Копирование данных в буфер обмена
 function copyDataToClipboard() {
     const data = {
-        calendarData: calendarData,
         appSettings: appSettings,
         exportDate: new Date().toISOString(),
-        version: '1.2'
+        version: '1.3'
     };
     
     const jsonString = JSON.stringify(data, null, 2);
@@ -98,18 +97,15 @@ function importFromText() {
         const data = JSON.parse(jsonString);
         
         // Обработка миграции данных при импорте
-        if (data.calendarData && data.appSettings) {
-            // Новая структура данных (версия 1.2+)
-            calendarData = data.calendarData;
+        if (data.appSettings) {
+            // Новая структура данных (версия 1.3+)
             appSettings = data.appSettings;
-        } else if (data.calendarData && !data.appSettings) {
+        } else if (data.calendarData) {
             // Старая структура данных (версия 1.1) - выполняем миграцию
             const currentTemplate = getCurrentTemplate();
             currentTemplate.calendarData = {...data.calendarData};
-            calendarData = {};
         }
         
-        saveToStorage('calendarData', calendarData);
         saveToStorage('appSettings', appSettings);
         loadSettingsToForm();
         generateCalendar();
@@ -145,10 +141,9 @@ async function forceUpdate() {
 // Экспорт данных
 function exportData() {
     const data = {
-        calendarData: calendarData,
         appSettings: appSettings,
         exportDate: new Date().toISOString(),
-        version: '1.2'
+        version: '1.3'
     };
     
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -177,18 +172,15 @@ function importData(event) {
             const data = JSON.parse(e.target.result);
             
             // Обработка миграции данных при импорте
-            if (data.calendarData && data.appSettings) {
-                // Новая структура данных (версия 1.2+)
-                calendarData = data.calendarData;
+            if (data.appSettings) {
+                // Новая структура данных (версия 1.3+)
                 appSettings = data.appSettings;
-            } else if (data.calendarData && !data.appSettings) {
+            } else if (data.calendarData) {
                 // Старая структура данных (версия 1.1) - выполняем миграцию
                 const currentTemplate = getCurrentTemplate();
                 currentTemplate.calendarData = {...data.calendarData};
-                calendarData = {};
             }
             
-            saveToStorage('calendarData', calendarData);
             saveToStorage('appSettings', appSettings);
             loadSettingsToForm();
             generateCalendar();
