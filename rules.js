@@ -1,28 +1,69 @@
+
 // Функции для работы с блоками правил и расчетов
 
 // Расчет заработка за день с учетом индивидуального процента
 function calculateEarnings(sales, percent) {
-    return sales * (percent / 100);
+  if (typeof sales !== 'number' || sales < 0) {
+    console.warn('Invalid sales value:', sales);
+    return 0;
+  }
+  
+  if (typeof percent !== 'number' || percent < 0 || percent > 100) {
+    console.warn('Invalid percent value:', percent);
+    return 0;
+  }
+  
+  return sales * (percent / 100);
 }
 
 // Нахождение подходящего диапазона для значения
 function findRangeForValue(value, ranges) {
-    if (!ranges || ranges.length === 0) return null;
-    
-    for (const range of ranges) {
-        const from = range.from || 0;
-        const to = range.to === null ? Infinity : range.to;
-        
-        if (value >= from && value < to) {
-            return range;
-        }
-    }
-    
+  if (!Array.isArray(ranges) || ranges.length === 0) return null;
+  
+  if (typeof value !== 'number' || value < 0) {
+    console.warn('Invalid value for range search:', value);
     return null;
+  }
+  
+  for (const range of ranges) {
+    if (!range || typeof range !== 'object') continue;
+    
+    const from = (typeof range.from === 'number') ? range.from : 0;
+    const to = (range.to === null || range.to === undefined) ? Infinity : range.to;
+    
+    if (typeof to === 'number' && to <= from) continue;
+    
+    if (value >= from && value < to) {
+      return range;
+    }
+  }
+  
+  return null;
 }
 
 // Расчет дохода с продаж
 function calculateSalesPercentIncome(calendarData, template, year, month) {
+  try {
+    if (!calendarData || typeof calendarData !== 'object') {
+      console.warn('Invalid calendar data');
+      return 0;
+    }
+    
+    if (!template || typeof template !== 'object') {
+      console.warn('Invalid template');
+      return 0;
+    }
+    
+    if (typeof year !== 'number' || year < 2000 || year > 2100) {
+      console.warn('Invalid year:', year);
+      return 0;
+    }
+    
+    if (typeof month !== 'number' || month < 0 || month > 11) {
+      console.warn('Invalid month:', month);
+      return 0;
+    }
+    
     let totalIncome = 0;
     const monthDays = new Date(year, month + 1, 0).getDate();
     const salesBlock = template.ruleBlocks.find(block => block.type === 'salesPercent');
@@ -30,25 +71,36 @@ function calculateSalesPercentIncome(calendarData, template, year, month) {
     if (!salesBlock) return 0;
     
     for (let day = 1; day <= monthDays; day++) {
-        const dateKey = `${year}-${month+1}-${day}`;
-        const dayData = calendarData[dateKey] || {};
+      const dateKey = `${year}-${month+1}-${day}`;
+      const dayData = calendarData[dateKey] || {};
+      
+      if (dayData.sales && dayData.sales > 0) {
+        const sales = parseFloat(dayData.sales) || 0;
+        const range = findRangeForValue(sales, salesBlock.ranges);
         
-        if (dayData.sales && dayData.sales > 0) {
-            const sales = dayData.sales;
-            const range = findRangeForValue(sales, salesBlock.ranges);
-            
-            if (range) {
-                const percent = dayData.customSalesPercent || range.percent;
-                totalIncome += calculateEarnings(sales, percent);
-            }
+        if (range) {
+          const percent = (typeof dayData.customSalesPercent === 'number') ? 
+            dayData.customSalesPercent : range.percent;
+          totalIncome += calculateEarnings(sales, percent);
         }
+      }
     }
     
-    return totalIncome;
+    return Math.round(totalIncome * 100) / 100; // Округление до копеек
+  } catch (error) {
+    console.error('Ошибка расчета дохода с продаж:', error);
+    return 0;
+  }
 }
 
 // Расчет дохода за смены
 function calculateShiftRateIncome(calendarData, template, year, month) {
+  try {
+    if (!calendarData || typeof calendarData !== 'object') return 0;
+    if (!template || typeof template !== 'object') return 0;
+    if (typeof year !== 'number' || year < 2000 || year > 2100) return 0;
+    if (typeof month !== 'number' || month < 0 || month > 11) return 0;
+    
     let totalIncome = 0;
     const monthDays = new Date(year, month + 1, 0).getDate();
     const shiftBlock = template.ruleBlocks.find(block => block.type === 'shiftRate');
@@ -60,34 +112,44 @@ function calculateShiftRateIncome(calendarData, template, year, month) {
     
     // Считаем общее количество смен за месяц
     for (let day = 1; day <= monthDays; day++) {
-        const dateKey = `${year}-${month+1}-${day}`;
-        const dayData = calendarData[dateKey] || {};
-        
-        if (dayData.dayShift) dayShiftsCount++;
-        if (dayData.nightShift) nightShiftsCount++;
+      const dateKey = `${year}-${month+1}-${day}`;
+      const dayData = calendarData[dateKey] || {};
+      
+      if (dayData.dayShift) dayShiftsCount++;
+      if (dayData.nightShift) nightShiftsCount++;
     }
     
     // Применяем ставки для дневных смен
-    if (shiftBlock.dayRanges && shiftBlock.dayRanges.length > 0) {
-        const dayRange = findRangeForValue(dayShiftsCount, shiftBlock.dayRanges);
-        if (dayRange) {
-            totalIncome += dayShiftsCount * dayRange.rate;
-        }
+    if (Array.isArray(shiftBlock.dayRanges) && shiftBlock.dayRanges.length > 0) {
+      const dayRange = findRangeForValue(dayShiftsCount, shiftBlock.dayRanges);
+      if (dayRange) {
+        totalIncome += dayShiftsCount * (dayRange.rate || 0);
+      }
     }
     
     // Применяем ставки для ночных смен
-    if (shiftBlock.nightRanges && shiftBlock.nightRanges.length > 0) {
-        const nightRange = findRangeForValue(nightShiftsCount, shiftBlock.nightRanges);
-        if (nightRange) {
-            totalIncome += nightShiftsCount * nightRange.rate;
-        }
+    if (Array.isArray(shiftBlock.nightRanges) && shiftBlock.nightRanges.length > 0) {
+      const nightRange = findRangeForValue(nightShiftsCount, shiftBlock.nightRanges);
+      if (nightRange) {
+        totalIncome += nightShiftsCount * (nightRange.rate || 0);
+      }
     }
     
-    return totalIncome;
+    return Math.round(totalIncome * 100) / 100;
+  } catch (error) {
+    console.error('Ошибка расчета дохода за смены:', error);
+    return 0;
+  }
 }
 
 // Расчет дохода за часы
 function calculateHourlyRateIncome(calendarData, template, year, month) {
+  try {
+    if (!calendarData || typeof calendarData !== 'object') return 0;
+    if (!template || typeof template !== 'object') return 0;
+    if (typeof year !== 'number' || year < 2000 || year > 2100) return 0;
+    if (typeof month !== 'number' || month < 0 || month > 11) return 0;
+    
     let totalIncome = 0;
     const monthDays = new Date(year, month + 1, 0).getDate();
     const hourlyBlock = template.ruleBlocks.find(block => block.type === 'hourlyRate');
@@ -99,34 +161,45 @@ function calculateHourlyRateIncome(calendarData, template, year, month) {
     
     // Суммируем часы за месяц
     for (let day = 1; day <= monthDays; day++) {
-        const dateKey = `${year}-${month+1}-${day}`;
-        const dayData = calendarData[dateKey] || {};
-        
-        if (dayData.dayHours) totalDayHours += dayData.dayHours;
-        if (dayData.nightHours) totalNightHours += dayData.nightHours;
+      const dateKey = `${year}-${month+1}-${day}`;
+      const dayData = calendarData[dateKey] || {};
+      
+      if (dayData.dayHours) totalDayHours += parseFloat(dayData.dayHours) || 0;
+      if (dayData.nightHours) totalNightHours += parseFloat(dayData.nightHours) || 0;
     }
     
     // Применяем ставки для дневных часов
-    if (hourlyBlock.dayRanges && hourlyBlock.dayRanges.length > 0) {
-        const dayRange = findRangeForValue(totalDayHours, hourlyBlock.dayRanges);
-        if (dayRange) {
-            totalIncome += totalDayHours * dayRange.rate;
-        }
+    if (Array.isArray(hourlyBlock.dayRanges) && hourlyBlock.dayRanges.length > 0) {
+      const dayRange = findRangeForValue(totalDayHours, hourlyBlock.dayRanges);
+      if (dayRange) {
+        totalIncome += totalDayHours * (dayRange.rate || 0);
+      }
     }
     
     // Применяем ставки для ночных часов
-    if (hourlyBlock.nightRanges && hourlyBlock.nightRanges.length > 0) {
-        const nightRange = findRangeForValue(totalNightHours, hourlyBlock.nightRanges);
-        if (nightRange) {
-            totalIncome += totalNightHours * nightRange.rate;
-        }
+    if (Array.isArray(hourlyBlock.nightRanges) && hourlyBlock.nightRanges.length > 0) {
+      const nightRange = findRangeForValue(totalNightHours, hourlyBlock.nightRanges);
+      if (nightRange) {
+        totalIncome += totalNightHours * (nightRange.rate || 0);
+      }
     }
     
-    return totalIncome;
+    return Math.round(totalIncome * 100) / 100;
+  } catch (error) {
+    console.error('Ошибка расчета дохода за часы:', error);
+    return 0;
+  }
 }
 
 // Расчет сверхурочных
 function calculateOvertimeAdjustment(calendarData, template, year, month, baseIncome) {
+  try {
+    if (!calendarData || typeof calendarData !== 'object') return 0;
+    if (!template || typeof template !== 'object') return 0;
+    if (typeof year !== 'number' || year < 2000 || year > 2100) return 0;
+    if (typeof month !== 'number' || month < 0 || month > 11) return 0;
+    if (typeof baseIncome !== 'number' || baseIncome < 0) return 0;
+    
     const overtimeBlock = template.ruleBlocks.find(block => block.type === 'overtime');
     
     if (!overtimeBlock) return 0;
@@ -135,88 +208,132 @@ function calculateOvertimeAdjustment(calendarData, template, year, month, baseIn
     let overtimeAmount = 0;
     
     if (overtimeBlock.overtimeType === 'shifts') {
-        let totalShifts = 0;
+      let totalShifts = 0;
+      
+      for (let day = 1; day <= monthDays; day++) {
+        const dateKey = `${year}-${month+1}-${day}`;
+        const dayData = calendarData[dateKey] || {};
         
-        for (let day = 1; day <= monthDays; day++) {
-            const dateKey = `${year}-${month+1}-${day}`;
-            const dayData = calendarData[dateKey] || {};
-            
-            if (dayData.dayShift) totalShifts++;
-            if (dayData.nightShift) totalShifts++;
-        }
-        
-        if (totalShifts > overtimeBlock.limit) {
-            const overtimeShifts = totalShifts - overtimeBlock.limit;
-            // Используем среднюю ставку за смену для расчета сверхурочных
-            const averageShiftRate = baseIncome / totalShifts;
-            overtimeAmount = overtimeShifts * averageShiftRate * (overtimeBlock.multiplier - 1);
-        }
+        if (dayData.dayShift) totalShifts++;
+        if (dayData.nightShift) totalShifts++;
+      }
+      
+      if (totalShifts > overtimeBlock.limit) {
+        const overtimeShifts = totalShifts - overtimeBlock.limit;
+        // Используем среднюю ставку за смену для расчета сверхурочных
+        const averageShiftRate = totalShifts > 0 ? baseIncome / totalShifts : 0;
+        overtimeAmount = overtimeShifts * averageShiftRate * (overtimeBlock.multiplier - 1);
+      }
     } else if (overtimeBlock.overtimeType === 'hours') {
-        let totalHours = 0;
+      let totalHours = 0;
+      
+      for (let day = 1; day <= monthDays; day++) {
+        const dateKey = `${year}-${month+1}-${day}`;
+        const dayData = calendarData[dateKey] || {};
         
-        for (let day = 1; day <= monthDays; day++) {
-            const dateKey = `${year}-${month+1}-${day}`;
-            const dayData = calendarData[dateKey] || {};
-            
-            if (dayData.dayHours) totalHours += dayData.dayHours;
-            if (dayData.nightHours) totalHours += dayData.nightHours;
-        }
-        
-        if (totalHours > overtimeBlock.limit) {
-            const overtimeHours = totalHours - overtimeBlock.limit;
-            // Используем среднюю ставку за час для расчета сверхурочных
-            const averageHourlyRate = baseIncome / totalHours;
-            overtimeAmount = overtimeHours * averageHourlyRate * (overtimeBlock.multiplier - 1);
-        }
+        if (dayData.dayHours) totalHours += parseFloat(dayData.dayHours) || 0;
+        if (dayData.nightHours) totalHours += parseFloat(dayData.nightHours) || 0;
+      }
+      
+      if (totalHours > overtimeBlock.limit) {
+        const overtimeHours = totalHours - overtimeBlock.limit;
+        // Используем среднюю ставку за час для расчета сверхурочных
+        const averageHourlyRate = totalHours > 0 ? baseIncome / totalHours : 0;
+        overtimeAmount = overtimeHours * averageHourlyRate * (overtimeBlock.multiplier - 1);
+      }
     }
     
-    return overtimeAmount;
+    return Math.round(overtimeAmount * 100) / 100;
+  } catch (error) {
+    console.error('Ошибка расчета сверхурочных:', error);
+    return 0;
+  }
 }
 
 // Расчет аванса
 function calculateAdvanceDeduction(template, totalIncome) {
+  try {
+    if (!template || typeof template !== 'object') return 0;
+    if (typeof totalIncome !== 'number' || totalIncome < 0) return 0;
+    
     const advanceBlock = template.ruleBlocks.find(block => block.type === 'advance');
     
     if (!advanceBlock) return 0;
     
     if (advanceBlock.advanceType === 'fixed') {
-        return advanceBlock.value;
+      return Math.max(0, advanceBlock.value || 0);
     } else if (advanceBlock.advanceType === 'percent') {
-        return totalIncome * (advanceBlock.value / 100);
+      const percent = Math.max(0, Math.min(100, advanceBlock.value || 0));
+      return totalIncome * (percent / 100);
     }
     
     return 0;
+  } catch (error) {
+    console.error('Ошибка расчета аванса:', error);
+    return 0;
+  }
 }
 
 // Расчет налога
 function calculateTaxDeduction(template, totalIncome) {
+  try {
+    if (!template || typeof template !== 'object') return 0;
+    if (typeof totalIncome !== 'number' || totalIncome < 0) return 0;
+    
     const taxBlock = template.ruleBlocks.find(block => block.type === 'tax');
     
     if (!taxBlock) return 0;
     
     if (taxBlock.taxSource === 'fixed') {
-        return taxBlock.fixedAmount * (taxBlock.taxPercent / 100);
+      const fixedAmount = Math.max(0, taxBlock.fixedAmount || 0);
+      const taxPercent = Math.max(0, Math.min(100, taxBlock.taxPercent || 0));
+      return fixedAmount * (taxPercent / 100);
     } else if (taxBlock.taxSource === 'total') {
-        return totalIncome * (taxBlock.taxPercent / 100);
+      const taxPercent = Math.max(0, Math.min(100, taxBlock.taxPercent || 0));
+      return totalIncome * (taxPercent / 100);
     }
     
     return 0;
+  } catch (error) {
+    console.error('Ошибка расчета налога:', error);
+    return 0;
+  }
 }
 
 // Получение суммы бонуса
 function getBonusAmount(template) {
+  try {
+    if (!template || typeof template !== 'object') return 0;
+    
     const bonusBlock = template.ruleBlocks.find(block => block.type === 'bonus');
-    return bonusBlock ? bonusBlock.amount : 0;
+    return bonusBlock ? Math.max(0, bonusBlock.amount || 0) : 0;
+  } catch (error) {
+    console.error('Ошибка получения суммы бонуса:', error);
+    return 0;
+  }
 }
 
 // Получение суммы фиксированного вычета
 function getFixedDeductionAmount(template) {
+  try {
+    if (!template || typeof template !== 'object') return 0;
+    
     const deductionBlock = template.ruleBlocks.find(block => block.type === 'fixedDeduction');
-    return deductionBlock ? deductionBlock.amount : 0;
+    return deductionBlock ? Math.max(0, deductionBlock.amount || 0) : 0;
+  } catch (error) {
+    console.error('Ошибка получения суммы вычета:', error);
+    return 0;
+  }
 }
 
 // Подсчет рабочих дней
 function countWorkDays(calendarData, template, year, month) {
+  try {
+    if (!calendarData || typeof calendarData !== 'object') return 0;
+    if (!template || typeof template !== 'object') return 0;
+    if (typeof year !== 'number' || year < 2000 || year > 2100) return 0;
+    if (typeof month !== 'number' || month < 0 || month > 11) return 0;
+    
     const monthDays = new Date(year, month + 1, 0).getDate();
     let workDays = 0;
     
@@ -225,102 +342,150 @@ function countWorkDays(calendarData, template, year, month) {
     const hasHourlyRate = template.ruleBlocks.some(block => block.type === 'hourlyRate');
     
     for (let day = 1; day <= monthDays; day++) {
-        const dateKey = `${year}-${month+1}-${day}`;
-        const dayData = calendarData[dateKey] || {};
-        
-        let isWorkDay = false;
-        
-        if (hasSalesPercent && dayData.sales > 0) {
-            isWorkDay = true;
-        }
-        
-        if (hasShiftRate && (dayData.dayShift || dayData.nightShift)) {
-            isWorkDay = true;
-        }
-        
-        if (hasHourlyRate && ((dayData.dayHours && dayData.dayHours > 0) || (dayData.nightHours && dayData.nightHours > 0))) {
-            isWorkDay = true;
-        }
-        
-        if (isWorkDay) workDays++;
+      const dateKey = `${year}-${month+1}-${day}`;
+      const dayData = calendarData[dateKey] || {};
+      
+      let isWorkDay = false;
+      
+      if (hasSalesPercent && dayData.sales > 0) {
+        isWorkDay = true;
+      }
+      
+      if (hasShiftRate && (dayData.dayShift || dayData.nightShift)) {
+        isWorkDay = true;
+      }
+      
+      if (hasHourlyRate && ((dayData.dayHours && dayData.dayHours > 0) || (dayData.nightHours && dayData.nightHours > 0))) {
+        isWorkDay = true;
+      }
+      
+      if (isWorkDay) workDays++;
     }
     
     return workDays;
+  } catch (error) {
+    console.error('Ошибка подсчета рабочих дней:', error);
+    return 0;
+  }
 }
 
 // Подсчет общей суммы продаж
 function calculateTotalSales(calendarData, year, month) {
+  try {
+    if (!calendarData || typeof calendarData !== 'object') return 0;
+    if (typeof year !== 'number' || year < 2000 || year > 2100) return 0;
+    if (typeof month !== 'number' || month < 0 || month > 11) return 0;
+    
     const monthDays = new Date(year, month + 1, 0).getDate();
     let totalSales = 0;
     
     for (let day = 1; day <= monthDays; day++) {
-        const dateKey = `${year}-${month+1}-${day}`;
-        const dayData = calendarData[dateKey] || {};
-        
-        if (dayData.sales) {
-            totalSales += dayData.sales;
-        }
+      const dateKey = `${year}-${month+1}-${day}`;
+      const dayData = calendarData[dateKey] || {};
+      
+      if (dayData.sales) {
+        totalSales += parseFloat(dayData.sales) || 0;
+      }
     }
     
-    return totalSales;
+    return Math.round(totalSales * 100) / 100;
+  } catch (error) {
+    console.error('Ошибка подсчета суммы продаж:', error);
+    return 0;
+  }
 }
 
 // Расчет суммы бонусов за дни
 function calculateDayBonuses(calendarData, year, month) {
+  try {
+    if (!calendarData || typeof calendarData !== 'object') return 0;
+    if (typeof year !== 'number' || year < 2000 || year > 2100) return 0;
+    if (typeof month !== 'number' || month < 0 || month > 11) return 0;
+    
     const monthDays = new Date(year, month + 1, 0).getDate();
     let totalBonuses = 0;
     
     for (let day = 1; day <= monthDays; day++) {
-        const dateKey = `${year}-${month+1}-${day}`;
-        const dayData = calendarData[dateKey] || {};
-        
-        if (dayData.bonus) {
-            totalBonuses += dayData.bonus;
-        }
+      const dateKey = `${year}-${month+1}-${day}`;
+      const dayData = calendarData[dateKey] || {};
+      
+      if (dayData.bonus) {
+        totalBonuses += parseFloat(dayData.bonus) || 0;
+      }
     }
     
-    return totalBonuses;
+    return Math.round(totalBonuses * 100) / 100;
+  } catch (error) {
+    console.error('Ошибка расчета бонусов за дни:', error);
+    return 0;
+  }
 }
 
 // Расчет суммы фиксированных вычетов за дни
 function calculateDayDeductions(calendarData, year, month) {
+  try {
+    if (!calendarData || typeof calendarData !== 'object') return 0;
+    if (typeof year !== 'number' || year < 2000 || year > 2100) return 0;
+    if (typeof month !== 'number' || month < 0 || month > 11) return 0;
+    
     const monthDays = new Date(year, month + 1, 0).getDate();
     let totalDeductions = 0;
     
     for (let day = 1; day <= monthDays; day++) {
-        const dateKey = `${year}-${month+1}-${day}`;
-        const dayData = calendarData[dateKey] || {};
-        
-        if (dayData.fixedDeduction) {
-            totalDeductions += dayData.fixedDeduction;
-        }
+      const dateKey = `${year}-${month+1}-${day}`;
+      const dayData = calendarData[dateKey] || {};
+      
+      if (dayData.fixedDeduction) {
+        totalDeductions += parseFloat(dayData.fixedDeduction) || 0;
+      }
     }
     
-    return totalDeductions;
+    return Math.round(totalDeductions * 100) / 100;
+  } catch (error) {
+    console.error('Ошибка расчета вычетов за дни:', error);
+    return 0;
+  }
 }
 
 // Основная функция расчета месяца
 function calculateMonthlySummary(calendarData, template, year, month) {
+  try {
+    if (!calendarData || typeof calendarData !== 'object') {
+      return getEmptySummary();
+    }
+    
+    if (!template || typeof template !== 'object') {
+      return getEmptySummary();
+    }
+    
+    if (typeof year !== 'number' || year < 2000 || year > 2100) {
+      return getEmptySummary();
+    }
+    
+    if (typeof month !== 'number' || month < 0 || month > 11) {
+      return getEmptySummary();
+    }
+    
     let baseIncome = 0;
     let adjustments = 0;
     let deductions = 0;
     
     // 1. РАСЧЕТ БАЗОВОГО ДОХОДА
     if (template.ruleBlocks.some(block => block.type === 'salesPercent')) {
-        baseIncome += calculateSalesPercentIncome(calendarData, template, year, month);
+      baseIncome += calculateSalesPercentIncome(calendarData, template, year, month);
     }
     
     if (template.ruleBlocks.some(block => block.type === 'shiftRate')) {
-        baseIncome += calculateShiftRateIncome(calendarData, template, year, month);
+      baseIncome += calculateShiftRateIncome(calendarData, template, year, month);
     }
     
     if (template.ruleBlocks.some(block => block.type === 'hourlyRate')) {
-        baseIncome += calculateHourlyRateIncome(calendarData, template, year, month);
+      baseIncome += calculateHourlyRateIncome(calendarData, template, year, month);
     }
     
     // 2. ПРИМЕНЕНИЕ КОРРЕКТИРОВОК
     if (template.ruleBlocks.some(block => block.type === 'overtime')) {
-        adjustments += calculateOvertimeAdjustment(calendarData, template, year, month, baseIncome);
+      adjustments += calculateOvertimeAdjustment(calendarData, template, year, month, baseIncome);
     }
     
     // УЧИТЫВАЕМ БОНУСЫ ИЗ ШАБЛОНА И ИЗ ДНЕЙ
@@ -332,11 +497,11 @@ function calculateMonthlySummary(calendarData, template, year, month) {
     
     // 3. ПРИМЕНЕНИЕ ВЫЧЕТОВ
     if (template.ruleBlocks.some(block => block.type === 'advance')) {
-        deductions += calculateAdvanceDeduction(template, totalIncome);
+      deductions += calculateAdvanceDeduction(template, totalIncome);
     }
     
     if (template.ruleBlocks.some(block => block.type === 'tax')) {
-        deductions += calculateTaxDeduction(template, totalIncome);
+      deductions += calculateTaxDeduction(template, totalIncome);
     }
     
     // УЧИТЫВАЕМ ФИКСИРОВАННЫЕ ВЫЧЕТЫ ИЗ ШАБЛОНА И ИЗ ДНЕЙ
@@ -345,246 +510,339 @@ function calculateMonthlySummary(calendarData, template, year, month) {
     deductions += totalDeductionAmount;
     
     // ИТОГОВЫЙ РАСЧЕТ
-    const finalSalary = totalIncome - deductions;
+    const finalSalary = Math.max(0, totalIncome - deductions);
     
     return {
-        baseIncome,
-        adjustments,
-        deductions,
-        totalIncome,
-        finalSalary,
-        workDays: countWorkDays(calendarData, template, year, month),
-        totalSales: calculateTotalSales(calendarData, year, month)
+      baseIncome: Math.round(baseIncome * 100) / 100,
+      adjustments: Math.round(adjustments * 100) / 100,
+      deductions: Math.round(deductions * 100) / 100,
+      totalIncome: Math.round(totalIncome * 100) / 100,
+      finalSalary: Math.round(finalSalary * 100) / 100,
+      workDays: countWorkDays(calendarData, template, year, month),
+      totalSales: calculateTotalSales(calendarData, year, month)
     };
+  } catch (error) {
+    console.error('Критическая ошибка расчета месяца:', error);
+    return getEmptySummary();
+  }
+}
+
+// Пустой результат расчета
+function getEmptySummary() {
+  return {
+    baseIncome: 0,
+    adjustments: 0,
+    deductions: 0,
+    totalIncome: 0,
+    finalSalary: 0,
+    workDays: 0,
+    totalSales: 0
+  };
 }
 
 // Обновление значений функциональных обводок
 function updateFunctionalBorders(calendarData, newFunctionalBorderData) {
+  try {
+    if (!calendarData || typeof calendarData !== 'object') return false;
+    if (!newFunctionalBorderData || typeof newFunctionalBorderData !== 'object') return false;
+    
     let updated = false;
     
     for (const dateKey in calendarData) {
-        if (calendarData[dateKey].functionalBorder) {
-            const dayData = calendarData[dateKey];
-            
-            // Обновляем данные дня в соответствии с активными блоками
-            if (newFunctionalBorderData.sales !== undefined) {
-                dayData.sales = newFunctionalBorderData.sales;
-            }
-            if (newFunctionalBorderData.dayShift !== undefined) {
-                dayData.dayShift = newFunctionalBorderData.dayShift;
-            }
-            if (newFunctionalBorderData.nightShift !== undefined) {
-                dayData.nightShift = newFunctionalBorderData.nightShift;
-            }
-            if (newFunctionalBorderData.dayHours !== undefined) {
-                dayData.dayHours = newFunctionalBorderData.dayHours;
-            }
-            if (newFunctionalBorderData.nightHours !== undefined) {
-                dayData.nightHours = newFunctionalBorderData.nightHours;
-            }
-            
-            // Обновляем данные функциональной обводки
-            dayData.functionalBorderData = {...newFunctionalBorderData};
-            updated = true;
+      if (calendarData[dateKey].functionalBorder) {
+        const dayData = calendarData[dateKey];
+        
+        // Обновляем данные дня в соответствии с активными блоками
+        if (newFunctionalBorderData.sales !== undefined) {
+          dayData.sales = newFunctionalBorderData.sales;
         }
+        if (newFunctionalBorderData.dayShift !== undefined) {
+          dayData.dayShift = newFunctionalBorderData.dayShift;
+        }
+        if (newFunctionalBorderData.nightShift !== undefined) {
+          dayData.nightShift = newFunctionalBorderData.nightShift;
+        }
+        if (newFunctionalBorderData.dayHours !== undefined) {
+          dayData.dayHours = newFunctionalBorderData.dayHours;
+        }
+        if (newFunctionalBorderData.nightHours !== undefined) {
+          dayData.nightHours = newFunctionalBorderData.nightHours;
+        }
+        
+        // Обновляем данные функциональной обводки
+        dayData.functionalBorderData = {...newFunctionalBorderData};
+        updated = true;
+      }
     }
     
     return updated;
+  } catch (error) {
+    console.error('Ошибка обновления функциональных обводок:', error);
+    return false;
+  }
 }
 
 // Создание блока правил по типу
 function createRuleBlock(blockType) {
+  try {
     const defaultBlock = {
-        id: 'block_' + Date.now(),
-        type: blockType,
-        name: getDefaultBlockName(blockType)
+      id: 'block_' + Date.now(),
+      type: blockType,
+      name: getDefaultBlockName(blockType)
     };
 
     switch (blockType) {
-        case 'salesPercent':
-            return {
-                ...defaultBlock,
-                ranges: [{ from: 0, to: null, percent: 7 }]
-            };
-        case 'shiftRate':
-            return {
-                ...defaultBlock,
-                dayRanges: [{ from: 0, to: null, rate: 1000 }],
-                nightRanges: []
-            };
-        case 'hourlyRate':
-            return {
-                ...defaultBlock,
-                dayRanges: [{ from: 0, to: null, rate: 150 }],
-                nightRanges: []
-            };
-        case 'advance':
-            return {
-                ...defaultBlock,
-                advanceType: 'fixed',
-                value: 10875
-            };
-        case 'tax':
-            return {
-                ...defaultBlock,
-                taxSource: 'total',
-                taxPercent: 13,
-                fixedAmount: 25000
-            };
-        case 'bonus':
-            return {
-                ...defaultBlock,
-                amount: 0
-            };
-        case 'overtime':
-            return {
-                ...defaultBlock,
-                overtimeType: 'shifts',
-                limit: 20,
-                multiplier: 1.5
-            };
-        case 'fixedDeduction':
-            return {
-                ...defaultBlock,
-                amount: 0
-            };
-        default:
-            return defaultBlock;
+      case 'salesPercent':
+        return {
+          ...defaultBlock,
+          ranges: [{ from: 0, to: null, percent: 7 }]
+        };
+      case 'shiftRate':
+        return {
+          ...defaultBlock,
+          dayRanges: [{ from: 0, to: null, rate: 1000 }],
+          nightRanges: []
+        };
+      case 'hourlyRate':
+        return {
+          ...defaultBlock,
+          dayRanges: [{ from: 0, to: null, rate: 150 }],
+          nightRanges: []
+        };
+      case 'advance':
+        return {
+          ...defaultBlock,
+          advanceType: 'fixed',
+          value: 10875
+        };
+      case 'tax':
+        return {
+          ...defaultBlock,
+          taxSource: 'total',
+          taxPercent: 13,
+          fixedAmount: 25000
+        };
+      case 'bonus':
+        return {
+          ...defaultBlock,
+          amount: 0
+        };
+      case 'overtime':
+        return {
+          ...defaultBlock,
+          overtimeType: 'shifts',
+          limit: 20,
+          multiplier: 1.5
+        };
+      case 'fixedDeduction':
+        return {
+          ...defaultBlock,
+          amount: 0
+        };
+      default:
+        return defaultBlock;
     }
+  } catch (error) {
+    console.error('Ошибка создания блока правил:', error);
+    return {
+      id: 'block_error_' + Date.now(),
+      type: blockType,
+      name: 'Ошибочный блок'
+    };
+  }
 }
 
 // Проверка конфликтов между блоками
 function hasConflict(newBlock, existingBlocks) {
+  try {
+    if (!newBlock || !Array.isArray(existingBlocks)) return false;
+    
     const conflictGroups = [
-        ['shiftRate', 'hourlyRate']
+      ['shiftRate', 'hourlyRate']
     ];
 
     for (const group of conflictGroups) {
-        if (group.includes(newBlock.type)) {
-            for (const existingBlock of existingBlocks) {
-                if (group.includes(existingBlock.type)) {
-                    return true;
-                }
-            }
+      if (group.includes(newBlock.type)) {
+        for (const existingBlock of existingBlocks) {
+          if (group.includes(existingBlock.type)) {
+            return true;
+          }
         }
+      }
     }
     return false;
+  } catch (error) {
+    console.error('Ошибка проверки конфликтов блоков:', error);
+    return true; // В случае ошибки считаем, что конфликт есть
+  }
 }
 
 // Валидация диапазонов
 function validateRanges(ranges) {
+  try {
     // Проверка на пустые диапазоны
-    if (!ranges || ranges.length === 0) {
-        return false;
+    if (!Array.isArray(ranges) || ranges.length === 0) {
+      return false;
     }
 
     // Проверка каждого диапазона на корректность
     for (let i = 0; i < ranges.length; i++) {
-        const range = ranges[i];
-        
-        // Проверка корректности значений
-        if (range.from === null || range.from === undefined || range.from < 0) {
-            return false;
+      const range = ranges[i];
+      
+      if (!range || typeof range !== 'object') {
+        return false;
+      }
+      
+      // Проверка корректности значений
+      if (range.from === null || range.from === undefined || range.from < 0) {
+        return false;
+      }
+      
+      if (range.to !== null && range.to !== undefined) {
+        if (range.to < 0 || range.to <= range.from) {
+          return false;
         }
-        
-        if (range.to !== null && range.to !== undefined) {
-            if (range.to < 0 || range.to <= range.from) {
-                return false;
-            }
-        }
-        
-        // Проверка значения процента/ставки
-        if (range.percent !== undefined && (range.percent < 0 || range.percent > 100)) {
-            return false;
-        }
-        
-        if (range.rate !== undefined && range.rate < 0) {
-            return false;
-        }
+      }
+      
+      // Проверка значения процента/ставки
+      if (range.percent !== undefined && (range.percent < 0 || range.percent > 100)) {
+        return false;
+      }
+      
+      if (range.rate !== undefined && range.rate < 0) {
+        return false;
+      }
 
-        // Проверка пересечения с другими диапазонами
-        for (let j = i + 1; j < ranges.length; j++) {
-            const otherRange = ranges[j];
-            
-            // Если один из диапазонов бесконечный, они не должны пересекаться по началу
-            if (range.to === null || otherRange.to === null) {
-                if (range.from === otherRange.from) {
-                    return false;
-                }
-                continue;
-            }
-            
-            // Проверка пересечения конечных диапазонов
-            if ((range.from >= otherRange.from && range.from < otherRange.to) ||
-                (range.to > otherRange.from && range.to <= otherRange.to) ||
-                (otherRange.from >= range.from && otherRange.from < range.to) ||
-                (otherRange.to > range.from && otherRange.to <= range.to)) {
-                return false;
-            }
+      // Проверка пересечения с другими диапазонами
+      for (let j = i + 1; j < ranges.length; j++) {
+        const otherRange = ranges[j];
+        
+        // Если один из диапазонов бесконечный, они не должны пересекаться по началу
+        if (range.to === null || otherRange.to === null) {
+          if (range.from === otherRange.from) {
+            return false;
+          }
+          continue;
         }
+        
+        // Проверка пересечения конечных диапазонов
+        if ((range.from >= otherRange.from && range.from < otherRange.to) ||
+            (range.to > otherRange.from && range.to <= otherRange.to) ||
+            (otherRange.from >= range.from && otherRange.from < range.to) ||
+            (otherRange.to > range.from && otherRange.to <= range.to)) {
+          return false;
+        }
+      }
     }
     
     // Проверка покрытия всех значений (от 0 до бесконечности)
     let coveredFrom = 0;
-    for (const range of ranges.sort((a, b) => a.from - b.from)) {
-        if (range.from > coveredFrom) {
-            return false; // Есть непокрытый промежуток
-        }
-        coveredFrom = range.to === null ? Infinity : range.to;
+    const sortedRanges = [...ranges].sort((a, b) => a.from - b.from);
+    
+    for (const range of sortedRanges) {
+      if (range.from > coveredFrom) {
+        return false; // Есть непокрытый промежуток
+      }
+      coveredFrom = range.to === null ? Infinity : range.to;
     }
     
     return true;
+  } catch (error) {
+    console.error('Ошибка валидации диапазонов:', error);
+    return false;
+  }
 }
 
 // Получение названия блока по умолчанию
 function getDefaultBlockName(blockType) {
+  try {
     const names = {
-        'salesPercent': 'Процент с продаж',
-        'shiftRate': 'Ставка за смену',
-        'hourlyRate': 'Ставка за час',
-        'advance': 'Аванс',
-        'tax': 'Налог',
-        'bonus': 'Бонус',
-        'overtime': 'Сверхурочные',
-        'fixedDeduction': 'Фиксированный вычет'
+      'salesPercent': 'Процент с продаж',
+      'shiftRate': 'Ставка за смену',
+      'hourlyRate': 'Ставка за час',
+      'advance': 'Аванс',
+      'tax': 'Налог',
+      'bonus': 'Бонус',
+      'overtime': 'Сверхурочные',
+      'fixedDeduction': 'Фиксированный вычет'
     };
     return names[blockType] || 'Неизвестный блок';
+  } catch (error) {
+    console.error('Ошибка получения названия блока:', error);
+    return 'Ошибочный блок';
+  }
 }
 
 // Валидация параметров блока аванса
 function validateAdvance(block) {
+  try {
+    if (!block || typeof block !== 'object') return false;
+    
     if (block.advanceType === 'fixed') {
-        return block.value >= 0;
+      return typeof block.value === 'number' && block.value >= 0;
     } else if (block.advanceType === 'percent') {
-        return block.value >= 0 && block.value <= 100;
+      return typeof block.value === 'number' && block.value >= 0 && block.value <= 100;
     }
     return false;
+  } catch (error) {
+    console.error('Ошибка валидации аванса:', error);
+    return false;
+  }
 }
 
 // Валидация параметров блока налога
 function validateTax(block) {
-    if (block.taxPercent < 0 || block.taxPercent > 100) {
-        return false;
+  try {
+    if (!block || typeof block !== 'object') return false;
+    
+    if (typeof block.taxPercent !== 'number' || block.taxPercent < 0 || block.taxPercent > 100) {
+      return false;
     }
     
-    if (block.taxSource === 'fixed' && block.fixedAmount < 0) {
-        return false;
+    if (block.taxSource === 'fixed' && (typeof block.fixedAmount !== 'number' || block.fixedAmount < 0)) {
+      return false;
     }
     
     return true;
+  } catch (error) {
+    console.error('Ошибка валидации налога:', error);
+    return false;
+  }
 }
 
 // Валидация параметров блока бонуса
 function validateBonus(block) {
-    return block.amount >= 0;
+  try {
+    if (!block || typeof block !== 'object') return false;
+    return typeof block.amount === 'number' && block.amount >= 0;
+  } catch (error) {
+    console.error('Ошибка валидации бонуса:', error);
+    return false;
+  }
 }
 
 // Валидация параметров блока сверхурочных
 function validateOvertime(block) {
-    return block.limit >= 0 && block.multiplier >= 1;
+  try {
+    if (!block || typeof block !== 'object') return false;
+    
+    if (typeof block.limit !== 'number' || block.limit < 0) return false;
+    if (typeof block.multiplier !== 'number' || block.multiplier < 1) return false;
+    
+    return true;
+  } catch (error) {
+    console.error('Ошибка валидации сверхурочных:', error);
+    return false;
+  }
 }
 
 // Валидация параметров блока фиксированного вычета
 function validateFixedDeduction(block) {
-    return block.amount >= 0;
+  try {
+    if (!block || typeof block !== 'object') return false;
+    return typeof block.amount === 'number' && block.amount >= 0;
+  } catch (error) {
+    console.error('Ошибка валидации вычета:', error);
+    return false;
+  }
 }
