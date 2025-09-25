@@ -44,23 +44,20 @@ function showHelpModal() {
         helpContent.appendChild(questionDiv);
     });
     
-    document.getElementById('help-modal').style.display = 'block';
-    document.body.classList.add('modal-open');
+    showModal('help-modal');
 }
 
 // Показать модальное окно экспорта
 function showExportModal() {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     document.getElementById('ios-export-text').style.display = isIOS ? 'block' : 'none';
-    document.getElementById('export-modal').style.display = 'block';
-    document.body.classList.add('modal-open');
+    showModal('export-modal');
 }
 
 // Показать модальное окно импорта
 function showImportModal() {
     document.getElementById('import-text-input').value = '';
-    document.getElementById('import-modal').style.display = 'block';
-    document.body.classList.add('modal-open');
+    showModal('import-modal');
 }
 
 // Копирование данных в буфер обмена
