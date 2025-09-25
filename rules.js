@@ -446,6 +446,66 @@ function calculateDayDeductions(calendarData, year, month) {
   }
 }
 
+// Подсчет общего количества часов
+function calculateTotalHours(calendarData, year, month) {
+  try {
+    if (!calendarData || typeof calendarData !== 'object') return { day: 0, night: 0, total: 0 };
+    if (typeof year !== 'number' || year < 2000 || year > 2100) return { day: 0, night: 0, total: 0 };
+    if (typeof month !== 'number' || month < 0 || month > 11) return { day: 0, night: 0, total: 0 };
+    
+    const monthDays = new Date(year, month + 1, 0).getDate();
+    let totalDayHours = 0;
+    let totalNightHours = 0;
+    
+    for (let day = 1; day <= monthDays; day++) {
+      const dateKey = `${year}-${month+1}-${day}`;
+      const dayData = calendarData[dateKey] || {};
+      
+      if (dayData.dayHours) totalDayHours += parseFloat(dayData.dayHours) || 0;
+      if (dayData.nightHours) totalNightHours += parseFloat(dayData.nightHours) || 0;
+    }
+    
+    return {
+      day: Math.round(totalDayHours * 10) / 10,
+      night: Math.round(totalNightHours * 10) / 10,
+      total: Math.round((totalDayHours + totalNightHours) * 10) / 10
+    };
+  } catch (error) {
+    console.error('Ошибка подсчета часов:', error);
+    return { day: 0, night: 0, total: 0 };
+  }
+}
+
+// Подсчет общего количества смен
+function calculateTotalShifts(calendarData, year, month) {
+  try {
+    if (!calendarData || typeof calendarData !== 'object') return { day: 0, night: 0, total: 0 };
+    if (typeof year !== 'number' || year < 2000 || year > 2100) return { day: 0, night: 0, total: 0 };
+    if (typeof month !== 'number' || month < 0 || month > 11) return { day: 0, night: 0, total: 0 };
+    
+    const monthDays = new Date(year, month + 1, 0).getDate();
+    let dayShifts = 0;
+    let nightShifts = 0;
+    
+    for (let day = 1; day <= monthDays; day++) {
+      const dateKey = `${year}-${month+1}-${day}`;
+      const dayData = calendarData[dateKey] || {};
+      
+      if (dayData.dayShift) dayShifts++;
+      if (dayData.nightShift) nightShifts++;
+    }
+    
+    return {
+      day: dayShifts,
+      night: nightShifts,
+      total: dayShifts + nightShifts
+    };
+  } catch (error) {
+    console.error('Ошибка подсчета смен:', error);
+    return { day: 0, night: 0, total: 0 };
+  }
+}
+
 // Основная функция расчета месяца
 function calculateMonthlySummary(calendarData, template, year, month) {
   try {
@@ -483,33 +543,51 @@ function calculateMonthlySummary(calendarData, template, year, month) {
     }
     
     // 2. ПРИМЕНЕНИЕ КОРРЕКТИРОВОК
+    let overtimeAmount = 0;
     if (template.ruleBlocks.some(block => block.type === 'overtime')) {
-      adjustments += calculateOvertimeAdjustment(calendarData, template, year, month, baseIncome);
+      overtimeAmount = calculateOvertimeAdjustment(calendarData, template, year, month, baseIncome);
+      adjustments += overtimeAmount;
     }
     
     // УЧИТЫВАЕМ БОНУСЫ ИЗ ШАБЛОНА И ИЗ ДНЕЙ
-    let totalBonusAmount = getBonusAmount(template);
-    totalBonusAmount += calculateDayBonuses(calendarData, year, month);
+    let templateBonus = getBonusAmount(template);
+    let dayBonuses = calculateDayBonuses(calendarData, year, month);
+    let totalBonusAmount = templateBonus + dayBonuses;
     adjustments += totalBonusAmount;
     
     const totalIncome = baseIncome + adjustments;
     
     // 3. ПРИМЕНЕНИЕ ВЫЧЕТОВ
+    let advanceAmount = 0;
     if (template.ruleBlocks.some(block => block.type === 'advance')) {
-      deductions += calculateAdvanceDeduction(template, totalIncome);
+      advanceAmount = calculateAdvanceDeduction(template, totalIncome);
+      deductions += advanceAmount;
     }
     
+    let taxAmount = 0;
     if (template.ruleBlocks.some(block => block.type === 'tax')) {
-      deductions += calculateTaxDeduction(template, totalIncome);
+      taxAmount = calculateTaxDeduction(template, totalIncome);
+      deductions += taxAmount;
     }
     
     // УЧИТЫВАЕМ ФИКСИРОВАННЫЕ ВЫЧЕТЫ ИЗ ШАБЛОНА И ИЗ ДНЕЙ
-    let totalDeductionAmount = getFixedDeductionAmount(template);
-    totalDeductionAmount += calculateDayDeductions(calendarData, year, month);
+    let templateDeduction = getFixedDeductionAmount(template);
+    let dayDeductions = calculateDayDeductions(calendarData, year, month);
+    let totalDeductionAmount = templateDeduction + dayDeductions;
     deductions += totalDeductionAmount;
     
     // ИТОГОВЫЙ РАСЧЕТ
     const finalSalary = Math.max(0, totalIncome - deductions);
+    
+    // ДОПОЛНИТЕЛЬНЫЕ ПОКАЗАТЕЛИ
+    const workDays = countWorkDays(calendarData, template, year, month);
+    const totalSales = calculateTotalSales(calendarData, year, month);
+    const hours = calculateTotalHours(calendarData, year, month);
+    const shifts = calculateTotalShifts(calendarData, year, month);
+    
+    // Расчет зарплаты до бонусов и до вычетов
+    const salaryBeforeBonuses = Math.max(0, (baseIncome + overtimeAmount) - advanceAmount);
+    const salaryBeforeDeductions = Math.max(0, totalIncome - totalDeductionAmount - advanceAmount);
     
     return {
       baseIncome: Math.round(baseIncome * 100) / 100,
@@ -517,8 +595,17 @@ function calculateMonthlySummary(calendarData, template, year, month) {
       deductions: Math.round(deductions * 100) / 100,
       totalIncome: Math.round(totalIncome * 100) / 100,
       finalSalary: Math.round(finalSalary * 100) / 100,
-      workDays: countWorkDays(calendarData, template, year, month),
-      totalSales: calculateTotalSales(calendarData, year, month)
+      workDays: workDays,
+      totalSales: totalSales,
+      hours: hours,
+      shifts: shifts,
+      overtimeAmount: overtimeAmount,
+      totalBonusAmount: totalBonusAmount,
+      totalDeductionAmount: totalDeductionAmount,
+      advanceAmount: advanceAmount,
+      taxAmount: taxAmount,
+      salaryBeforeBonuses: Math.round(salaryBeforeBonuses * 100) / 100,
+      salaryBeforeDeductions: Math.round(salaryBeforeDeductions * 100) / 100
     };
   } catch (error) {
     console.error('Критическая ошибка расчета месяца:', error);
@@ -535,7 +622,16 @@ function getEmptySummary() {
     totalIncome: 0,
     finalSalary: 0,
     workDays: 0,
-    totalSales: 0
+    totalSales: 0,
+    hours: { day: 0, night: 0, total: 0 },
+    shifts: { day: 0, night: 0, total: 0 },
+    overtimeAmount: 0,
+    totalBonusAmount: 0,
+    totalDeductionAmount: 0,
+    advanceAmount: 0,
+    taxAmount: 0,
+    salaryBeforeBonuses: 0,
+    salaryBeforeDeductions: 0
   };
 }
 
