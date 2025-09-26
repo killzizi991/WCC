@@ -1,3 +1,4 @@
+// FILE: style.css
 /* Сброс стилей */
 * {
     margin: 0;
@@ -752,6 +753,65 @@ input:focus, textarea:focus {
     .help-item {
         border-bottom-color: #4a4d55 !important;
     }
+
+    /* Стили для выпадающего списка шаблонов в темной теме */
+    #template-dropdown {
+        background: #2d3035;
+        border-color: #4a4d55;
+    }
+    
+    #template-dropdown div {
+        color: #e9ecef;
+        border-bottom-color: #4a4d55;
+    }
+    
+    #template-dropdown div:hover {
+        background-color: #3b3e45;
+    }
+
+    /* Стили для блоков правил в темной теме */
+    #rule-blocks-list div {
+        background-color: #3b3e45;
+        color: #e9ecef;
+        border-color: #4a4d55;
+    }
+
+    /* Стили для выпадающего списка добавления блоков правил */
+    #add-rule-block-dropdown {
+        background: #2d3035;
+        border-color: #4a4d55;
+        color: #e9ecef;
+    }
+    
+    #add-rule-block-dropdown div {
+        color: #e9ecef;
+        border-bottom-color: #4a4d55;
+    }
+    
+    #add-rule-block-dropdown div:hover {
+        background-color: #3b3e45;
+    }
+
+    /* Стили для настроек функциональной обводки в темной теме */
+    #functional-border-container {
+        background: #3b3e45;
+        color: #e9ecef;
+        border-color: #4a4d55;
+    }
+    
+    #functional-border-container h4 {
+        color: #6c9bff;
+    }
+    
+    #functional-border-container .setting-group label {
+        color: #e9ecef;
+    }
+    
+    #functional-border-container input {
+        background: #2d3035;
+        border-color: #5a6c7d;
+        color: #e9ecef;
+    }
 }
 
 /* Улучшенная поддержка мобильных устройств */
@@ -846,23 +906,6 @@ textarea:focus-visible {
     border: 1px solid #e2e8f0;
 }
 
-@media (prefers-color-scheme: dark) {
-    .help-question {
-        background-color: #3b3e45 !important;
-        color: #e9ecef !important;
-    }
-    
-    .help-answer {
-        background-color: #2d3035 !important;
-        color: #e9ecef !important;
-        border-color: #4a4d55 !important;
-    }
-
-    .help-item {
-        border-bottom-color: #4a4d55 !important;
-    }
-}
-
 /* Стили для выпадающего списка шаблонов */
 #template-dropdown {
     background: white;
@@ -888,18 +931,102 @@ textarea:focus-visible {
     border-bottom: none;
 }
 
-@media (prefers-color-scheme: dark) {
-    #template-dropdown {
-        background: #2d3035;
-        border-color: #4a4d55;
-    }
-    
-    #template-dropdown div {
-        color: #e9ecef;
-        border-bottom-color: #4a4d55;
-    }
-    
-    #template-dropdown div:hover {
-        background-color: #3b3e45;
-    }
+/* Стили для блоков правил */
+#rule-blocks-list div {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#rule-blocks-list div:hover {
+    background-color: #edf2f7;
+}
+
+/* Стили для выпадающего списка добавления блоков правил */
+#add-rule-block-dropdown {
+    position: absolute;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 5px;
+    padding: 10px;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+#add-rule-block-dropdown div {
+    padding: 8px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+#add-rule-block-dropdown div:hover {
+    background-color: #f8fafc;
+}
+
+#add-rule-block-dropdown div:last-child {
+    border-bottom: none;
+}
+
+/* Универсальные стили для выпадающих списков */
+.dropdown {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 5px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.dropdown-item {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f1f1;
+    transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background-color: #f8fafc;
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+/* Универсальные стили для карточек */
+.card {
+    background: #ffffff;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid #e1e5e9;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.card-dark {
+    background: #2d3035;
+    border-color: #3b3e45;
+    color: #e9ecef;
+}
+
+/* Универсальные стили для групп настроек */
+.settings-panel {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 15px;
+    margin: 15px 0;
+    border: 1px solid #e2e8f0;
+}
+
+.settings-panel-dark {
+    background: #3b3e45;
+    border-color: #4a4d55;
+    color: #e9ecef;
 }
