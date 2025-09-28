@@ -16,6 +16,48 @@ function calculateEarnings(sales, percent) {
   return sales * (percent / 100);
 }
 
+// Расчет заработка за день по прогрессивной (ступенчатой) модели
+function calculateProgressiveEarnings(sales, ranges) {
+  if (typeof sales !== 'number' || sales < 0) {
+    console.warn('Invalid sales value for progressive calculation:', sales);
+    return 0;
+  }
+  
+  if (!Array.isArray(ranges) || ranges.length === 0) {
+    console.warn('Invalid ranges for progressive calculation');
+    return 0;
+  }
+
+  // Сортируем диапазоны по полю from
+  const sortedRanges = [...ranges].sort((a, b) => a.from - b.from);
+
+  let totalEarnings = 0;
+  let remainingSales = sales;
+
+  for (const range of sortedRanges) {
+    if (remainingSales <= 0) break;
+
+    // Определяем верхнюю границу диапазона
+    const rangeEnd = range.to === null ? Infinity : range.to;
+    
+    // Определяем, какая часть продаж попадает в текущий диапазон
+    let amountInRange;
+    if (remainingSales <= rangeEnd - range.from) {
+      amountInRange = remainingSales;
+    } else {
+      amountInRange = rangeEnd - range.from;
+    }
+
+    // Если amountInRange положительное, то добавляем earnings для этой части
+    if (amountInRange > 0) {
+      totalEarnings += amountInRange * (range.percent / 100);
+      remainingSales -= amountInRange;
+    }
+  }
+
+  return totalEarnings;
+}
+
 // Нахождение подходящего диапазона для значения
 function findRangeForValue(value, ranges) {
   if (!Array.isArray(ranges) || ranges.length === 0) return null;
@@ -76,12 +118,13 @@ function calculateSalesPercentIncome(calendarData, template, year, month) {
       
       if (dayData.sales && dayData.sales > 0) {
         const sales = parseFloat(dayData.sales) || 0;
-        const range = findRangeForValue(sales, salesBlock.ranges);
         
-        if (range) {
-          const percent = (typeof dayData.customSalesPercent === 'number') ? 
-            dayData.customSalesPercent : range.percent;
-          totalIncome += calculateEarnings(sales, percent);
+        if (typeof dayData.customSalesPercent === 'number') {
+          // Используем индивидуальный процент (простая модель)
+          totalIncome += calculateEarnings(sales, dayData.customSalesPercent);
+        } else {
+          // Используем прогрессивную модель с диапазонами
+          totalIncome += calculateProgressiveEarnings(sales, salesBlock.ranges);
         }
       }
     }
