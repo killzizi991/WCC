@@ -1,3 +1,4 @@
+
 // Показать модальное окно шаблонов
 function showTemplatesModal() {
   try {
@@ -219,7 +220,7 @@ function createNewTemplate() {
   }
 }
 
-// Показать выпадающий список для добавления блока правил
+// Показать выпадающий список для добавления блоков правил
 function showAddRuleBlockDropdown() {
   try {
     const currentTemplate = getCurrentTemplate();
@@ -245,6 +246,7 @@ function showAddRuleBlockDropdown() {
     });
 
     const dropdown = document.createElement('div');
+    dropdown.className = 'rule-block-dropdown';
     dropdown.style.position = 'absolute';
     dropdown.style.background = 'white';
     dropdown.style.border = '1px solid #ccc';
@@ -354,12 +356,7 @@ function renderRuleBlocksList() {
     
     currentTemplate.ruleBlocks.forEach((block, index) => {
       const blockElement = document.createElement('div');
-      blockElement.style.display = 'flex';
-      blockElement.style.alignItems = 'center';
-      blockElement.style.marginBottom = '10px';
-      blockElement.style.padding = '10px';
-      blockElement.style.backgroundColor = '#f8f9fa';
-      blockElement.style.borderRadius = '5px';
+      blockElement.className = 'rule-block-item';
       
       const blockName = document.createElement('div');
       blockName.textContent = block.name;
