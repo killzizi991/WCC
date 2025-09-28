@@ -1,4 +1,4 @@
-
+// FILE: rules.js
 // Функции для работы с блоками правил и расчетов
 
 // Расчет заработка за день с учетом индивидуального процента
@@ -120,19 +120,13 @@ function calculateShiftRateIncome(calendarData, template, year, month) {
     }
     
     // Применяем ставки для дневных смен
-    if (Array.isArray(shiftBlock.dayRanges) && shiftBlock.dayRanges.length > 0) {
-      const dayRange = findRangeForValue(dayShiftsCount, shiftBlock.dayRanges);
-      if (dayRange) {
-        totalIncome += dayShiftsCount * (dayRange.rate || 0);
-      }
+    if (shiftBlock.dayRate) {
+      totalIncome += dayShiftsCount * (shiftBlock.dayRate || 0);
     }
     
     // Применяем ставки для ночных смен
-    if (Array.isArray(shiftBlock.nightRanges) && shiftBlock.nightRanges.length > 0) {
-      const nightRange = findRangeForValue(nightShiftsCount, shiftBlock.nightRanges);
-      if (nightRange) {
-        totalIncome += nightShiftsCount * (nightRange.rate || 0);
-      }
+    if (shiftBlock.nightRate) {
+      totalIncome += nightShiftsCount * (shiftBlock.nightRate || 0);
     }
     
     return Math.round(totalIncome * 100) / 100;
@@ -169,19 +163,13 @@ function calculateHourlyRateIncome(calendarData, template, year, month) {
     }
     
     // Применяем ставки для дневных часов
-    if (Array.isArray(hourlyBlock.dayRanges) && hourlyBlock.dayRanges.length > 0) {
-      const dayRange = findRangeForValue(totalDayHours, hourlyBlock.dayRanges);
-      if (dayRange) {
-        totalIncome += totalDayHours * (dayRange.rate || 0);
-      }
+    if (hourlyBlock.dayRate) {
+      totalIncome += totalDayHours * (hourlyBlock.dayRate || 0);
     }
     
     // Применяем ставки для ночных часов
-    if (Array.isArray(hourlyBlock.nightRanges) && hourlyBlock.nightRanges.length > 0) {
-      const nightRange = findRangeForValue(totalNightHours, hourlyBlock.nightRanges);
-      if (nightRange) {
-        totalIncome += totalNightHours * (nightRange.rate || 0);
-      }
+    if (hourlyBlock.nightRate) {
+      totalIncome += totalNightHours * (hourlyBlock.nightRate || 0);
     }
     
     return Math.round(totalIncome * 100) / 100;
@@ -696,14 +684,14 @@ function createRuleBlock(blockType) {
       case 'shiftRate':
         return {
           ...defaultBlock,
-          dayRanges: [{ from: 0, to: null, rate: 1000 }],
-          nightRanges: []
+          dayRate: 1000,
+          nightRate: 0
         };
       case 'hourlyRate':
         return {
           ...defaultBlock,
-          dayRanges: [{ from: 0, to: null, rate: 150 }],
-          nightRanges: []
+          dayRate: 150,
+          nightRate: 0
         };
       case 'advance':
         return {
