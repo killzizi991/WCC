@@ -1,3 +1,4 @@
+
 // Функции для работы с блоками правил и расчетов
 
 // Расчет заработка за день с учетом индивидуального процента
@@ -586,8 +587,8 @@ function calculateMonthlySummary(calendarData, template, year, month) {
     const shifts = calculateTotalShifts(calendarData, year, month);
     
     // Расчет зарплаты до бонусов и до вычетов
-    const salaryBeforeBonuses = Math.max(0, (baseIncome + overtimeAmount) - advanceAmount);
-    const salaryBeforeDeductions = Math.max(0, totalIncome - totalDeductionAmount - advanceAmount);
+    const salaryBeforeBonuses = Math.max(0, (baseIncome + overtimeAmount) - advanceAmount - taxAmount);
+    const salaryBeforeDeductions = Math.max(0, totalIncome - advanceAmount - taxAmount);
     
     return {
       baseIncome: Math.round(baseIncome * 100) / 100,
