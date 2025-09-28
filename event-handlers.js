@@ -1,3 +1,4 @@
+// FILE: event-handlers.js
 // Настройка обработчиков событий
 function setupEventListeners() {
     document.getElementById('prev-month').addEventListener('click', () => {
@@ -101,10 +102,12 @@ function setupEventListeners() {
             document.getElementById('day-sales-percent').value = '';
         }
         if (hasShiftRate) {
-            document.getElementById('day-shift-rate').value = '';
+            document.getElementById('day-shift-rate-day').value = '';
+            document.getElementById('day-shift-rate-night').value = '';
         }
         if (hasHourlyRate) {
-            document.getElementById('day-hourly-rate').value = '';
+            document.getElementById('day-hourly-rate-day').value = '';
+            document.getElementById('day-hourly-rate-night').value = '';
         }
     });
     
@@ -121,11 +124,9 @@ function setupEventListeners() {
     });
     document.getElementById('import-text-btn').addEventListener('click', importFromText);
     
-    // Новые обработчики для кнопок очистки данных
     document.getElementById('clear-all-data-btn').addEventListener('click', clearAllData);
     document.getElementById('clear-template-data-btn').addEventListener('click', clearCurrentTemplateData);
     
-    // Обработчики для отчета
     document.getElementById('detailed-data-btn').addEventListener('click', toggleDetailedData);
     document.getElementById('close-report').addEventListener('click', () => {
         closeModal();
@@ -141,7 +142,6 @@ function handleKeyPress(e) {
 
 // Сохранение настроек
 function saveSettings() {
-    // Убрали сохранение настроек ФО из настроек приложения
     saveToStorage('appSettings', appSettings);
     closeModal();
     calculateSummaryDisplay();
@@ -151,27 +151,21 @@ function saveSettings() {
 // Функция очистки всех данных
 function clearAllData() {
     if (confirm('Вы уверены, что хотите удалить все данные? Это действие нельзя отменить. Будут удалены все шаблоны (кроме основного) и все данные календаря.')) {
-        // Оставляем только шаблон по умолчанию
         const defaultTemplate = appSettings.templates['default'];
         
-        // Очищаем все шаблоны, оставляя только default
         appSettings.templates = {
             'default': {
                 ...defaultTemplate,
-                calendarData: {} // Очищаем данные календаря
+                calendarData: {}
             }
         };
         
-        // Устанавливаем текущий шаблон как default
         appSettings.currentTemplateId = 'default';
         
-        // Сохраняем изменения
         saveToStorage('appSettings', appSettings);
         
-        // Перезагружаем календарь
         generateCalendar();
         
-        // Закрываем модальное окно
         closeModal();
         
         showNotification('Все данные успешно очищены');
@@ -184,13 +178,10 @@ function clearCurrentTemplateData() {
     const templateName = currentTemplate.name;
     
     if (confirm(`Вы уверены, что хотите удалить все данные шаблона "${templateName}"? Это действие нельзя отменить.`)) {
-        // Очищаем данные календаря текущего шаблона
         currentTemplate.calendarData = {};
         
-        // Сохраняем изменения
         saveToStorage('appSettings', appSettings);
         
-        // Перезагружаем календарь
         generateCalendar();
         
         showNotification(`Данные шаблона "${templateName}" успешно очищены`);
@@ -210,14 +201,12 @@ function showReportModal() {
         const currentCalendarData = getCurrentCalendarData();
         const summary = calculateMonthlySummary(currentCalendarData, template, currentYear, currentMonth);
         
-        // Обновляем основные показатели
         document.getElementById('modal-work-days').textContent = summary.workDays;
         document.getElementById('modal-total-earned').textContent = summary.totalIncome.toLocaleString();
         document.getElementById('modal-salary').textContent = summary.finalSalary.toLocaleString();
         document.getElementById('summary-month-year').textContent = 
             `${new Date(currentYear, currentMonth).toLocaleString('ru', { month: 'long' })} ${currentYear}`;
         
-        // Показываем/скрываем строку аванса в зависимости от наличия блока
         const advanceRow = document.getElementById('advance-row');
         const hasAdvance = template.ruleBlocks.some(block => block.type === 'advance');
         advanceRow.style.display = hasAdvance ? 'block' : 'none';
@@ -226,11 +215,9 @@ function showReportModal() {
             document.getElementById('modal-advance').textContent = summary.advanceAmount.toLocaleString();
         }
         
-        // Скрываем подробные данные при открытии
         const detailedData = document.getElementById('detailed-data');
         detailedData.style.display = 'none';
         
-        // Обновляем подробные данные
         updateDetailedReport(summary, template, currentCalendarData);
         
         showModal('summary-modal');
@@ -243,7 +230,6 @@ function showReportModal() {
 // Обновление подробного отчета
 function updateDetailedReport(summary, template, calendarData) {
     try {
-        // Всего продаж
         const totalSalesRow = document.getElementById('total-sales-row');
         const hasSalesPercent = template.ruleBlocks.some(block => block.type === 'salesPercent');
         totalSalesRow.style.display = hasSalesPercent ? 'block' : 'none';
@@ -251,7 +237,6 @@ function updateDetailedReport(summary, template, calendarData) {
             document.getElementById('modal-total-sales').textContent = summary.totalSales.toLocaleString();
         }
         
-        // Часы
         const hasHourlyRate = template.ruleBlocks.some(block => block.type === 'hourlyRate');
         const hasHoursData = summary.hours.total > 0;
         
@@ -269,7 +254,6 @@ function updateDetailedReport(summary, template, calendarData) {
             document.getElementById('modal-total-hours').textContent = summary.hours.total;
         }
         
-        // Смены
         const hasShiftRate = template.ruleBlocks.some(block => block.type === 'shiftRate');
         const hasShiftsData = summary.shifts.total > 0;
         
@@ -284,7 +268,6 @@ function updateDetailedReport(summary, template, calendarData) {
             document.getElementById('modal-night-shifts').textContent = summary.shifts.night;
         }
         
-        // Сверхурочные
         const overtimeRow = document.getElementById('overtime-row');
         const hasOvertime = template.ruleBlocks.some(block => block.type === 'overtime');
         overtimeRow.style.display = hasOvertime ? 'block' : 'none';
@@ -292,7 +275,6 @@ function updateDetailedReport(summary, template, calendarData) {
             document.getElementById('modal-overtime').textContent = summary.overtimeAmount.toLocaleString();
         }
         
-        // Бонусы
         const bonusRow = document.getElementById('bonus-row');
         const hasBonus = template.ruleBlocks.some(block => block.type === 'bonus') || summary.totalBonusAmount > 0;
         bonusRow.style.display = hasBonus ? 'block' : 'none';
@@ -300,7 +282,6 @@ function updateDetailedReport(summary, template, calendarData) {
             document.getElementById('modal-bonus').textContent = summary.totalBonusAmount.toLocaleString();
         }
         
-        // Вычеты
         const deductionRow = document.getElementById('deduction-row');
         const hasDeduction = template.ruleBlocks.some(block => block.type === 'fixedDeduction') || summary.totalDeductionAmount > 0;
         deductionRow.style.display = hasDeduction ? 'block' : 'none';
@@ -308,14 +289,12 @@ function updateDetailedReport(summary, template, calendarData) {
             document.getElementById('modal-deduction').textContent = summary.totalDeductionAmount.toLocaleString();
         }
         
-        // Зарплата до бонусов
         const salaryBeforeBonusesRow = document.getElementById('salary-before-bonuses-row');
         salaryBeforeBonusesRow.style.display = hasBonus ? 'block' : 'none';
         if (hasBonus) {
             document.getElementById('modal-salary-before-bonuses').textContent = summary.salaryBeforeBonuses.toLocaleString();
         }
         
-        // Зарплата до вычетов
         const salaryBeforeDeductionsRow = document.getElementById('salary-before-deductions-row');
         salaryBeforeDeductionsRow.style.display = hasDeduction ? 'block' : 'none';
         if (hasDeduction) {
