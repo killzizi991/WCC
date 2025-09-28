@@ -1,3 +1,4 @@
+
 // Основные переменные
 let currentDate = new Date();
 let currentYear = currentDate.getFullYear();
@@ -19,9 +20,9 @@ let appSettings = loadFromStorage('appSettings') || {
       ruleBlocks: [],
       functionalBorderData: {
         sales: 30000,
-        dayShift: false,
+        dayShift: true,
         nightShift: false,
-        dayHours: 0,
+        dayHours: 8,
         nightHours: 0
       },
       calendarData: {}
@@ -87,9 +88,9 @@ function validateTemplate(template) {
   if (!template.functionalBorderData || typeof template.functionalBorderData !== 'object') {
     template.functionalBorderData = {
       sales: 30000,
-      dayShift: false,
+      dayShift: true,
       nightShift: false,
-      dayHours: 0,
+      dayHours: 8,
       nightHours: 0
     };
   }
@@ -146,9 +147,9 @@ function getCurrentTemplate() {
         ruleBlocks: [],
         functionalBorderData: {
           sales: 30000,
-          dayShift: false,
+          dayShift: true,
           nightShift: false,
-          dayHours: 0,
+          dayHours: 8,
           nightHours: 0
         },
         calendarData: {}
@@ -212,9 +213,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (currentTemplate.functionalBorderValue && typeof currentTemplate.functionalBorderValue === 'number') {
       currentTemplate.functionalBorderData = {
         sales: currentTemplate.functionalBorderValue,
-        dayShift: false,
+        dayShift: true,
         nightShift: false,
-        dayHours: 0,
+        dayHours: 8,
         nightHours: 0
       };
       delete currentTemplate.functionalBorderValue;
