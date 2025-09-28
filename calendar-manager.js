@@ -104,12 +104,10 @@ function setupEventListeners() {
             document.getElementById('day-sales-percent').value = '';
         }
         if (hasShiftRate) {
-            document.getElementById('day-shift-rate-day').value = '';
-            document.getElementById('day-shift-rate-night').value = '';
+            document.getElementById('day-shift-rate').value = '';
         }
         if (hasHourlyRate) {
-            document.getElementById('day-hourly-rate-day').value = '';
-            document.getElementById('day-hourly-rate-night').value = '';
+            document.getElementById('day-hourly-rate').value = '';
         }
     });
     
@@ -363,6 +361,9 @@ function generateCalendar() {
     }
     
     const currentCalendarData = getCurrentCalendarData();
+    const template = getCurrentTemplate();
+    const hasSalesPercent = template.ruleBlocks.some(block => block.type === 'salesPercent');
+    const hasHourlyRate = template.ruleBlocks.some(block => block.type === 'hourlyRate');
     
     for (let day = 1; day <= lastDay.getDate(); day++) {
         const dayElement = document.createElement('div');
@@ -376,10 +377,38 @@ function generateCalendar() {
             return value;
         };
         
-        dayElement.innerHTML = `
-            <div class="day-number">${day}</div>
-            ${dayData.sales ? `<div class="day-sales">${formatSalesNumber(dayData.sales)}</div>` : ''}
-        `;
+        const calculateTotalHours = (dayData) => {
+            const dayHours = parseFloat(dayData.dayHours) || 0;
+            const nightHours = parseFloat(dayData.nightHours) || 0;
+            return dayHours + nightHours;
+        };
+        
+        const totalHours = calculateTotalHours(dayData);
+        const hasSales = dayData.sales && dayData.sales > 0;
+        const hasHours = totalHours > 0;
+        
+        let contentHTML = `<div class="day-number">${day}</div>`;
+        
+        if (hasSalesPercent && hasHourlyRate && (hasSales || hasHours)) {
+            // Оба блока активны - показываем два числа друг над другом
+            const salesDisplay = hasSales ? formatSalesNumber(dayData.sales) : '';
+            const hoursDisplay = hasHours ? totalHours : '';
+            
+            contentHTML += `
+                <div class="day-data-container">
+                    ${salesDisplay ? `<div class="day-sales small">${salesDisplay}</div>` : ''}
+                    ${hoursDisplay ? `<div class="day-hours small">${hoursDisplay}</div>` : ''}
+                </div>
+            `;
+        } else if (hasSalesPercent && hasSales) {
+            // Только продажи
+            contentHTML += `<div class="day-sales">${formatSalesNumber(dayData.sales)}</div>`;
+        } else if (hasHourlyRate && hasHours) {
+            // Только часы
+            contentHTML += `<div class="day-hours">${totalHours}</div>`;
+        }
+        
+        dayElement.innerHTML = contentHTML;
         
         if (dayData.color) {
             if (dayData.color === '#ffffff') {
