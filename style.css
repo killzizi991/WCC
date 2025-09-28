@@ -1,3 +1,4 @@
+
 /* Сброс стилей */
 * {
     margin: 0;
@@ -198,7 +199,7 @@ button:active {
     font-size: 0.75em;
 }
 
-/* Функциональная обводка */
+/* Функциональная обводки */
 .day.functional-border {
     border: 2px solid #e74c3c;
     animation: pulse-border 2s infinite;
@@ -755,18 +756,17 @@ input:focus, textarea:focus {
 
     /* Стили для выпадающего списка шаблонов */
     #template-dropdown {
-        background: #2d3035;
-        border-color: #4a4d55;
-        color: #e9ecef;
+        background: #2d3035 !important;
+        border-color: #4a4d55 !important;
     }
     
     #template-dropdown div {
-        color: #e9ecef;
-        border-bottom-color: #4a4d55;
+        color: #e9ecef !important;
+        border-bottom-color: #4a4d55 !important;
     }
     
     #template-dropdown div:hover {
-        background-color: #3b3e45;
+        background-color: #3b3e45 !important;
     }
 
     /* Стили для блоков правил */
