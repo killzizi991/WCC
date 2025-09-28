@@ -752,6 +752,140 @@ input:focus, textarea:focus {
     .help-item {
         border-bottom-color: #4a4d55 !important;
     }
+
+    /* Стили для выпадающего списка шаблонов */
+    #template-dropdown {
+        background: #2d3035;
+        border-color: #4a4d55;
+    }
+    
+    #template-dropdown div {
+        color: #e9ecef;
+        border-bottom-color: #4a4d55;
+    }
+    
+    #template-dropdown div:hover {
+        background-color: #3b3e45;
+    }
+
+    /* Стили для блоков правил */
+    .rule-block-item {
+        background-color: #3b3e45 !important;
+        color: #e9ecef !important;
+        border-color: #4a4d55 !important;
+    }
+
+    .rule-block-item:hover {
+        background-color: #4a4d55 !important;
+    }
+
+    /* Стили для выпадающего списка добавления блоков правил */
+    .rule-block-dropdown {
+        background: #2d3035 !important;
+        border-color: #4a4d55 !important;
+        color: #e9ecef !important;
+    }
+
+    .rule-block-dropdown div {
+        color: #e9ecef !important;
+        border-bottom-color: #4a4d55 !important;
+    }
+
+    .rule-block-dropdown div:hover {
+        background-color: #3b3e45 !important;
+    }
+
+    /* Стили для настроек функциональной обводки */
+    #functional-border-container {
+        background: #3b3e45 !important;
+        color: #e9ecef !important;
+        border-color: #4a4d55 !important;
+    }
+
+    #functional-border-container h4 {
+        color: #e9ecef !important;
+    }
+
+    #functional-border-container .setting-group label {
+        color: #e9ecef !important;
+    }
+
+    #functional-border-container input {
+        background: #2d3035 !important;
+        border-color: #5a6c7d !important;
+        color: #e9ecef !important;
+    }
+
+    /* Стили для кнопок блоков правил */
+    #rule-blocks-list .rule-block-item {
+        background: #3b3e45 !important;
+        color: #e9ecef !important;
+    }
+
+    #rule-blocks-list .rule-block-item:hover {
+        background: #4a4d55 !important;
+    }
+
+    /* Стили для модальных окон блоков правил */
+    #sales-percent-modal .modal-content,
+    #shift-rate-modal .modal-content,
+    #hourly-rate-modal .modal-content,
+    #advance-modal .modal-content,
+    #tax-modal .modal-content,
+    #bonus-modal .modal-content,
+    #overtime-modal .modal-content,
+    #fixed-deduction-modal .modal-content {
+        background: #2d3035;
+        color: #e9ecef;
+    }
+
+    #sales-percent-modal h3,
+    #shift-rate-modal h3,
+    #hourly-rate-modal h3,
+    #advance-modal h3,
+    #tax-modal h3,
+    #bonus-modal h3,
+    #overtime-modal h3,
+    #fixed-deduction-modal h3 {
+        color: #e9ecef;
+    }
+
+    #sales-percent-modal .setting-group label,
+    #shift-rate-modal .setting-group label,
+    #hourly-rate-modal .setting-group label,
+    #advance-modal .setting-group label,
+    #tax-modal .setting-group label,
+    #bonus-modal .setting-group label,
+    #overtime-modal .setting-group label,
+    #fixed-deduction-modal .setting-group label {
+        color: #e9ecef;
+    }
+
+    #sales-percent-modal input,
+    #shift-rate-modal input,
+    #hourly-rate-modal input,
+    #advance-modal input,
+    #tax-modal input,
+    #bonus-modal input,
+    #overtime-modal input,
+    #fixed-deduction-modal input {
+        background: #3b3e45;
+        border-color: #5a6c7d;
+        color: #e9ecef;
+    }
+
+    #sales-percent-modal select,
+    #shift-rate-modal select,
+    #hourly-rate-modal select,
+    #advance-modal select,
+    #tax-modal select,
+    #bonus-modal select,
+    #overtime-modal select,
+    #fixed-deduction-modal select {
+        background: #3b3e45;
+        border-color: #5a6c7d;
+        color: #e9ecef;
+    }
 }
 
 /* Улучшенная поддержка мобильных устройств */
