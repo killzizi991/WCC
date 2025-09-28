@@ -1,4 +1,3 @@
-
 // Показать модальное окно шаблонов
 function showTemplatesModal() {
   try {
@@ -248,8 +247,7 @@ function showAddRuleBlockDropdown() {
     const dropdown = document.createElement('div');
     dropdown.className = 'rule-block-dropdown';
     dropdown.style.position = 'absolute';
-    dropdown.style.background = 'white';
-    dropdown.style.border = '1px solid #ccc';
+    dropdown.style.border = '1px solid #e2e8f0';
     dropdown.style.borderRadius = '5px';
     dropdown.style.padding = '10px';
     dropdown.style.zIndex = '1000';
