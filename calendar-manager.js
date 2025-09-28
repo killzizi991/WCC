@@ -104,10 +104,12 @@ function setupEventListeners() {
             document.getElementById('day-sales-percent').value = '';
         }
         if (hasShiftRate) {
-            document.getElementById('day-shift-rate').value = '';
+            document.getElementById('day-shift-rate-day').value = '';
+            document.getElementById('day-shift-rate-night').value = '';
         }
         if (hasHourlyRate) {
-            document.getElementById('day-hourly-rate').value = '';
+            document.getElementById('day-hourly-rate-day').value = '';
+            document.getElementById('day-hourly-rate-night').value = '';
         }
     });
     
@@ -362,6 +364,7 @@ function generateCalendar() {
     
     const currentCalendarData = getCurrentCalendarData();
     const template = getCurrentTemplate();
+    
     const hasSalesPercent = template.ruleBlocks.some(block => block.type === 'salesPercent');
     const hasHourlyRate = template.ruleBlocks.some(block => block.type === 'hourlyRate');
     
@@ -377,38 +380,29 @@ function generateCalendar() {
             return value;
         };
         
-        const calculateTotalHours = (dayData) => {
-            const dayHours = parseFloat(dayData.dayHours) || 0;
-            const nightHours = parseFloat(dayData.nightHours) || 0;
-            return dayHours + nightHours;
-        };
+        // Рассчитываем общее количество часов
+        const totalHours = (parseFloat(dayData.dayHours) || 0) + (parseFloat(dayData.nightHours) || 0);
         
-        const totalHours = calculateTotalHours(dayData);
-        const hasSales = dayData.sales && dayData.sales > 0;
-        const hasHours = totalHours > 0;
+        // Создаем содержимое ячейки
+        let dayContent = `<div class="day-number">${day}</div>`;
         
-        let contentHTML = `<div class="day-number">${day}</div>`;
-        
-        if (hasSalesPercent && hasHourlyRate && (hasSales || hasHours)) {
-            // Оба блока активны - показываем два числа друг над другом
-            const salesDisplay = hasSales ? formatSalesNumber(dayData.sales) : '';
-            const hoursDisplay = hasHours ? totalHours : '';
-            
-            contentHTML += `
+        if (hasSalesPercent && hasHourlyRate && dayData.sales && totalHours > 0) {
+            // Оба показателя: продажи и часы
+            dayContent += `
                 <div class="day-data-container">
-                    ${salesDisplay ? `<div class="day-sales small">${salesDisplay}</div>` : ''}
-                    ${hoursDisplay ? `<div class="day-hours small">${hoursDisplay}</div>` : ''}
+                    <div class="day-sales small">${formatSalesNumber(dayData.sales)}</div>
+                    <div class="day-hours small">${totalHours}</div>
                 </div>
             `;
-        } else if (hasSalesPercent && hasSales) {
+        } else if (hasSalesPercent && dayData.sales) {
             // Только продажи
-            contentHTML += `<div class="day-sales">${formatSalesNumber(dayData.sales)}</div>`;
-        } else if (hasHourlyRate && hasHours) {
+            dayContent += `<div class="day-sales">${formatSalesNumber(dayData.sales)}</div>`;
+        } else if (hasHourlyRate && totalHours > 0) {
             // Только часы
-            contentHTML += `<div class="day-hours">${totalHours}</div>`;
+            dayContent += `<div class="day-hours">${totalHours}</div>`;
         }
         
-        dayElement.innerHTML = contentHTML;
+        dayElement.innerHTML = dayContent;
         
         if (dayData.color) {
             if (dayData.color === '#ffffff') {
