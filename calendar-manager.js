@@ -1,3 +1,4 @@
+
 // Генерация календаря
 function generateCalendar() {
     const calendar = document.getElementById('calendar');
