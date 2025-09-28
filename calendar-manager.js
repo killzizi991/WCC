@@ -1,4 +1,5 @@
 // FILE: calendar-manager.js
+
 // Настройка обработчиков событий
 function setupEventListeners() {
     document.getElementById('prev-month').addEventListener('click', () => {
@@ -672,7 +673,7 @@ function generateDynamicFields(dayData) {
     // Поля смен (если есть блок ставки за смену)
     if (hasShiftRate) {
         const shiftBlock = template.ruleBlocks.find(block => block.type === 'shiftRate');
-        const hasNightShifts = shiftBlock && shiftBlock.nightRanges && shiftBlock.nightRanges.length > 0;
+        const hasNightShifts = shiftBlock && shiftBlock.nightRate > 0;
         
         const shiftGroup = document.createElement('div');
         shiftGroup.className = 'setting-group';
@@ -694,7 +695,7 @@ function generateDynamicFields(dayData) {
     // Поля часов (если есть блок ставки за час)
     if (hasHourlyRate) {
         const hourlyBlock = template.ruleBlocks.find(block => block.type === 'hourlyRate');
-        const hasNightHours = hourlyBlock && hourlyBlock.nightRanges && hourlyBlock.nightRanges.length > 0;
+        const hasNightHours = hourlyBlock && hourlyBlock.nightRate > 0;
         
         const hoursGroup = document.createElement('div');
         hoursGroup.className = 'setting-group';
