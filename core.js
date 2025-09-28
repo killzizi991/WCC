@@ -1,4 +1,4 @@
-
+// FILE: core.js
 // Основные переменные
 let currentDate = new Date();
 let currentYear = currentDate.getFullYear();
@@ -38,7 +38,6 @@ function loadFromStorage(key) {
     
     const parsedData = JSON.parse(data);
     
-    // Валидация загруженных данных
     if (!validateAppSettings(parsedData)) {
       console.warn('Invalid app settings detected, using defaults');
       return null;
@@ -55,14 +54,11 @@ function loadFromStorage(key) {
 function validateAppSettings(settings) {
   if (!settings || typeof settings !== 'object') return false;
   
-  // Проверка обязательных полей
   if (!settings.currentTemplateId || typeof settings.currentTemplateId !== 'string') return false;
   if (!settings.templates || typeof settings.templates !== 'object') return false;
   
-  // Проверка существования текущего шаблона
   if (!settings.templates[settings.currentTemplateId]) return false;
   
-  // Валидация каждого шаблона
   for (const templateId in settings.templates) {
     if (!validateTemplate(settings.templates[templateId])) {
       return false;
@@ -76,11 +72,9 @@ function validateAppSettings(settings) {
 function validateTemplate(template) {
   if (!template || typeof template !== 'object') return false;
   
-  // Обязательные поля
   if (!template.id || typeof template.id !== 'string') return false;
   if (!template.name || typeof template.name !== 'string') return false;
   
-  // Опциональные поля с значениями по умолчанию
   if (!template.ruleBlocks || !Array.isArray(template.ruleBlocks)) {
     template.ruleBlocks = [];
   }
@@ -105,7 +99,6 @@ function validateTemplate(template) {
 // Функция безопасного сохранения в localStorage
 function saveToStorage(key, data) {
   try {
-    // Валидация данных перед сохранением
     if (key === 'appSettings' && !validateAppSettings(data)) {
       console.error('Invalid app settings structure');
       showNotification('Ошибка сохранения: неверная структура данных');
@@ -117,7 +110,6 @@ function saveToStorage(key, data) {
   } catch (error) {
     console.error('Ошибка сохранения в localStorage:', error);
     
-    // Проверка доступности localStorage
     if (error.name === 'QuotaExceededError') {
       showNotification('Ошибка: недостаточно места для сохранения данных');
     } else if (error.name === 'SecurityError') {
@@ -134,12 +126,10 @@ function saveToStorage(key, data) {
 function getCurrentTemplate() {
   const template = appSettings.templates[appSettings.currentTemplateId];
   
-  // Если шаблон не найден, используем шаблон по умолчанию
   if (!template) {
     console.warn('Current template not found, using default');
     appSettings.currentTemplateId = 'default';
     
-    // Создаем шаблон по умолчанию если его нет
     if (!appSettings.templates.default) {
       appSettings.templates.default = {
         id: 'default',
@@ -167,7 +157,6 @@ function getCurrentTemplate() {
 function getCurrentCalendarData() {
   const template = getCurrentTemplate();
   
-  // Гарантируем существование calendarData
   if (!template.calendarData || typeof template.calendarData !== 'object') {
     template.calendarData = {};
     saveToStorage('appSettings', appSettings);
@@ -179,7 +168,6 @@ function getCurrentCalendarData() {
 // Миграция существующих данных в новую структуру
 function migrateToTemplateStructure() {
   try {
-    // Если есть старые данные calendarData в корне, переносим их в текущий шаблон
     const oldCalendarData = loadFromStorage('calendarData');
     if (oldCalendarData && Object.keys(oldCalendarData).length > 0 && 
         Object.keys(oldCalendarData).some(key => key.includes('-'))) {
@@ -187,7 +175,6 @@ function migrateToTemplateStructure() {
       const currentTemplate = getCurrentTemplate();
       currentTemplate.calendarData = {...oldCalendarData};
       
-      // Очищаем старые данные
       localStorage.removeItem('calendarData');
       saveToStorage('appSettings', appSettings);
       
@@ -204,12 +191,10 @@ function migrateToTemplateStructure() {
 // Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', () => {
   try {
-    // Выполняем миграцию данных при необходимости
     migrateToTemplateStructure();
     
     const currentTemplate = getCurrentTemplate();
     
-    // Миграция старого формата functionalBorderValue
     if (currentTemplate.functionalBorderValue && typeof currentTemplate.functionalBorderValue === 'number') {
       currentTemplate.functionalBorderData = {
         sales: currentTemplate.functionalBorderValue,
@@ -241,7 +226,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
     
-    // Проверка целостности данных после загрузки
     validateDataIntegrity();
     
   } catch (error) {
@@ -255,19 +239,16 @@ function validateDataIntegrity() {
   try {
     const template = getCurrentTemplate();
     
-    // Проверка calendarData
     if (template.calendarData) {
       for (const dateKey in template.calendarData) {
         const dayData = template.calendarData[dateKey];
         
-        // Валидация формата даты
         if (!isValidDateKey(dateKey)) {
           console.warn('Invalid date key found:', dateKey);
           delete template.calendarData[dateKey];
           continue;
         }
         
-        // Валидация структуры данных дня
         if (!validateDayData(dayData)) {
           console.warn('Invalid day data structure for:', dateKey);
           template.calendarData[dateKey] = normalizeDayData(dayData);
@@ -275,7 +256,6 @@ function validateDataIntegrity() {
       }
     }
     
-    // Проверка ruleBlocks
     if (template.ruleBlocks && Array.isArray(template.ruleBlocks)) {
       template.ruleBlocks = template.ruleBlocks.filter(block => 
         block && typeof block === 'object' && block.id && block.type
@@ -311,7 +291,6 @@ function isValidDateKey(dateKey) {
 function validateDayData(dayData) {
   if (!dayData || typeof dayData !== 'object') return false;
   
-  // Разрешенные поля
   const allowedFields = [
     'comment', 'color', 'sales', 'dayShift', 'nightShift', 
     'dayHours', 'nightHours', 'functionalBorder', 'functionalBorderData',
@@ -431,14 +410,12 @@ if (!checkLocalStorageSupport()) {
 // Функция показа модального окна с управлением стеком
 function showModal(modalId) {
   try {
-    // Если есть текущее открытое модальное окно, скрываем его и добавляем в стек
     const currentModal = document.querySelector('.modal[style*="display: block"]');
     if (currentModal) {
       currentModal.style.display = 'none';
       modalStack.push(currentModal.id);
     }
     
-    // Показываем новое модальное окно
     const modal = document.getElementById(modalId);
     if (modal) {
       modal.style.display = 'block';
@@ -452,23 +429,20 @@ function showModal(modalId) {
 // Закрытие модального окна с управлением стеком
 function closeModal() {
   try {
-    // Скрываем текущее модальное окно
     const currentModal = document.querySelector('.modal[style*="display: block"]');
     if (currentModal) {
       currentModal.style.display = 'none';
     }
     
-    // Если в стеке есть предыдущее модальное окно, показываем его
     if (modalStack.length > 0) {
       const previousModalId = modalStack.pop();
       const previousModal = document.getElementById(previousModalId);
       if (previousModal) {
         previousModal.style.display = 'block';
-        return; // Не снимаем класс modal-open, т.к. есть другое открытое окно
+        return;
       }
     }
     
-    // Если стек пуст, снимаем класс modal-open
     document.body.classList.remove('modal-open');
   } catch (error) {
     console.error('Ошибка закрытия модального окна:', error);
