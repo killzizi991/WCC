@@ -1,3 +1,4 @@
+
 // FILE: calendar-manager.js
 
 // Настройка обработчиков событий
@@ -103,10 +104,12 @@ function setupEventListeners() {
             document.getElementById('day-sales-percent').value = '';
         }
         if (hasShiftRate) {
-            document.getElementById('day-shift-rate').value = '';
+            document.getElementById('day-shift-rate-day').value = '';
+            document.getElementById('day-shift-rate-night').value = '';
         }
         if (hasHourlyRate) {
-            document.getElementById('day-hourly-rate').value = '';
+            document.getElementById('day-hourly-rate-day').value = '';
+            document.getElementById('day-hourly-rate-night').value = '';
         }
     });
     
@@ -587,27 +590,49 @@ function generateDaySettingsFields(dayData) {
         newSettingsContainer.appendChild(percentGroup);
     }
     
-    // Поле для индивидуальной ставки за смену (если активен блок)
+    // Поля для индивидуальных ставок за смену (если активен блок)
     if (hasShiftRate) {
+        const shiftBlock = template.ruleBlocks.find(block => block.type === 'shiftRate');
+        const hasNightShifts = shiftBlock && shiftBlock.nightRate > 0;
+        
         const shiftGroup = document.createElement('div');
         shiftGroup.className = 'setting-group';
         shiftGroup.innerHTML = `
-            <label>Ставка за смену (руб):</label>
-            <input type="number" id="day-shift-rate" min="0" step="100" 
-                   value="${dayData.customShiftRate || ''}">
+            <label>Дневная ставка за смену (руб):</label>
+            <input type="number" id="day-shift-rate-day" min="0" step="100" 
+                   value="${dayData.customDayShiftRate || ''}">
         `;
+        
+        if (hasNightShifts) {
+            shiftGroup.innerHTML += `
+                <label>Ночная ставка за смену (руб):</label>
+                <input type="number" id="day-shift-rate-night" min="0" step="100" 
+                       value="${dayData.customNightShiftRate || ''}">
+            `;
+        }
         newSettingsContainer.appendChild(shiftGroup);
     }
     
-    // Поле для индивидуальной ставки за час (если активен блок)
+    // Поля для индивидуальных ставок за час (если активен блок)
     if (hasHourlyRate) {
+        const hourlyBlock = template.ruleBlocks.find(block => block.type === 'hourlyRate');
+        const hasNightHours = hourlyBlock && hourlyBlock.nightRate > 0;
+        
         const hourlyGroup = document.createElement('div');
         hourlyGroup.className = 'setting-group';
         hourlyGroup.innerHTML = `
-            <label>Ставка за час (руб):</label>
-            <input type="number" id="day-hourly-rate" min="0" step="10" 
-                   value="${dayData.customHourlyRate || ''}">
+            <label>Дневная ставка за час (руб):</label>
+            <input type="number" id="day-hourly-rate-day" min="0" step="10" 
+                   value="${dayData.customDayHourlyRate || ''}">
         `;
+        
+        if (hasNightHours) {
+            hourlyGroup.innerHTML += `
+                <label>Ночная ставка за час (руб):</label>
+                <input type="number" id="day-hourly-rate-night" min="0" step="10" 
+                       value="${dayData.customNightHourlyRate || ''}">
+            `;
+        }
         newSettingsContainer.appendChild(hourlyGroup);
     }
     
@@ -764,8 +789,11 @@ function saveDayData() {
     }
     
     if (hasShiftRate) {
-        const customRate = document.getElementById('day-shift-rate')?.value;
-        dayData.customShiftRate = customRate ? parseInt(customRate) : null;
+        const dayRate = document.getElementById('day-shift-rate-day')?.value;
+        dayData.customDayShiftRate = dayRate ? parseInt(dayRate) : null;
+        const nightRate = document.getElementById('day-shift-rate-night')?.value;
+        if (nightRate) dayData.customNightShiftRate = parseInt(nightRate);
+        
         dayData.dayShift = document.getElementById('day-shift-checkbox')?.checked || false;
         const nightCheckbox = document.getElementById('night-shift-checkbox');
         if (nightCheckbox) {
@@ -774,8 +802,11 @@ function saveDayData() {
     }
     
     if (hasHourlyRate) {
-        const customHourly = document.getElementById('day-hourly-rate')?.value;
-        dayData.customHourlyRate = customHourly ? parseFloat(customHourly) : null;
+        const dayRate = document.getElementById('day-hourly-rate-day')?.value;
+        dayData.customDayHourlyRate = dayRate ? parseFloat(dayRate) : null;
+        const nightRate = document.getElementById('day-hourly-rate-night')?.value;
+        if (nightRate) dayData.customNightHourlyRate = parseFloat(nightRate);
+        
         dayData.dayHours = parseFloat(document.getElementById('day-hours-input').value) || 0;
         const nightHoursInput = document.getElementById('night-hours-input');
         if (nightHoursInput) {
