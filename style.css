@@ -204,12 +204,13 @@ button:active {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    align-items: center;
+    justify-content: center;
 }
 
-.day-sales.small,
-.day-hours.small {
-    font-size: 0.5em;
-    line-height: 1;
+.day-sales.small, .day-hours.small {
+    font-size: 0.85rem;
+    line-height: 1.1;
 }
 
 .day-comment {
@@ -520,9 +521,8 @@ input:focus, textarea:focus {
         font-size: 0.95rem;
     }
     
-    .day-sales.small,
-    .day-hours.small {
-        font-size: 0.45em;
+    .day-sales.small, .day-hours.small {
+        font-size: 0.8rem;
     }
     
     .modal-content {
@@ -577,9 +577,8 @@ input:focus, textarea:focus {
         font-size: 0.9rem;
     }
     
-    .day-sales.small,
-    .day-hours.small {
-        font-size: 0.4em;
+    .day-sales.small, .day-hours.small {
+        font-size: 0.75rem;
     }
     
     .period-options {
@@ -647,9 +646,8 @@ input:focus, textarea:focus {
         font-size: 0.8rem;
     }
     
-    .day-sales.small,
-    .day-hours.small {
-        font-size: 0.35em;
+    .day-sales.small, .day-hours.small {
+        font-size: 0.7rem;
     }
 }
 
