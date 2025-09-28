@@ -1,4 +1,4 @@
-
+// FILE: calculations-export.js
 // Показать модальное окно помощи
 function showHelpModal() {
   try {
@@ -38,7 +38,7 @@ function showHelpModal() {
       
       const answerDiv = document.createElement('div');
       answerDiv.className = 'help-answer';
-      answerDiv.textContent = ''; // Clear before setting HTML content
+      answerDiv.textContent = '';
       answerDiv.innerHTML = item.answer;
       answerDiv.style.display = 'none';
       answerDiv.style.padding = '12px';
@@ -94,17 +94,14 @@ function validateImportedData(data) {
     return { isValid: false, error: 'Неверный формат данных' };
   }
   
-  // Проверка обязательных полей
   if (!data.appSettings && !data.calendarData) {
     return { isValid: false, error: 'Отсутствуют данные приложения' };
   }
   
-  // Проверка версии данных
   if (data.version && typeof data.version !== 'string') {
     return { isValid: false, error: 'Неверный формат версии данных' };
   }
   
-  // Проверка даты экспорта
   if (data.exportDate) {
     try {
       new Date(data.exportDate);
@@ -113,7 +110,6 @@ function validateImportedData(data) {
     }
   }
   
-  // Валидация appSettings если присутствует
   if (data.appSettings) {
     if (!data.appSettings.currentTemplateId || typeof data.appSettings.currentTemplateId !== 'string') {
       return { isValid: false, error: 'Неверный формат текущего шаблона' };
@@ -124,7 +120,6 @@ function validateImportedData(data) {
     }
   }
   
-  // Валидация calendarData если присутствует
   if (data.calendarData && typeof data.calendarData !== 'object') {
     return { isValid: false, error: 'Неверный формат данных календаря' };
   }
@@ -136,10 +131,8 @@ function validateImportedData(data) {
 function processDataMigration(data) {
   try {
     if (data.appSettings) {
-      // Новая структура данных (версия 1.3+)
       return data.appSettings;
     } else if (data.calendarData) {
-      // Старая структура данных (версия 1.1) - выполняем миграцию
       const currentTemplate = getCurrentTemplate();
       const migratedData = {
         currentTemplateId: 'default',
@@ -170,7 +163,6 @@ function copyDataToClipboard() {
     
     const jsonString = JSON.stringify(data, null, 2);
     
-    // Проверка поддержки clipboard API
     if (!navigator.clipboard || !navigator.clipboard.writeText) {
       fallbackCopyToClipboard(jsonString);
       return;
@@ -211,7 +203,6 @@ function fallbackCopyToClipboard(text) {
       closeModal();
     } else {
       showNotification('Не удалось скопировать данные. Скопируйте текст вручную.');
-      // Показываем текст для ручного копирования
       showManualCopyText(text);
     }
   } catch (error) {
@@ -255,36 +246,30 @@ function importFromText() {
     
     const data = JSON.parse(jsonString);
     
-    // Валидация импортируемых данных
     const validation = validateImportedData(data);
     if (!validation.isValid) {
       showNotification('Ошибка импорта: ' + validation.error);
       return;
     }
     
-    // Обработка миграции данных при импорте
     const migratedSettings = processDataMigration(data);
     if (!migratedSettings) {
       showNotification('Ошибка обработки данных импорта');
       return;
     }
     
-    // Дополнительная валидация структуры
     if (!migratedSettings.templates || typeof migratedSettings.templates !== 'object') {
       showNotification('Неверная структура данных шаблонов');
       return;
     }
     
-    // Сохранение импортированных данных
     if (!saveToStorage('appSettings', migratedSettings)) {
       showNotification('Ошибка сохранения импортированных данных');
       return;
     }
     
-    // Обновление глобальной переменной
     appSettings = migratedSettings;
     
-    // Обновление интерфейса
     loadSettingsToForm();
     generateCalendar();
     showNotification('Данные импортированы');
@@ -335,7 +320,6 @@ function exportData() {
       version: '1.3'
     };
     
-    // Валидация данных перед экспортом
     const validation = validateImportedData(data);
     if (!validation.isValid) {
       showNotification('Ошибка экспорта: неверная структура данных');
@@ -367,14 +351,12 @@ function importData(event) {
     const file = event.target.files[0];
     if (!file) return;
     
-    // Проверка типа файла
     if (!file.name.endsWith('.json') && file.type !== 'application/json') {
       showNotification('Выберите файл в формате JSON');
       event.target.value = '';
       return;
     }
     
-    // Проверка размера файла (макс 10MB)
     if (file.size > 10 * 1024 * 1024) {
       showNotification('Файл слишком большой (макс. 10MB)');
       event.target.value = '';
@@ -386,36 +368,30 @@ function importData(event) {
       try {
         const data = JSON.parse(e.target.result);
         
-        // Валидация импортируемых данных
         const validation = validateImportedData(data);
         if (!validation.isValid) {
           showNotification('Ошибка импорта: ' + validation.error);
           return;
         }
         
-        // Обработка миграции данных при импорте
         const migratedSettings = processDataMigration(data);
         if (!migratedSettings) {
           showNotification('Ошибка обработки данных импорта');
           return;
         }
         
-        // Дополнительная валидация
         if (!migratedSettings.templates || typeof migratedSettings.templates !== 'object') {
           showNotification('Неверная структура данных шаблонов');
           return;
         }
         
-        // Сохранение импортированных данных
         if (!saveToStorage('appSettings', migratedSettings)) {
           showNotification('Ошибка сохранения импортированных данных');
           return;
         }
         
-        // Обновление глобальной переменной
         appSettings = migratedSettings;
         
-        // Обновление интерфейса
         loadSettingsToForm();
         generateCalendar();
         showNotification('Данные импортированы');
