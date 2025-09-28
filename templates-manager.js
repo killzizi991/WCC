@@ -1,4 +1,4 @@
-
+// FILE: templates-manager.js
 // Показать модальное окно шаблонов
 function showTemplatesModal() {
   try {
@@ -516,12 +516,12 @@ function saveBlockChanges(modal, block, index) {
         if (!isValid) errorMessage = 'Ошибка валидации: некорректные диапазоны процента с продаж';
         break;
       case 'shiftRate':
-        isValid = validateRanges(block.dayRanges) && validateRanges(block.nightRanges);
-        if (!isValid) errorMessage = 'Ошибка валидации: некорректные диапазоны ставки за смену';
+        isValid = validateShiftRate(block);
+        if (!isValid) errorMessage = 'Ошибка валидации: некорректные ставки за смену';
         break;
       case 'hourlyRate':
-        isValid = validateRanges(block.dayRanges) && validateRanges(block.nightRanges);
-        if (!isValid) errorMessage = 'Ошибка валидации: некорректные диапазоны ставки за час';
+        isValid = validateHourlyRate(block);
+        if (!isValid) errorMessage = 'Ошибка валидации: некорректные ставки за час';
         break;
       case 'advance':
         isValid = validateAdvance(block);
@@ -704,51 +704,34 @@ function saveSalesPercentChanges(modal, block) {
 // Настройка модального окна для ставки за смену
 function setupShiftRateModal(modal, block) {
   try {
-    setupShiftRateSection(modal, block, 'day', 'day-shift-ranges', 'add-day-shift-range');
-    setupShiftRateSection(modal, block, 'night', 'night-shift-ranges', 'add-night-shift-range');
+    const dayRateInput = modal.querySelector('#shift-rate-day');
+    const nightRateInput = modal.querySelector('#shift-rate-night');
+    
+    if (dayRateInput) dayRateInput.value = block.dayRate || 1000;
+    if (nightRateInput) nightRateInput.value = block.nightRate || 0;
   } catch (error) {
     console.error('Ошибка настройки модального окна ставки за смену:', error);
-  }
-}
-
-function setupShiftRateSection(modal, block, type, rangesId, addButtonId) {
-  try {
-    const rangesContainer = modal.querySelector('#' + rangesId);
-    if (!rangesContainer) return;
-    
-    rangesContainer.innerHTML = '';
-    
-    const rangesArray = block[type + 'Ranges'];
-    if (!Array.isArray(rangesArray)) {
-      block[type + 'Ranges'] = [];
-    }
-    
-    rangesArray.forEach((range, rangeIndex) => {
-      const rangeElement = createRangeElement(range, rangeIndex, 'rate', rangesArray);
-      rangesContainer.appendChild(rangeElement);
-    });
-    
-    const addButton = modal.querySelector('#' + addButtonId);
-    if (addButton) {
-      addButton.onclick = () => {
-        const newRange = { from: 0, to: null, rate: 1000 };
-        rangesArray.push(newRange);
-        const rangeElement = createRangeElement(newRange, rangesArray.length - 1, 'rate', rangesArray);
-        rangesContainer.appendChild(rangeElement);
-      };
-    }
-  } catch (error) {
-    console.error('Ошибка настройки секции ставки за смену:', error);
   }
 }
 
 // Сохранение изменений ставки за смену
 function saveShiftRateChanges(modal, block) {
   try {
-    if (!validateRanges(block.dayRanges) || !validateRanges(block.nightRanges)) {
-      showNotification('Диапазоны не должны пересекаться и должны покрывать все значения от 0');
+    const dayRateInput = modal.querySelector('#shift-rate-day');
+    const nightRateInput = modal.querySelector('#shift-rate-night');
+    
+    if (!dayRateInput) return false;
+    
+    block.dayRate = parseFloat(dayRateInput.value) || 0;
+    if (nightRateInput) {
+      block.nightRate = parseFloat(nightRateInput.value) || 0;
+    }
+    
+    if (!validateShiftRate(block)) {
+      showNotification('Некорректные ставки за смену');
       return false;
     }
+    
     return true;
   } catch (error) {
     console.error('Ошибка сохранения ставки за смену:', error);
@@ -756,11 +739,27 @@ function saveShiftRateChanges(modal, block) {
   }
 }
 
+// Валидация ставки за смену
+function validateShiftRate(block) {
+  try {
+    if (!block || typeof block !== 'object') return false;
+    if (typeof block.dayRate !== 'number' || block.dayRate < 0) return false;
+    if (block.nightRate !== undefined && (typeof block.nightRate !== 'number' || block.nightRate < 0)) return false;
+    return true;
+  } catch (error) {
+    console.error('Ошибка валидации ставки за смену:', error);
+    return false;
+  }
+}
+
 // Настройка модального окна для ставки за час
 function setupHourlyRateModal(modal, block) {
   try {
-    setupShiftRateSection(modal, block, 'day', 'day-hourly-ranges', 'add-day-hourly-range');
-    setupShiftRateSection(modal, block, 'night', 'night-hourly-ranges', 'add-night-hourly-range');
+    const dayRateInput = modal.querySelector('#hourly-rate-day');
+    const nightRateInput = modal.querySelector('#hourly-rate-night');
+    
+    if (dayRateInput) dayRateInput.value = block.dayRate || 150;
+    if (nightRateInput) nightRateInput.value = block.nightRate || 0;
   } catch (error) {
     console.error('Ошибка настройки модального окна ставки за час:', error);
   }
@@ -769,13 +768,37 @@ function setupHourlyRateModal(modal, block) {
 // Сохранение изменений ставки за час
 function saveHourlyRateChanges(modal, block) {
   try {
-    if (!validateRanges(block.dayRanges) || !validateRanges(block.nightRanges)) {
-      showNotification('Диапазоны не должны пересекаться и должны покрывать все значения от 0');
+    const dayRateInput = modal.querySelector('#hourly-rate-day');
+    const nightRateInput = modal.querySelector('#hourly-rate-night');
+    
+    if (!dayRateInput) return false;
+    
+    block.dayRate = parseFloat(dayRateInput.value) || 0;
+    if (nightRateInput) {
+      block.nightRate = parseFloat(nightRateInput.value) || 0;
+    }
+    
+    if (!validateHourlyRate(block)) {
+      showNotification('Некорректные ставки за час');
       return false;
     }
+    
     return true;
   } catch (error) {
     console.error('Ошибка сохранения ставки за час:', error);
+    return false;
+  }
+}
+
+// Валидация ставки за час
+function validateHourlyRate(block) {
+  try {
+    if (!block || typeof block !== 'object') return false;
+    if (typeof block.dayRate !== 'number' || block.dayRate < 0) return false;
+    if (block.nightRate !== undefined && (typeof block.nightRate !== 'number' || block.nightRate < 0)) return false;
+    return true;
+  } catch (error) {
+    console.error('Ошибка валидации ставки за час:', error);
     return false;
   }
 }
@@ -1092,9 +1115,6 @@ function generateFunctionalBorderFields(template) {
     }
     
     if (hasShiftRate) {
-      const shiftBlock = template.ruleBlocks.find(block => block.type === 'shiftRate');
-      const hasNightShifts = shiftBlock && Array.isArray(shiftBlock.nightRanges) && shiftBlock.nightRanges.length > 0;
-      
       const shiftGroup = document.createElement('div');
       shiftGroup.className = 'setting-group';
       
@@ -1115,29 +1135,24 @@ function generateFunctionalBorderFields(template) {
       dayLabel.appendChild(dayText);
       shiftGroup.appendChild(dayLabel);
       
-      if (hasNightShifts) {
-        const nightLabel = document.createElement('label');
-        nightLabel.style.display = 'flex';
-        nightLabel.style.alignItems = 'center';
-        nightLabel.style.gap = '10px';
-        nightLabel.style.marginTop = '10px';
-        const nightCheckbox = document.createElement('input');
-        nightCheckbox.type = 'checkbox';
-        nightCheckbox.id = 'functional-border-night-shift';
-        if (template.functionalBorderData.nightShift) nightCheckbox.checked = true;
-        const nightText = document.createTextNode('Ночная смена');
-        nightLabel.appendChild(nightCheckbox);
-        nightLabel.appendChild(nightText);
-        shiftGroup.appendChild(nightLabel);
-      }
+      const nightLabel = document.createElement('label');
+      nightLabel.style.display = 'flex';
+      nightLabel.style.alignItems = 'center';
+      nightLabel.style.gap = '10px';
+      nightLabel.style.marginTop = '10px';
+      const nightCheckbox = document.createElement('input');
+      nightCheckbox.type = 'checkbox';
+      nightCheckbox.id = 'functional-border-night-shift';
+      if (template.functionalBorderData.nightShift) nightCheckbox.checked = true;
+      const nightText = document.createTextNode('Ночная смена');
+      nightLabel.appendChild(nightCheckbox);
+      nightLabel.appendChild(nightText);
+      shiftGroup.appendChild(nightLabel);
       
       container.appendChild(shiftGroup);
     }
     
     if (hasHourlyRate) {
-      const hourlyBlock = template.ruleBlocks.find(block => block.type === 'hourlyRate');
-      const hasNightHours = hourlyBlock && Array.isArray(hourlyBlock.nightRanges) && hourlyBlock.nightRanges.length > 0;
-      
       const hoursGroup = document.createElement('div');
       hoursGroup.className = 'setting-group';
       
@@ -1152,19 +1167,17 @@ function generateFunctionalBorderFields(template) {
       hoursGroup.appendChild(dayLabel);
       hoursGroup.appendChild(dayInput);
       
-      if (hasNightHours) {
-        const nightLabel = document.createElement('label');
-        nightLabel.textContent = 'Ночные часы для обводки:';
-        nightLabel.style.marginTop = '10px';
-        const nightInput = document.createElement('input');
-        nightInput.type = 'number';
-        nightInput.id = 'functional-border-night-hours';
-        nightInput.value = template.functionalBorderData.nightHours || 0;
-        nightInput.min = 0;
-        nightInput.step = 0.5;
-        hoursGroup.appendChild(nightLabel);
-        hoursGroup.appendChild(nightInput);
-      }
+      const nightLabel = document.createElement('label');
+      nightLabel.textContent = 'Ночные часы для обводки:';
+      nightLabel.style.marginTop = '10px';
+      const nightInput = document.createElement('input');
+      nightInput.type = 'number';
+      nightInput.id = 'functional-border-night-hours';
+      nightInput.value = template.functionalBorderData.nightHours || 0;
+      nightInput.min = 0;
+      nightInput.step = 0.5;
+      hoursGroup.appendChild(nightLabel);
+      hoursGroup.appendChild(nightInput);
       
       container.appendChild(hoursGroup);
     }
