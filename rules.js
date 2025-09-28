@@ -1,3 +1,4 @@
+
 // FILE: rules.js
 // Функции для работы с блоками правил и расчетов
 
@@ -150,26 +151,22 @@ function calculateShiftRateIncome(calendarData, template, year, month) {
     
     if (!shiftBlock) return 0;
     
-    let dayShiftsCount = 0;
-    let nightShiftsCount = 0;
-    
-    // Считаем общее количество смен за месяц
+    // Для каждого дня считаем доход отдельно с учетом индивидуальных ставок
     for (let day = 1; day <= monthDays; day++) {
       const dateKey = `${year}-${month+1}-${day}`;
       const dayData = calendarData[dateKey] || {};
       
-      if (dayData.dayShift) dayShiftsCount++;
-      if (dayData.nightShift) nightShiftsCount++;
-    }
-    
-    // Применяем ставки для дневных смен
-    if (shiftBlock.dayRate) {
-      totalIncome += dayShiftsCount * (shiftBlock.dayRate || 0);
-    }
-    
-    // Применяем ставки для ночных смен
-    if (shiftBlock.nightRate) {
-      totalIncome += nightShiftsCount * (shiftBlock.nightRate || 0);
+      if (dayData.dayShift) {
+        // Используем индивидуальную ставку если задана и больше 0, иначе ставку из шаблона
+        const dayRate = (dayData.customDayShiftRate > 0) ? dayData.customDayShiftRate : shiftBlock.dayRate;
+        totalIncome += dayRate || 0;
+      }
+      
+      if (dayData.nightShift) {
+        // Используем индивидуальную ставку если задана и больше 0, иначе ставку из шаблона
+        const nightRate = (dayData.customNightShiftRate > 0) ? dayData.customNightShiftRate : shiftBlock.nightRate;
+        totalIncome += nightRate || 0;
+      }
     }
     
     return Math.round(totalIncome * 100) / 100;
@@ -193,26 +190,22 @@ function calculateHourlyRateIncome(calendarData, template, year, month) {
     
     if (!hourlyBlock) return 0;
     
-    let totalDayHours = 0;
-    let totalNightHours = 0;
-    
-    // Суммируем часы за месяц
+    // Для каждого дня считаем доход отдельно с учетом индивидуальных ставок
     for (let day = 1; day <= monthDays; day++) {
       const dateKey = `${year}-${month+1}-${day}`;
       const dayData = calendarData[dateKey] || {};
       
-      if (dayData.dayHours) totalDayHours += parseFloat(dayData.dayHours) || 0;
-      if (dayData.nightHours) totalNightHours += parseFloat(dayData.nightHours) || 0;
-    }
-    
-    // Применяем ставки для дневных часов
-    if (hourlyBlock.dayRate) {
-      totalIncome += totalDayHours * (hourlyBlock.dayRate || 0);
-    }
-    
-    // Применяем ставки для ночных часов
-    if (hourlyBlock.nightRate) {
-      totalIncome += totalNightHours * (hourlyBlock.nightRate || 0);
+      if (dayData.dayHours && dayData.dayHours > 0) {
+        // Используем индивидуальную ставку если задана и больше 0, иначе ставку из шаблона
+        const dayRate = (dayData.customDayHourlyRate > 0) ? dayData.customDayHourlyRate : hourlyBlock.dayRate;
+        totalIncome += dayData.dayHours * (dayRate || 0);
+      }
+      
+      if (dayData.nightHours && dayData.nightHours > 0) {
+        // Используем индивидуальную ставку если задана и больше 0, иначе ставку из шаблона
+        const nightRate = (dayData.customNightHourlyRate > 0) ? dayData.customNightHourlyRate : hourlyBlock.nightRate;
+        totalIncome += dayData.nightHours * (nightRate || 0);
+      }
     }
     
     return Math.round(totalIncome * 100) / 100;
@@ -602,7 +595,7 @@ function calculateMonthlySummary(calendarData, template, year, month) {
       deductions += taxAmount;
     }
     
-    // УЧИТЫВАЕМ ФИКСИРОВАННЫЕ ВЫЧЕТЫ ИЗ ШАБЛОНА И ИЗ ДНЕЙ
+    // УЧИТЫВАЕМ ФИКСИРОВАННЫЕ ВЫЧЕТЫ ИЗ ШАБЛОна И ИЗ ДНЕЙ
     let templateDeduction = getFixedDeductionAmount(template);
     let dayDeductions = calculateDayDeductions(calendarData, year, month);
     let totalDeductionAmount = templateDeduction + dayDeductions;
