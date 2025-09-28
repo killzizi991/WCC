@@ -1,4 +1,3 @@
-
 // FILE: rules.js
 // Функции для работы с блоками правил и расчетов
 
@@ -29,7 +28,6 @@ function calculateProgressiveEarnings(sales, ranges) {
     return 0;
   }
 
-  // Сортируем диапазоны по полю from
   const sortedRanges = [...ranges].sort((a, b) => a.from - b.from);
 
   let totalEarnings = 0;
@@ -38,10 +36,8 @@ function calculateProgressiveEarnings(sales, ranges) {
   for (const range of sortedRanges) {
     if (remainingSales <= 0) break;
 
-    // Определяем верхнюю границу диапазона
     const rangeEnd = range.to === null ? Infinity : range.to;
     
-    // Определяем, какая часть продаж попадает в текущий диапазон
     let amountInRange;
     if (remainingSales <= rangeEnd - range.from) {
       amountInRange = remainingSales;
@@ -49,7 +45,6 @@ function calculateProgressiveEarnings(sales, ranges) {
       amountInRange = rangeEnd - range.from;
     }
 
-    // Если amountInRange положительное, то добавляем earnings для этой части
     if (amountInRange > 0) {
       totalEarnings += amountInRange * (range.percent / 100);
       remainingSales -= amountInRange;
@@ -121,16 +116,14 @@ function calculateSalesPercentIncome(calendarData, template, year, month) {
         const sales = parseFloat(dayData.sales) || 0;
         
         if (typeof dayData.customSalesPercent === 'number') {
-          // Используем индивидуальный процент (простая модель)
           totalIncome += calculateEarnings(sales, dayData.customSalesPercent);
         } else {
-          // Используем прогрессивную модель с диапазонами
           totalIncome += calculateProgressiveEarnings(sales, salesBlock.ranges);
         }
       }
     }
     
-    return Math.round(totalIncome * 100) / 100; // Округление до копеек
+    return Math.round(totalIncome * 100) / 100;
   } catch (error) {
     console.error('Ошибка расчета дохода с продаж:', error);
     return 0;
@@ -151,19 +144,16 @@ function calculateShiftRateIncome(calendarData, template, year, month) {
     
     if (!shiftBlock) return 0;
     
-    // Для каждого дня считаем доход отдельно с учетом индивидуальных ставок
     for (let day = 1; day <= monthDays; day++) {
       const dateKey = `${year}-${month+1}-${day}`;
       const dayData = calendarData[dateKey] || {};
       
       if (dayData.dayShift) {
-        // Используем индивидуальную ставку если задана и больше 0, иначе ставку из шаблона
         const dayRate = (dayData.customDayShiftRate > 0) ? dayData.customDayShiftRate : shiftBlock.dayRate;
         totalIncome += dayRate || 0;
       }
       
       if (dayData.nightShift) {
-        // Используем индивидуальную ставку если задана и больше 0, иначе ставку из шаблона
         const nightRate = (dayData.customNightShiftRate > 0) ? dayData.customNightShiftRate : shiftBlock.nightRate;
         totalIncome += nightRate || 0;
       }
@@ -190,19 +180,16 @@ function calculateHourlyRateIncome(calendarData, template, year, month) {
     
     if (!hourlyBlock) return 0;
     
-    // Для каждого дня считаем доход отдельно с учетом индивидуальных ставок
     for (let day = 1; day <= monthDays; day++) {
       const dateKey = `${year}-${month+1}-${day}`;
       const dayData = calendarData[dateKey] || {};
       
       if (dayData.dayHours && dayData.dayHours > 0) {
-        // Используем индивидуальную ставку если задана и больше 0, иначе ставку из шаблона
         const dayRate = (dayData.customDayHourlyRate > 0) ? dayData.customDayHourlyRate : hourlyBlock.dayRate;
         totalIncome += dayData.dayHours * (dayRate || 0);
       }
       
       if (dayData.nightHours && dayData.nightHours > 0) {
-        // Используем индивидуальную ставку если задана и больше 0, иначе ставку из шаблона
         const nightRate = (dayData.customNightHourlyRate > 0) ? dayData.customNightHourlyRate : hourlyBlock.nightRate;
         totalIncome += dayData.nightHours * (nightRate || 0);
       }
@@ -244,7 +231,6 @@ function calculateOvertimeAdjustment(calendarData, template, year, month, baseIn
       
       if (totalShifts > overtimeBlock.limit) {
         const overtimeShifts = totalShifts - overtimeBlock.limit;
-        // Используем среднюю ставку за смену для расчета сверхурочных
         const averageShiftRate = totalShifts > 0 ? baseIncome / totalShifts : 0;
         overtimeAmount = overtimeShifts * averageShiftRate * (overtimeBlock.multiplier - 1);
       }
@@ -261,7 +247,6 @@ function calculateOvertimeAdjustment(calendarData, template, year, month, baseIn
       
       if (totalHours > overtimeBlock.limit) {
         const overtimeHours = totalHours - overtimeBlock.limit;
-        // Используем среднюю ставку за час для расчета сверхурочных
         const averageHourlyRate = totalHours > 0 ? baseIncome / totalHours : 0;
         overtimeAmount = overtimeHours * averageHourlyRate * (overtimeBlock.multiplier - 1);
       }
@@ -554,7 +539,6 @@ function calculateMonthlySummary(calendarData, template, year, month) {
     let adjustments = 0;
     let deductions = 0;
     
-    // 1. РАСЧЕТ БАЗОВОГО ДОХОДА
     if (template.ruleBlocks.some(block => block.type === 'salesPercent')) {
       baseIncome += calculateSalesPercentIncome(calendarData, template, year, month);
     }
@@ -567,14 +551,12 @@ function calculateMonthlySummary(calendarData, template, year, month) {
       baseIncome += calculateHourlyRateIncome(calendarData, template, year, month);
     }
     
-    // 2. ПРИМЕНЕНИЕ КОРРЕКТИРОВОК
     let overtimeAmount = 0;
     if (template.ruleBlocks.some(block => block.type === 'overtime')) {
       overtimeAmount = calculateOvertimeAdjustment(calendarData, template, year, month, baseIncome);
       adjustments += overtimeAmount;
     }
     
-    // УЧИТЫВАЕМ БОНУСЫ ИЗ ШАБЛОНА И ИЗ ДНЕЙ
     let templateBonus = getBonusAmount(template);
     let dayBonuses = calculateDayBonuses(calendarData, year, month);
     let totalBonusAmount = templateBonus + dayBonuses;
@@ -582,7 +564,6 @@ function calculateMonthlySummary(calendarData, template, year, month) {
     
     const totalIncome = baseIncome + adjustments;
     
-    // 3. ПРИМЕНЕНИЕ ВЫЧЕТОВ
     let advanceAmount = 0;
     if (template.ruleBlocks.some(block => block.type === 'advance')) {
       advanceAmount = calculateAdvanceDeduction(template, totalIncome);
@@ -595,22 +576,18 @@ function calculateMonthlySummary(calendarData, template, year, month) {
       deductions += taxAmount;
     }
     
-    // УЧИТЫВАЕМ ФИКСИРОВАННЫЕ ВЫЧЕТЫ ИЗ ШАБЛОна И ИЗ ДНЕЙ
     let templateDeduction = getFixedDeductionAmount(template);
     let dayDeductions = calculateDayDeductions(calendarData, year, month);
     let totalDeductionAmount = templateDeduction + dayDeductions;
     deductions += totalDeductionAmount;
     
-    // ИТОГОВЫЙ РАСЧЕТ
     const finalSalary = Math.max(0, totalIncome - deductions);
     
-    // ДОПОЛНИТЕЛЬНЫЕ ПОКАЗАТЕЛИ
     const workDays = countWorkDays(calendarData, template, year, month);
     const totalSales = calculateTotalSales(calendarData, year, month);
     const hours = calculateTotalHours(calendarData, year, month);
     const shifts = calculateTotalShifts(calendarData, year, month);
     
-    // Расчет зарплаты до бонусов и до вычетов
     const salaryBeforeBonuses = Math.max(0, (baseIncome + overtimeAmount) - advanceAmount - taxAmount);
     const salaryBeforeDeductions = Math.max(0, totalIncome - advanceAmount - taxAmount);
     
@@ -672,7 +649,6 @@ function updateFunctionalBorders(calendarData, newFunctionalBorderData) {
       if (calendarData[dateKey].functionalBorder) {
         const dayData = calendarData[dateKey];
         
-        // Обновляем данные дня в соответствии с активными блоками
         if (newFunctionalBorderData.sales !== undefined) {
           dayData.sales = newFunctionalBorderData.sales;
         }
@@ -689,7 +665,6 @@ function updateFunctionalBorders(calendarData, newFunctionalBorderData) {
           dayData.nightHours = newFunctionalBorderData.nightHours;
         }
         
-        // Обновляем данные функциональной обводки
         dayData.functionalBorderData = {...newFunctionalBorderData};
         updated = true;
       }
@@ -793,19 +768,17 @@ function hasConflict(newBlock, existingBlocks) {
     return false;
   } catch (error) {
     console.error('Ошибка проверки конфликтов блоков:', error);
-    return true; // В случае ошибки считаем, что конфликт есть
+    return true;
   }
 }
 
 // Валидация диапазонов
 function validateRanges(ranges) {
   try {
-    // Проверка на пустые диапазоны
     if (!Array.isArray(ranges) || ranges.length === 0) {
       return false;
     }
 
-    // Проверка каждого диапазона на корректность
     for (let i = 0; i < ranges.length; i++) {
       const range = ranges[i];
       
@@ -813,7 +786,6 @@ function validateRanges(ranges) {
         return false;
       }
       
-      // Проверка корректности значений
       if (range.from === null || range.from === undefined || range.from < 0) {
         return false;
       }
@@ -824,7 +796,6 @@ function validateRanges(ranges) {
         }
       }
       
-      // Проверка значения процента/ставки
       if (range.percent !== undefined && (range.percent < 0 || range.percent > 100)) {
         return false;
       }
@@ -833,11 +804,9 @@ function validateRanges(ranges) {
         return false;
       }
 
-      // Проверка пересечения с другими диапазонами
       for (let j = i + 1; j < ranges.length; j++) {
         const otherRange = ranges[j];
         
-        // Если один из диапазонов бесконечный, они не должны пересекаться по началу
         if (range.to === null || otherRange.to === null) {
           if (range.from === otherRange.from) {
             return false;
@@ -845,7 +814,6 @@ function validateRanges(ranges) {
           continue;
         }
         
-        // Проверка пересечения конечных диапазонов
         if ((range.from >= otherRange.from && range.from < otherRange.to) ||
             (range.to > otherRange.from && range.to <= otherRange.to) ||
             (otherRange.from >= range.from && otherRange.from < range.to) ||
@@ -855,13 +823,12 @@ function validateRanges(ranges) {
       }
     }
     
-    // Проверка покрытия всех значений (от 0 до бесконечности)
     let coveredFrom = 0;
     const sortedRanges = [...ranges].sort((a, b) => a.from - b.from);
     
     for (const range of sortedRanges) {
       if (range.from > coveredFrom) {
-        return false; // Есть непокрытый промежуток
+        return false;
       }
       coveredFrom = range.to === null ? Infinity : range.to;
     }
