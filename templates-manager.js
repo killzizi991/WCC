@@ -1,3 +1,4 @@
+
 // Показать модальное окно шаблонов
 function showTemplatesModal() {
   try {
@@ -185,9 +186,9 @@ function createNewTemplate() {
       ruleBlocks: [],
       functionalBorderData: {
         sales: 30000,
-        dayShift: false,
+        dayShift: true,
         nightShift: false,
-        dayHours: 0,
+        dayHours: 8,
         nightHours: 0
       },
       calendarData: {}
@@ -1027,7 +1028,7 @@ function saveTemplateChanges() {
     if (hasShiftRate) {
       const dayShiftCheckbox = document.getElementById('functional-border-day-shift');
       if (dayShiftCheckbox) {
-        template.functionalBorderData.dayShift = dayShiftCheckbox.checked || false;
+        template.functionalBorderData.dayShift = dayShiftCheckbox.checked || true;
       }
       
       const nightCheckbox = document.getElementById('functional-border-night-shift');
@@ -1039,7 +1040,7 @@ function saveTemplateChanges() {
     if (hasHourlyRate) {
       const dayHoursInput = document.getElementById('functional-border-day-hours');
       if (dayHoursInput) {
-        template.functionalBorderData.dayHours = parseFloat(dayHoursInput.value) || 0;
+        template.functionalBorderData.dayHours = parseFloat(dayHoursInput.value) || 8;
       }
       
       const nightHoursInput = document.getElementById('functional-border-night-hours');
@@ -1104,7 +1105,11 @@ function generateFunctionalBorderFields(template) {
       const dayCheckbox = document.createElement('input');
       dayCheckbox.type = 'checkbox';
       dayCheckbox.id = 'functional-border-day-shift';
-      if (template.functionalBorderData.dayShift) dayCheckbox.checked = true;
+      if (template.functionalBorderData.dayShift !== undefined) {
+        dayCheckbox.checked = template.functionalBorderData.dayShift;
+      } else {
+        dayCheckbox.checked = true; // Значение по умолчанию
+      }
       const dayText = document.createTextNode('Дневная смена');
       dayLabel.appendChild(dayCheckbox);
       dayLabel.appendChild(dayText);
@@ -1141,7 +1146,7 @@ function generateFunctionalBorderFields(template) {
       const dayInput = document.createElement('input');
       dayInput.type = 'number';
       dayInput.id = 'functional-border-day-hours';
-      dayInput.value = template.functionalBorderData.dayHours || 0;
+      dayInput.value = template.functionalBorderData.dayHours !== undefined ? template.functionalBorderData.dayHours : 8;
       dayInput.min = 0;
       dayInput.step = 0.5;
       hoursGroup.appendChild(dayLabel);
