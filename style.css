@@ -192,6 +192,26 @@ button:active {
     text-shadow: 0 0 1px #000, 0 0 1px #000, 0 0 1px #000, 0 0 1px #000;
 }
 
+.day-hours {
+    font-size: 1rem;
+    color: #2c3e50;
+    word-break: break-word;
+    font-weight: 500;
+    text-shadow: 0 0 1px #000, 0 0 1px #000, 0 0 1px #000, 0 0 1px #000;
+}
+
+.day-data-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.day-sales.small,
+.day-hours.small {
+    font-size: 0.5em;
+    line-height: 1;
+}
+
 .day-comment {
     position: absolute;
     top: 5px;
@@ -496,6 +516,15 @@ input:focus, textarea:focus {
         font-size: 0.95rem;
     }
     
+    .day-hours {
+        font-size: 0.95rem;
+    }
+    
+    .day-sales.small,
+    .day-hours.small {
+        font-size: 0.45em;
+    }
+    
     .modal-content {
         margin: 8% auto;
         width: 95%;
@@ -542,6 +571,15 @@ input:focus, textarea:focus {
     
     .day-sales {
         font-size: 0.9rem;
+    }
+    
+    .day-hours {
+        font-size: 0.9rem;
+    }
+    
+    .day-sales.small,
+    .day-hours.small {
+        font-size: 0.4em;
     }
     
     .period-options {
@@ -603,6 +641,15 @@ input:focus, textarea:focus {
     
     .day-sales {
         font-size: 0.8rem;
+    }
+    
+    .day-hours {
+        font-size: 0.8rem;
+    }
+    
+    .day-sales.small,
+    .day-hours.small {
+        font-size: 0.35em;
     }
 }
 
@@ -680,6 +727,11 @@ input:focus, textarea:focus {
     }
     
     .day-sales {
+        color: #e9ecef;
+        text-shadow: 0 0 1px #000, 0 0 1px #000, 0 0 1px #000, 0 0 1px #000;
+    }
+    
+    .day-hours {
         color: #e9ecef;
         text-shadow: 0 0 1px #000, 0 0 1px #000, 0 0 1px #000, 0 0 1px #000;
     }
