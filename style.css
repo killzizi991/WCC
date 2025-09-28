@@ -1,3 +1,5 @@
+// FILE: style.css
+[file content begin]
 /* Сброс стилей */
 * {
     margin: 0;
@@ -886,6 +888,27 @@ input:focus, textarea:focus {
         border-color: #5a6c7d;
         color: #e9ecef;
     }
+
+    /* Стили для настроек дня */
+    #day-settings {
+        background: #3b3e45 !important;
+        color: #e9ecef !important;
+        border-color: #4a4d55 !important;
+    }
+
+    #day-settings h4 {
+        color: #e9ecef !important;
+    }
+
+    #day-settings .setting-group label {
+        color: #e9ecef !important;
+    }
+
+    #day-settings input {
+        background: #2d3035 !important;
+        border-color: #5a6c7d !important;
+        color: #e9ecef !important;
+    }
 }
 
 /* Улучшенная поддержка мобильных устройств */
@@ -980,23 +1003,6 @@ textarea:focus-visible {
     border: 1px solid #e2e8f0;
 }
 
-@media (prefers-color-scheme: dark) {
-    .help-question {
-        background-color: #3b3e45 !important;
-        color: #e9ecef !important;
-    }
-    
-    .help-answer {
-        background-color: #2d3035 !important;
-        color: #e9ecef !important;
-        border-color: #4a4d55 !important;
-    }
-
-    .help-item {
-        border-bottom-color: #4a4d55 !important;
-    }
-}
-
 /* Стили для выпадающего списка шаблонов */
 #template-dropdown {
     background: white;
@@ -1022,18 +1028,57 @@ textarea:focus-visible {
     border-bottom: none;
 }
 
-@media (prefers-color-scheme: dark) {
-    #template-dropdown {
-        background: #2d3035;
-        border-color: #4a4d55;
-    }
-    
-    #template-dropdown div {
-        color: #e9ecef;
-        border-bottom-color: #4a4d55;
-    }
-    
-    #template-dropdown div:hover {
-        background-color: #3b3e45;
-    }
+/* Стили для блоков правил */
+.rule-block-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    border: 1px solid #e2e8f0;
 }
+
+.rule-block-item:hover {
+    background-color: #e9ecef;
+}
+
+/* Стили для выпадающего списка блоков правил */
+.rule-block-dropdown {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 5px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.rule-block-dropdown div {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.rule-block-dropdown div:hover {
+    background-color: #f8fafc;
+}
+
+.rule-block-dropdown div:last-child {
+    border-bottom: none;
+}
+
+/* Стили для настроек дня */
+#day-settings {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    border: 1px solid #e2e8f0;
+}
+
+#day-settings h4 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+[file content end]
