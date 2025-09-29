@@ -1,3 +1,4 @@
+// FILE: calendar-manager.js
 // Генерация календаря
 function generateCalendar() {
     const calendar = document.getElementById('calendar');
@@ -25,6 +26,10 @@ function generateCalendar() {
     const template = getCurrentTemplate();
     const hasSalesPercent = template.ruleBlocks.some(block => block.type === 'salesPercent');
     const hasHourlyRate = template.ruleBlocks.some(block => block.type === 'hourlyRate');
+    const hasShiftRate = template.ruleBlocks.some(block => block.type === 'shiftRate');
+    
+    // Проверяем условия для показа индикаторов смен
+    const showShiftIndicators = hasShiftRate && (!hasSalesPercent || !hasHourlyRate);
     
     for (let day = 1; day <= lastDay.getDate(); day++) {
         const dayElement = document.createElement('div');
@@ -73,6 +78,26 @@ function generateCalendar() {
             ${contentHTML}
         `;
         
+        // Добавляем индикаторы смен если выполняются условия
+        if (showShiftIndicators) {
+            const shiftIndicators = document.createElement('div');
+            shiftIndicators.className = 'shift-indicators';
+            
+            if (dayData.dayShift) {
+                const dayShiftIndicator = document.createElement('div');
+                dayShiftIndicator.className = 'shift-indicator day-shift';
+                shiftIndicators.appendChild(dayShiftIndicator);
+            }
+            
+            if (dayData.nightShift) {
+                const nightShiftIndicator = document.createElement('div');
+                nightShiftIndicator.className = 'shift-indicator night-shift';
+                shiftIndicators.appendChild(nightShiftIndicator);
+            }
+            
+            dayElement.appendChild(shiftIndicators);
+        }
+        
         if (dayData.color) {
             if (dayData.color === '#ffffff') {
                 dayElement.style.backgroundColor = '';
@@ -113,27 +138,6 @@ function generateCalendar() {
         `${monthNames[currentMonth]} ${currentYear}`;
     
     calculateSummaryDisplay();
-}
-
-// Расчеты для отображения
-function calculateSummaryDisplay() {
-    const template = getCurrentTemplate();
-    const currentCalendarData = getCurrentCalendarData();
-    const summary = calculateMonthlySummary(currentCalendarData, template, currentYear, currentMonth);
-    
-    document.getElementById('modal-work-days').textContent = summary.workDays;
-    document.getElementById('modal-total-earned').textContent = summary.totalIncome.toLocaleString();
-    document.getElementById('modal-salary').textContent = summary.finalSalary.toLocaleString();
-    document.getElementById('summary-month-year').textContent = 
-        `${new Date(currentYear, currentMonth).toLocaleString('ru', { month: 'long' })} ${currentYear}`;
-    
-    const advanceRow = document.getElementById('advance-row');
-    const hasAdvance = template.ruleBlocks.some(block => block.type === 'advance');
-    advanceRow.style.display = hasAdvance ? 'block' : 'none';
-    
-    if (hasAdvance) {
-        document.getElementById('modal-advance').textContent = calculateAdvanceDeduction(template, summary.totalIncome).toLocaleString();
-    }
 }
 
 // Обработчик клика по дню
