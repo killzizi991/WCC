@@ -264,7 +264,7 @@ button:active {
     border-radius: 8px;
     width: 95%;
     max-width: 380px;
-    max-height: 90vh;
+    max-height: 85vh;
     overflow-y: auto;
     position: relative;
     animation: slideIn 0.3s ease;
@@ -284,8 +284,8 @@ button:active {
     font-weight: bold;
     cursor: pointer;
     position: absolute;
-    top: 10px;
-    right: 15px;
+    top: 15px;
+    right: 20px;
 }
 
 .close:hover {
@@ -450,32 +450,9 @@ input:focus, textarea:focus {
     color: #4a6cf7;
 }
 
-/* Оптимизация для мобильных устройств */
 @media (max-width: 768px) {
     body {
         padding: 10px;
-    }
-    
-    .header {
-        padding: 10px;
-        margin-bottom: 15px;
-    }
-    
-    .header-container {
-        margin-bottom: 8px;
-    }
-    
-    #current-month-year {
-        font-size: 1.1rem;
-    }
-    
-    .tools-container {
-        gap: 8px;
-    }
-    
-    button {
-        padding: 10px 14px;
-        font-size: 0.85rem;
     }
     
     .calendar {
@@ -484,28 +461,31 @@ input:focus, textarea:focus {
     
     .day {
         min-height: 70px;
-        padding: 8px;
+        padding: 10px;
     }
     
     .day-number {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
     }
     
     .day-sales {
-        font-size: 0.85rem;
+        font-size: 0.95rem;
     }
     
     .modal-content {
         margin: 1% auto;
-        padding: 15px;
         width: 98%;
+        padding: 15px;
         max-width: 360px;
     }
     
-    .close {
-        top: 8px;
-        right: 12px;
-        font-size: 22px;
+    .header {
+        padding: 12px;
+    }
+    
+    button {
+        padding: 10px 16px;
+        font-size: 0.85rem;
     }
     
     .period-options {
@@ -513,60 +493,38 @@ input:focus, textarea:focus {
     }
     
     .palette-tool {
-        width: 35px;
-        height: 35px;
-    }
-    
-    .palette-panel {
-        padding: 10px;
-    }
-    
-    input, textarea {
-        padding: 10px;
-        font-size: 16px; /* Предотвращает масштабирование в iOS */
-    }
-    
-    .summary-results {
-        padding: 15px;
-    }
-    
-    .summary-results p {
-        font-size: 0.9rem;
+        width: 36px;
+        height: 36px;
     }
 }
 
 @media (max-width: 480px) {
-    body {
-        padding: 8px;
-    }
-    
     .header-container {
         flex-wrap: wrap;
     }
     
     .tools-container {
         width: 100%;
-        margin-top: 8px;
-        justify-content: space-between;
+        margin-top: 10px;
     }
     
     .day {
         min-height: 60px;
-        padding: 6px;
+        padding: 8px;
     }
     
     .day-number {
-        font-size: 0.85rem;
+        font-size: 0.9rem;
     }
     
     .day-sales {
-        font-size: 0.8rem;
+        font-size: 0.9rem;
     }
     
     .modal-content {
         margin: 0.5% auto;
-        padding: 12px;
         width: 99%;
+        padding: 12px;
         max-width: 340px;
     }
     
@@ -575,72 +533,32 @@ input:focus, textarea:focus {
     }
     
     .palette-panel {
-        padding: 8px;
+        padding: 12px;
     }
     
     .palette-tools {
-        gap: 6px;
+        gap: 8px;
     }
     
     .palette-tool {
-        width: 30px;
-        height: 30px;
-        font-size: 0.9rem;
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
     }
     
     #current-month-year {
         font-size: 1rem;
     }
-    
-    .color-picker {
-        gap: 8px;
-    }
-    
-    .color-option {
-        width: 28px;
-        height: 28px;
-    }
-    
-    .setting-group {
-        margin: 12px 0;
-    }
-    
-    .setting-group label {
-        font-size: 0.9rem;
-    }
 }
 
-/* Оптимизация для очень маленьких экранов */
-@media (max-width: 360px) {
+@media (max-width: 400px) {
+    #current-month-year {
+        font-size: 0.9rem;
+    }
+    
     .modal-content {
         padding: 10px;
         max-width: 320px;
-    }
-    
-    .day {
-        min-height: 55px;
-        padding: 4px;
-    }
-    
-    .day-number {
-        font-size: 0.8rem;
-    }
-    
-    .day-sales {
-        font-size: 0.75rem;
-    }
-    
-    button {
-        padding: 8px 12px;
-        font-size: 0.8rem;
-    }
-    
-    .header {
-        padding: 8px;
-    }
-    
-    #current-month-year {
-        font-size: 0.9rem;
     }
 }
 
@@ -675,7 +593,7 @@ input:focus, textarea:focus {
     }
     
     .modal-content {
-        margin: 1% auto;
+        margin: 0.5% auto;
         max-height: 95vh;
     }
 }
@@ -686,32 +604,13 @@ input:focus, textarea:focus {
     }
     
     .modal-content {
-        margin: 1% auto;
-        max-height: 95vh;
+        max-height: 90vh;
     }
 }
 
 @media (min-height: 1000px) {
     .day {
         min-height: 90px;
-    }
-}
-
-/* Специфичные стили для iOS */
-@supports (-webkit-touch-callout: none) {
-    input, textarea, select {
-        font-size: 16px; /* Предотвращает масштабирование в iOS */
-    }
-    
-    .modal-content {
-        -webkit-overflow-scrolling: touch;
-    }
-}
-
-/* Специфичные стили для Android */
-@supports not (-webkit-touch-callout: none) {
-    .modal-content {
-        scroll-behavior: smooth;
     }
 }
 
@@ -997,10 +896,10 @@ input:focus, textarea:focus {
 
 @supports (padding: max(0px)) {
     body {
-        padding-left: max(8px, env(safe-area-inset-left));
-        padding-right: max(8px, env(safe-area-inset-right));
-        padding-top: max(8px, env(safe-area-inset-top));
-        padding-bottom: max(8px, env(safe-area-inset-bottom));
+        padding-left: max(10px, env(safe-area-inset-left));
+        padding-right: max(10px, env(safe-area-inset-right));
+        padding-top: max(10px, env(safe-area-inset-top));
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
     }
     
     .modal-content {
@@ -1037,6 +936,12 @@ input:focus-visible,
 textarea:focus-visible {
     outline: 2px solid #4a6cf7;
     outline-offset: 2px;
+}
+
+@supports (-webkit-touch-callout: none) {
+    input, textarea {
+        font-size: 16px;
+    }
 }
 
 .notification {
