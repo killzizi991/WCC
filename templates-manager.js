@@ -1,3 +1,4 @@
+
 // FILE: templates-manager.js
 // Показать модальное окно шаблонов
 function showTemplatesModal() {
@@ -185,7 +186,7 @@ function createNewTemplate() {
             ruleBlocks: [],
             functionalBorderData: {
                 sales: 30000,
-                dayShift: true,
+                dayShift: false,
                 nightShift: false,
                 dayHours: 8,
                 nightHours: 0
@@ -1038,7 +1039,7 @@ function saveTemplateChanges() {
         if (hasShiftRate) {
             const dayShiftCheckbox = document.getElementById('functional-border-day-shift');
             if (dayShiftCheckbox) {
-                template.functionalBorderData.dayShift = dayShiftCheckbox.checked || true;
+                template.functionalBorderData.dayShift = dayShiftCheckbox.checked;
             }
             
             const nightCheckbox = document.getElementById('functional-border-night-shift');
@@ -1060,7 +1061,7 @@ function saveTemplateChanges() {
         }
         
         saveToStorage('appSettings', appSettings);
-        closeModal();
+        closeAllModals();
         showNotification('Изменения шаблона сохранены');
     } catch (error) {
         console.error('Ошибка сохранения изменений шаблона:', error);
@@ -1114,7 +1115,7 @@ function generateFunctionalBorderFields(template) {
             if (template.functionalBorderData.dayShift !== undefined) {
                 dayCheckbox.checked = template.functionalBorderData.dayShift;
             } else {
-                dayCheckbox.checked = true;
+                dayCheckbox.checked = false;
             }
             const dayText = document.createTextNode('Дневная смена');
             dayLabel.appendChild(dayCheckbox);
