@@ -124,8 +124,8 @@ function setupEventListeners() {
     });
     document.getElementById('import-text-btn').addEventListener('click', importFromText);
     
-    document.getElementById('clear-all-data-btn').addEventListener('click', clearAllData);
-    document.getElementById('clear-template-data-btn').addEventListener('click', clearCurrentTemplateData);
+    document.getElementById('clear-all-data-btn').addEventListener('click', showClearAllDataConfirm);
+    document.getElementById('clear-template-data-btn').addEventListener('click', showClearTemplateDataConfirm);
     
     document.getElementById('detailed-data-btn').addEventListener('click', toggleDetailedData);
     document.getElementById('close-report').addEventListener('click', () => {
@@ -148,44 +148,95 @@ function saveSettings() {
     showNotification('Настройки сохранены');
 }
 
+// Показать подтверждение очистки всех данных
+function showClearAllDataConfirm() {
+    showConfirmModal(
+        'Очистка всех данных',
+        'Вы уверены, что хотите удалить все данные? Это действие нельзя отменить. Будут удалены все шаблоны (кроме основного) и все данные календаря.',
+        clearAllData
+    );
+}
+
+// Показать подтверждение очистки данных шаблона
+function showClearTemplateDataConfirm() {
+    const currentTemplate = getCurrentTemplate();
+    const templateName = currentTemplate.name;
+    
+    showConfirmModal(
+        'Очистка данных шаблона',
+        `Вы уверены, что хотите удалить все данные шаблона "${templateName}"? Это действие нельзя отменить.`,
+        clearCurrentTemplateData
+    );
+}
+
 // Функция очистки всех данных
 function clearAllData() {
-    if (confirm('Вы уверены, что хотите удалить все данные? Это действие нельзя отменить. Будут удалены все шаблоны (кроме основного) и все данные календаря.')) {
-        const defaultTemplate = appSettings.templates['default'];
-        
-        appSettings.templates = {
-            'default': {
-                ...defaultTemplate,
-                calendarData: {}
-            }
-        };
-        
-        appSettings.currentTemplateId = 'default';
-        
-        saveToStorage('appSettings', appSettings);
-        
-        generateCalendar();
-        
-        closeModal();
-        
-        showNotification('Все данные успешно очищены');
-    }
+    const defaultTemplate = appSettings.templates['default'];
+    
+    appSettings.templates = {
+        'default': {
+            ...defaultTemplate,
+            calendarData: {}
+        }
+    };
+    
+    appSettings.currentTemplateId = 'default';
+    
+    saveToStorage('appSettings', appSettings);
+    
+    generateCalendar();
+    
+    closeModal();
+    
+    showNotification('Все данные успешно очищены');
 }
 
 // Функция очистки данных текущего шаблона
 function clearCurrentTemplateData() {
     const currentTemplate = getCurrentTemplate();
-    const templateName = currentTemplate.name;
     
-    if (confirm(`Вы уверены, что хотите удалить все данные шаблона "${templateName}"? Это действие нельзя отменить.`)) {
-        currentTemplate.calendarData = {};
-        
-        saveToStorage('appSettings', appSettings);
-        
-        generateCalendar();
-        
-        showNotification(`Данные шаблона "${templateName}" успешно очищены`);
+    currentTemplate.calendarData = {};
+    
+    saveToStorage('appSettings', appSettings);
+    
+    generateCalendar();
+    
+    showNotification(`Данные шаблона "${currentTemplate.name}" успешно очищены`);
+}
+
+// Показать модальное окно подтверждения
+function showConfirmModal(title, message, onConfirm) {
+    const modal = document.getElementById('confirm-modal');
+    if (!modal) {
+        console.error('Confirm modal not found');
+        if (onConfirm) onConfirm();
+        return;
     }
+    
+    document.getElementById('confirm-modal-title').textContent = title;
+    document.getElementById('confirm-modal-message').textContent = message;
+    
+    const confirmButton = document.getElementById('confirm-modal-confirm');
+    const cancelButton = document.getElementById('confirm-modal-cancel');
+    
+    // Удаляем предыдущие обработчики
+    const newConfirmButton = confirmButton.cloneNode(true);
+    const newCancelButton = cancelButton.cloneNode(true);
+    
+    confirmButton.parentNode.replaceChild(newConfirmButton, confirmButton);
+    cancelButton.parentNode.replaceChild(newCancelButton, cancelButton);
+    
+    // Добавляем новые обработчики
+    newConfirmButton.addEventListener('click', function() {
+        closeModal();
+        if (onConfirm) onConfirm();
+    });
+    
+    newCancelButton.addEventListener('click', function() {
+        closeModal();
+    });
+    
+    showModal('confirm-modal');
 }
 
 // Показать модальное окно отчета
