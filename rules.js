@@ -1,3 +1,5 @@
+// FILE: rules.js
+// Функции для работы с блоками правил и расчетов
 
 // Расчет заработка за день с учетом индивидуального процента
 function calculateEarnings(sales, percent) {
@@ -217,140 +219,99 @@ function calculateOvertimeAdjustment(calendarData, template, year, month, baseIn
     let overtimeAmount = 0;
     
     if (overtimeBlock.overtimeType === 'shifts') {
-      let totalShifts = 0;
-      const shiftDays = [];
+      // Собираем все смены за месяц с их ставками
+      const shifts = [];
       
       for (let day = 1; day <= monthDays; day++) {
         const dateKey = `${year}-${month+1}-${day}`;
         const dayData = calendarData[dateKey] || {};
-        
-        let dayShifts = 0;
-        if (dayData.dayShift) dayShifts++;
-        if (dayData.nightShift) dayShifts++;
-        
-        if (dayShifts > 0) {
-          shiftDays.push({
-            date: day,
-            shifts: dayShifts,
-            dayShift: dayData.dayShift || false,
-            nightShift: dayData.nightShift || false,
-            customDayShiftRate: dayData.customDayShiftRate,
-            customNightShiftRate: dayData.customNightShiftRate
-          });
-          totalShifts += dayShifts;
-        }
-      }
-      
-      if (totalShifts > overtimeBlock.limit) {
         const shiftBlock = template.ruleBlocks.find(block => block.type === 'shiftRate');
-        if (!shiftBlock) return 0;
         
-        let accumulatedShifts = 0;
+        if (dayData.dayShift) {
+          const dayRate = (dayData.customDayShiftRate > 0) ? dayData.customDayShiftRate : shiftBlock.dayRate;
+          shifts.push({
+            date: dateKey,
+            type: 'day',
+            rate: dayRate || 0
+          });
+        }
         
-        for (const day of shiftDays) {
-          if (accumulatedShifts >= overtimeBlock.limit) {
-            // Все смены в этом дне сверхурочные
-            if (day.dayShift) {
-              const dayRate = day.customDayShiftRate > 0 ? day.customDayShiftRate : shiftBlock.dayRate;
-              overtimeAmount += dayRate * (overtimeBlock.multiplier - 1);
-            }
-            if (day.nightShift) {
-              const nightRate = day.customNightShiftRate > 0 ? day.customNightShiftRate : shiftBlock.nightRate;
-              overtimeAmount += nightRate * (overtimeBlock.multiplier - 1);
-            }
-          } else if (accumulatedShifts + day.shifts > overtimeBlock.limit) {
-            // Часть смен в этом дне сверхурочные
-            const overtimeShifts = accumulatedShifts + day.shifts - overtimeBlock.limit;
-            
-            // Распределяем сверхурочные смены пропорционально
-            const dayShiftRatio = day.dayShift ? 1 : 0;
-            const nightShiftRatio = day.nightShift ? 1 : 0;
-            const totalRatios = dayShiftRatio + nightShiftRatio;
-            
-            if (day.dayShift && totalRatios > 0) {
-              const dayOvertimeShifts = overtimeShifts * (dayShiftRatio / totalRatios);
-              const dayRate = day.customDayShiftRate > 0 ? day.customDayShiftRate : shiftBlock.dayRate;
-              overtimeAmount += dayOvertimeShifts * dayRate * (overtimeBlock.multiplier - 1);
-            }
-            
-            if (day.nightShift && totalRatios > 0) {
-              const nightOvertimeShifts = overtimeShifts * (nightShiftRatio / totalRatios);
-              const nightRate = day.customNightShiftRate > 0 ? day.customNightShiftRate : shiftBlock.nightRate;
-              overtimeAmount += nightOvertimeShifts * nightRate * (overtimeBlock.multiplier - 1);
-            }
-            
-            accumulatedShifts = overtimeBlock.limit;
-          } else {
-            accumulatedShifts += day.shifts;
-          }
+        if (dayData.nightShift) {
+          const nightRate = (dayData.customNightShiftRate > 0) ? dayData.customNightShiftRate : shiftBlock.nightRate;
+          shifts.push({
+            date: dateKey,
+            type: 'night',
+            rate: nightRate || 0
+          });
         }
       }
+      
+      // Сортируем смены по дате
+      shifts.sort((a, b) => new Date(a.date) - new Date(b.date));
+      
+      // Рассчитываем сверхурочные
+      let totalShifts = 0;
+      
+      for (const shift of shifts) {
+        if (totalShifts < overtimeBlock.limit) {
+          totalShifts++;
+        } else {
+          // Смена сверх лимита - применяем множитель к ставке этой смены
+          overtimeAmount += shift.rate * (overtimeBlock.multiplier - 1);
+        }
+      }
+      
     } else if (overtimeBlock.overtimeType === 'hours') {
-      let totalHours = 0;
-      const hourDays = [];
+      // Собираем все часы за месяц с их ставками
+      const hours = [];
       
       for (let day = 1; day <= monthDays; day++) {
         const dateKey = `${year}-${month+1}-${day}`;
         const dayData = calendarData[dateKey] || {};
+        const hourlyBlock = template.ruleBlocks.find(block => block.type === 'hourlyRate');
         
-        const dayHours = parseFloat(dayData.dayHours) || 0;
-        const nightHours = parseFloat(dayData.nightHours) || 0;
-        const dayTotalHours = dayHours + nightHours;
-        
-        if (dayTotalHours > 0) {
-          hourDays.push({
-            date: day,
-            dayHours: dayHours,
-            nightHours: nightHours,
-            totalHours: dayTotalHours,
-            customDayHourlyRate: dayData.customDayHourlyRate,
-            customNightHourlyRate: dayData.customNightHourlyRate
+        if (dayData.dayHours && dayData.dayHours > 0) {
+          const dayRate = (dayData.customDayHourlyRate > 0) ? dayData.customDayHourlyRate : hourlyBlock.dayRate;
+          hours.push({
+            date: dateKey,
+            type: 'day',
+            hours: parseFloat(dayData.dayHours) || 0,
+            rate: dayRate || 0
           });
-          totalHours += dayTotalHours;
+        }
+        
+        if (dayData.nightHours && dayData.nightHours > 0) {
+          const nightRate = (dayData.customNightHourlyRate > 0) ? dayData.customNightHourlyRate : hourlyBlock.nightRate;
+          hours.push({
+            date: dateKey,
+            type: 'night',
+            hours: parseFloat(dayData.nightHours) || 0,
+            rate: nightRate || 0
+          });
         }
       }
       
-      if (totalHours > overtimeBlock.limit) {
-        const hourlyBlock = template.ruleBlocks.find(block => block.type === 'hourlyRate');
-        if (!hourlyBlock) return 0;
+      // Сортируем часы по дате
+      hours.sort((a, b) => new Date(a.date) - new Date(b.date));
+      
+      // Рассчитываем сверхурочные
+      let totalHours = 0;
+      
+      for (const hourEntry of hours) {
+        const remainingLimit = Math.max(0, overtimeBlock.limit - totalHours);
         
-        let accumulatedHours = 0;
-        
-        for (const day of hourDays) {
-          if (accumulatedHours >= overtimeBlock.limit) {
-            // Все часы в этом дне сверхурочные
-            if (day.dayHours > 0) {
-              const dayRate = day.customDayHourlyRate > 0 ? day.customDayHourlyRate : hourlyBlock.dayRate;
-              overtimeAmount += day.dayHours * dayRate * (overtimeBlock.multiplier - 1);
-            }
-            if (day.nightHours > 0) {
-              const nightRate = day.customNightHourlyRate > 0 ? day.customNightHourlyRate : hourlyBlock.nightRate;
-              overtimeAmount += day.nightHours * nightRate * (overtimeBlock.multiplier - 1);
-            }
-          } else if (accumulatedHours + day.totalHours > overtimeBlock.limit) {
-            // Часть часов в этом дне сверхурочные
-            const overtimeHours = accumulatedHours + day.totalHours - overtimeBlock.limit;
-            
-            // Распределяем сверхурочные часы пропорционально
-            const dayHoursRatio = day.dayHours / day.totalHours;
-            const nightHoursRatio = day.nightHours / day.totalHours;
-            
-            if (day.dayHours > 0) {
-              const dayOvertimeHours = overtimeHours * dayHoursRatio;
-              const dayRate = day.customDayHourlyRate > 0 ? day.customDayHourlyRate : hourlyBlock.dayRate;
-              overtimeAmount += dayOvertimeHours * dayRate * (overtimeBlock.multiplier - 1);
-            }
-            
-            if (day.nightHours > 0) {
-              const nightOvertimeHours = overtimeHours * nightHoursRatio;
-              const nightRate = day.customNightHourlyRate > 0 ? day.customNightHourlyRate : hourlyBlock.nightRate;
-              overtimeAmount += nightOvertimeHours * nightRate * (overtimeBlock.multiplier - 1);
-            }
-            
-            accumulatedHours = overtimeBlock.limit;
-          } else {
-            accumulatedHours += day.totalHours;
-          }
+        if (remainingLimit >= hourEntry.hours) {
+          // Все часы в пределах лимита
+          totalHours += hourEntry.hours;
+        } else {
+          // Часть часов сверх лимита
+          const regularHours = remainingLimit;
+          const overtimeHours = hourEntry.hours - regularHours;
+          
+          totalHours = overtimeBlock.limit;
+          
+          // Применяем множитель только к сверхурочным часам
+          overtimeAmount += overtimeHours * hourEntry.rate * (overtimeBlock.multiplier - 1);
         }
       }
     }
