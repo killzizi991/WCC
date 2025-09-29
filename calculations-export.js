@@ -1,4 +1,4 @@
-// FILE: calculations-export.js
+
 // Показать модальное окно помощи
 function showHelpModal() {
   try {
@@ -244,7 +244,14 @@ function importFromText() {
       return;
     }
     
-    const data = JSON.parse(jsonString);
+    let data;
+    try {
+      data = JSON.parse(jsonString);
+    } catch (parseError) {
+      console.error('Ошибка парсинга JSON:', parseError);
+      showNotification('Ошибка импорта: неверный формат JSON данных');
+      return;
+    }
     
     const validation = validateImportedData(data);
     if (!validation.isValid) {
@@ -277,11 +284,7 @@ function importFromText() {
     
   } catch (error) {
     console.error('Ошибка импорта:', error);
-    if (error instanceof SyntaxError) {
-      showNotification('Ошибка импорта данных: неверный формат JSON');
-    } else {
-      showNotification('Ошибка импорта данных: ' + error.message);
-    }
+    showNotification('Ошибка импорта данных: ' + error.message);
   }
 }
 
@@ -366,7 +369,14 @@ function importData(event) {
     const reader = new FileReader();
     reader.onload = function(e) {
       try {
-        const data = JSON.parse(e.target.result);
+        let data;
+        try {
+          data = JSON.parse(e.target.result);
+        } catch (parseError) {
+          console.error('Ошибка парсинга JSON:', parseError);
+          showNotification('Ошибка импорта: неверный формат JSON файла');
+          return;
+        }
         
         const validation = validateImportedData(data);
         if (!validation.isValid) {
@@ -398,11 +408,7 @@ function importData(event) {
         
       } catch (error) {
         console.error('Ошибка импорта:', error);
-        if (error instanceof SyntaxError) {
-          showNotification('Ошибка импорта данных: неверный формат файла');
-        } else {
-          showNotification('Ошибка импорта данных: ' + error.message);
-        }
+        showNotification('Ошибка импорта данных: ' + error.message);
       }
     };
     
