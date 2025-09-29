@@ -168,6 +168,18 @@ function showTemplatesDropdown() {
         newTemplateOption.addEventListener('click', showCreateTemplateModal);
         dropdown.appendChild(newTemplateOption);
         
+        // Рассчитываем ширину выпадающего списка как 4/6 от ширины модального окна
+        const modal = document.getElementById('templates-modal');
+        if (modal) {
+            const modalWidth = modal.offsetWidth;
+            const dropdownWidth = modalWidth * 4 / 6;
+            const margin = modalWidth / 6;
+            
+            dropdown.style.width = dropdownWidth + 'px';
+            dropdown.style.left = margin + 'px';
+            dropdown.style.right = margin + 'px';
+        }
+        
         dropdown.style.display = 'block';
         
         const clickHandler = function(e) {
