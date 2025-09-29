@@ -1,3 +1,4 @@
+// FILE: calculations-export.js
 // Показать модальное окно помощи
 function showHelpModal() {
   try {
@@ -415,6 +416,7 @@ function importData(event) {
     
     reader.readAsText(file);
     event.target.value = '';
+    closeModal();
   } catch (error) {
     console.error('Ошибка импорта файла:', error);
     showNotification('Ошибка импорта файла');
