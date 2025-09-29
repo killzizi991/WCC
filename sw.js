@@ -1,3 +1,4 @@
+
 const CACHE_NAME = 'sales-calendar-v8';
 const urlsToCache = [
   './',
@@ -22,9 +23,52 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
+  // Пропускаем не-GET запросы
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
-      .then(response => response || fetch(event.request))
+      .then(response => {
+        // Если ресурс есть в кеше, возвращаем его
+        if (response) {
+          return response;
+        }
+
+        // Иначе загружаем из сети
+        return fetch(event.request)
+          .then(response => {
+            // Проверяем валидность ответа
+            if (!response || response.status !== 200 || response.type !== 'basic') {
+              return response;
+            }
+
+            // Клонируем ответ для кеширования
+            const responseToCache = response.clone();
+
+            caches.open(CACHE_NAME)
+              .then(cache => {
+                cache.put(event.request, responseToCache);
+              });
+
+            return response;
+          })
+          .catch(error => {
+            // В случае ошибки сети возвращаем fallback
+            console.log('Fetch failed; returning offline page instead.', error);
+            
+            // Для HTML-запросов возвращаем главную страницу
+            if (event.request.headers.get('accept').includes('text/html')) {
+              return caches.match('./index.html');
+            }
+            
+            return new Response('Network error happened', {
+              status: 408,
+              headers: { 'Content-Type': 'text/plain' }
+            });
+          });
+      })
   );
 });
 
