@@ -1,4 +1,3 @@
-
 // FILE: templates-manager.js
 // Показать модальное окно шаблонов
 function showTemplatesModal() {
@@ -144,27 +143,25 @@ function switchTemplate(templateId) {
     try {
         if (appSettings.currentTemplateId === templateId) return;
         
-        if (confirm('При переключении шаблона все несохраненные данные текущего шаблона будут потеряны. Продолжить?')) {
-            appSettings.currentTemplateId = templateId;
-            saveToStorage('appSettings', appSettings);
-            generateCalendar();
-            
-            const template = getCurrentTemplate();
-            const currentTemplateName = document.getElementById('current-template-name');
-            if (currentTemplateName) {
-                currentTemplateName.textContent = template.name;
-            }
-            
-            const dropdown = document.getElementById('template-dropdown');
-            if (dropdown) {
-                dropdown.style.display = 'none';
-            }
-            
-            renderRuleBlocksList();
-            generateFunctionalBorderFields(template);
-            
-            showNotification('Шаблон изменен: ' + template.name);
+        appSettings.currentTemplateId = templateId;
+        saveToStorage('appSettings', appSettings);
+        generateCalendar();
+        
+        const template = getCurrentTemplate();
+        const currentTemplateName = document.getElementById('current-template-name');
+        if (currentTemplateName) {
+            currentTemplateName.textContent = template.name;
         }
+        
+        const dropdown = document.getElementById('template-dropdown');
+        if (dropdown) {
+            dropdown.style.display = 'none';
+        }
+        
+        renderRuleBlocksList();
+        generateFunctionalBorderFields(template);
+        
+        showNotification('Шаблон изменен: ' + template.name);
     } catch (error) {
         console.error('Ошибка переключения шаблона:', error);
         showNotification('Ошибка переключения шаблона');
