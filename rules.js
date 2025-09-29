@@ -202,121 +202,142 @@ function calculateHourlyRateIncome(calendarData, template, year, month) {
   }
 }
 
+// Расчет сверхурочных по сменам
+function calculateOvertimeShifts(calendarData, template, year, month, overtimeBlock) {
+  try {
+    const shiftBlock = template.ruleBlocks.find(block => block.type === 'shiftRate');
+    if (!shiftBlock) return 0;
+    
+    let overtimeAmount = 0;
+    let totalShifts = 0;
+    const monthDays = new Date(year, month + 1, 0).getDate();
+    
+    // Собираем все смены по дням
+    const shifts = [];
+    for (let day = 1; day <= monthDays; day++) {
+      const dateKey = `${year}-${month+1}-${day}`;
+      const dayData = calendarData[dateKey] || {};
+      
+      if (dayData.dayShift) {
+        shifts.push({
+          day: day,
+          type: 'day',
+          rate: (dayData.customDayShiftRate > 0) ? dayData.customDayShiftRate : shiftBlock.dayRate
+        });
+      }
+      
+      if (dayData.nightShift) {
+        shifts.push({
+          day: day,
+          type: 'night',
+          rate: (dayData.customNightShiftRate > 0) ? dayData.customNightShiftRate : shiftBlock.nightRate
+        });
+      }
+    }
+    
+    // Сортируем смены по дням
+    shifts.sort((a, b) => a.day - b.day);
+    
+    // Рассчитываем сверхурочные для смен сверх лимита
+    for (let i = 0; i < shifts.length; i++) {
+      totalShifts++;
+      if (totalShifts > overtimeBlock.limit) {
+        overtimeAmount += shifts[i].rate * (overtimeBlock.multiplier - 1);
+      }
+    }
+    
+    return Math.round(overtimeAmount * 100) / 100;
+  } catch (error) {
+    console.error('Ошибка расчета сверхурочных по сменам:', error);
+    return 0;
+  }
+}
+
+// Расчет сверхурочных по часам
+function calculateOvertimeHours(calendarData, template, year, month, overtimeBlock) {
+  try {
+    const hourlyBlock = template.ruleBlocks.find(block => block.type === 'hourlyRate');
+    if (!hourlyBlock) return 0;
+    
+    let overtimeAmount = 0;
+    let totalHours = 0;
+    const monthDays = new Date(year, month + 1, 0).getDate();
+    
+    // Собираем все часы по дням
+    const hours = [];
+    for (let day = 1; day <= monthDays; day++) {
+      const dateKey = `${year}-${month+1}-${day}`;
+      const dayData = calendarData[dateKey] || {};
+      
+      const dayHours = parseFloat(dayData.dayHours) || 0;
+      const nightHours = parseFloat(dayData.nightHours) || 0;
+      
+      if (dayHours > 0) {
+        hours.push({
+          day: day,
+          type: 'day',
+          hours: dayHours,
+          rate: (dayData.customDayHourlyRate > 0) ? dayData.customDayHourlyRate : hourlyBlock.dayRate
+        });
+      }
+      
+      if (nightHours > 0) {
+        hours.push({
+          day: day,
+          type: 'night',
+          hours: nightHours,
+          rate: (dayData.customNightHourlyRate > 0) ? dayData.customNightHourlyRate : hourlyBlock.nightRate
+        });
+      }
+    }
+    
+    // Сортируем часы по дням
+    hours.sort((a, b) => a.day - b.day);
+    
+    // Рассчитываем сверхурочные для часов сверх лимита
+    for (let i = 0; i < hours.length; i++) {
+      const hourEntry = hours[i];
+      const remainingLimit = Math.max(0, overtimeBlock.limit - totalHours);
+      
+      if (hourEntry.hours <= remainingLimit) {
+        // Часы в пределах лимита
+        totalHours += hourEntry.hours;
+      } else {
+        // Часть часов сверхурочные
+        const normalHours = Math.max(0, remainingLimit);
+        const overtimeHours = hourEntry.hours - normalHours;
+        
+        totalHours += normalHours;
+        overtimeAmount += overtimeHours * hourEntry.rate * (overtimeBlock.multiplier - 1);
+      }
+    }
+    
+    return Math.round(overtimeAmount * 100) / 100;
+  } catch (error) {
+    console.error('Ошибка расчета сверхурочных по часам:', error);
+    return 0;
+  }
+}
+
 // Расчет сверхурочных
-function calculateOvertimeAdjustment(calendarData, template, year, month, baseIncome) {
+function calculateOvertimeAdjustment(calendarData, template, year, month) {
   try {
     if (!calendarData || typeof calendarData !== 'object') return 0;
     if (!template || typeof template !== 'object') return 0;
     if (typeof year !== 'number' || year < 2000 || year > 2100) return 0;
     if (typeof month !== 'number' || month < 0 || month > 11) return 0;
-    if (typeof baseIncome !== 'number' || baseIncome < 0) return 0;
     
     const overtimeBlock = template.ruleBlocks.find(block => block.type === 'overtime');
     
     if (!overtimeBlock) return 0;
     
-    const monthDays = new Date(year, month + 1, 0).getDate();
-    let overtimeAmount = 0;
-    
     if (overtimeBlock.overtimeType === 'shifts') {
-      // Собираем все смены за месяц с их ставками
-      const shifts = [];
-      
-      for (let day = 1; day <= monthDays; day++) {
-        const dateKey = `${year}-${month+1}-${day}`;
-        const dayData = calendarData[dateKey] || {};
-        const shiftBlock = template.ruleBlocks.find(block => block.type === 'shiftRate');
-        
-        if (dayData.dayShift) {
-          const dayRate = (dayData.customDayShiftRate > 0) ? dayData.customDayShiftRate : shiftBlock.dayRate;
-          shifts.push({
-            date: dateKey,
-            type: 'day',
-            rate: dayRate || 0
-          });
-        }
-        
-        if (dayData.nightShift) {
-          const nightRate = (dayData.customNightShiftRate > 0) ? dayData.customNightShiftRate : shiftBlock.nightRate;
-          shifts.push({
-            date: dateKey,
-            type: 'night',
-            rate: nightRate || 0
-          });
-        }
-      }
-      
-      // Сортируем смены по дате
-      shifts.sort((a, b) => new Date(a.date) - new Date(b.date));
-      
-      // Рассчитываем сверхурочные
-      let totalShifts = 0;
-      
-      for (const shift of shifts) {
-        if (totalShifts < overtimeBlock.limit) {
-          totalShifts++;
-        } else {
-          // Смена сверх лимита - применяем множитель к ставке этой смены
-          overtimeAmount += shift.rate * (overtimeBlock.multiplier - 1);
-        }
-      }
-      
+      return calculateOvertimeShifts(calendarData, template, year, month, overtimeBlock);
     } else if (overtimeBlock.overtimeType === 'hours') {
-      // Собираем все часы за месяц с их ставками
-      const hours = [];
-      
-      for (let day = 1; day <= monthDays; day++) {
-        const dateKey = `${year}-${month+1}-${day}`;
-        const dayData = calendarData[dateKey] || {};
-        const hourlyBlock = template.ruleBlocks.find(block => block.type === 'hourlyRate');
-        
-        if (dayData.dayHours && dayData.dayHours > 0) {
-          const dayRate = (dayData.customDayHourlyRate > 0) ? dayData.customDayHourlyRate : hourlyBlock.dayRate;
-          hours.push({
-            date: dateKey,
-            type: 'day',
-            hours: parseFloat(dayData.dayHours) || 0,
-            rate: dayRate || 0
-          });
-        }
-        
-        if (dayData.nightHours && dayData.nightHours > 0) {
-          const nightRate = (dayData.customNightHourlyRate > 0) ? dayData.customNightHourlyRate : hourlyBlock.nightRate;
-          hours.push({
-            date: dateKey,
-            type: 'night',
-            hours: parseFloat(dayData.nightHours) || 0,
-            rate: nightRate || 0
-          });
-        }
-      }
-      
-      // Сортируем часы по дате
-      hours.sort((a, b) => new Date(a.date) - new Date(b.date));
-      
-      // Рассчитываем сверхурочные
-      let totalHours = 0;
-      
-      for (const hourEntry of hours) {
-        const remainingLimit = Math.max(0, overtimeBlock.limit - totalHours);
-        
-        if (remainingLimit >= hourEntry.hours) {
-          // Все часы в пределах лимита
-          totalHours += hourEntry.hours;
-        } else {
-          // Часть часов сверх лимита
-          const regularHours = remainingLimit;
-          const overtimeHours = hourEntry.hours - regularHours;
-          
-          totalHours = overtimeBlock.limit;
-          
-          // Применяем множитель только к сверхурочным часам
-          overtimeAmount += overtimeHours * hourEntry.rate * (overtimeBlock.multiplier - 1);
-        }
-      }
+      return calculateOvertimeHours(calendarData, template, year, month, overtimeBlock);
     }
     
-    return Math.round(overtimeAmount * 100) / 100;
+    return 0;
   } catch (error) {
     console.error('Ошибка расчета сверхурочных:', error);
     return 0;
@@ -392,7 +413,7 @@ function getFixedDeductionAmount(template) {
     if (!template || typeof template !== 'object') return 0;
     
     const deductionBlock = template.ruleBlocks.find(block => block.type === 'fixedDeduction');
-    return deductionBlock ? Math.max(0, deductionBlock.amount || 0) : 0;
+    return deductionBlock ? Math.max(0, block.amount || 0) : 0;
   } catch (error) {
     console.error('Ошибка получения суммы вычета:', error);
     return 0;
@@ -617,7 +638,7 @@ function calculateMonthlySummary(calendarData, template, year, month) {
     
     let overtimeAmount = 0;
     if (template.ruleBlocks.some(block => block.type === 'overtime')) {
-      overtimeAmount = calculateOvertimeAdjustment(calendarData, template, year, month, baseIncome);
+      overtimeAmount = calculateOvertimeAdjustment(calendarData, template, year, month);
       adjustments += overtimeAmount;
     }
     
