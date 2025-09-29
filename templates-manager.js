@@ -168,19 +168,12 @@ function showTemplatesDropdown() {
         newTemplateOption.addEventListener('click', showCreateTemplateModal);
         dropdown.appendChild(newTemplateOption);
         
-        // Рассчитываем ширину выпадающего списка как 4/6 от ширины модального окна
-        const modal = document.getElementById('templates-modal');
-        if (modal) {
-            const modalWidth = modal.offsetWidth;
-            const dropdownWidth = modalWidth * 4 / 6;
-            const margin = modalWidth / 6;
-            
-            dropdown.style.width = dropdownWidth + 'px';
-            dropdown.style.left = margin + 'px';
-            dropdown.style.right = margin + 'px';
-        }
+        // Получаем ширину кнопки "Основной" и замораживаем её
+        const currentTemplateNameElement = document.getElementById('current-template-name');
+        const mainTemplateWidth = getMainTemplateButtonWidth();
         
         dropdown.style.display = 'block';
+        dropdown.style.width = mainTemplateWidth + 'px';
         
         const clickHandler = function(e) {
             if (!dropdown.contains(e.target) && e.target !== document.getElementById('current-template-name')) {
@@ -194,6 +187,33 @@ function showTemplatesDropdown() {
         }, 0);
     } catch (error) {
         console.error('Ошибка показа выпадающего списка шаблонов:', error);
+    }
+}
+
+// Получить ширину кнопки "Основной" и заморозить её
+function getMainTemplateButtonWidth() {
+    try {
+        const currentTemplateNameElement = document.getElementById('current-template-name');
+        if (!currentTemplateNameElement) return 200; // значение по умолчанию
+        
+        // Создаем временный элемент для измерения ширины текста "Основной"
+        const tempElement = document.createElement('span');
+        tempElement.textContent = 'Основной';
+        tempElement.style.visibility = 'hidden';
+        tempElement.style.position = 'absolute';
+        tempElement.style.whiteSpace = 'nowrap';
+        tempElement.style.fontSize = window.getComputedStyle(currentTemplateNameElement).fontSize;
+        tempElement.style.fontFamily = window.getComputedStyle(currentTemplateNameElement).fontFamily;
+        tempElement.style.fontWeight = window.getComputedStyle(currentTemplateNameElement).fontWeight;
+        
+        document.body.appendChild(tempElement);
+        const width = tempElement.offsetWidth + 40; // добавляем отступы
+        document.body.removeChild(tempElement);
+        
+        return Math.max(width, 200); // минимальная ширина 200px
+    } catch (error) {
+        console.error('Ошибка получения ширины кнопки:', error);
+        return 200;
     }
 }
 
