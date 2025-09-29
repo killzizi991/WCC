@@ -169,9 +169,22 @@ function showTemplatesDropdown() {
         dropdown.appendChild(newTemplateOption);
         
         // Получаем ширину кнопки "Основной" и замораживаем её
-        const currentTemplateNameElement = document.getElementById('current-template-name');
         const mainTemplateWidth = getMainTemplateButtonWidth();
         
+        // Получаем модальное окно и его центр
+        const modal = document.getElementById('templates-modal');
+        const modalRect = modal.getBoundingClientRect();
+        const modalCenter = modalRect.left + modalRect.width / 2;
+        const leftPosition = modalCenter - mainTemplateWidth / 2;
+        
+        // Получаем кнопку, которая открыла dropdown
+        const currentTemplateNameElement = document.getElementById('current-template-name');
+        const currentTemplateNameRect = currentTemplateNameElement.getBoundingClientRect();
+        
+        // Устанавливаем позиционирование
+        dropdown.style.position = 'fixed';
+        dropdown.style.top = (currentTemplateNameRect.bottom + window.scrollY) + 'px';
+        dropdown.style.left = leftPosition + 'px';
         dropdown.style.display = 'block';
         dropdown.style.width = mainTemplateWidth + 'px';
         
