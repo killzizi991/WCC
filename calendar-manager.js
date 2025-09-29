@@ -28,9 +28,6 @@ function generateCalendar() {
     const hasHourlyRate = template.ruleBlocks.some(block => block.type === 'hourlyRate');
     const hasShiftRate = template.ruleBlocks.some(block => block.type === 'shiftRate');
     
-    // Проверяем условия для показа индикаторов смен
-    const showShiftIndicators = hasShiftRate && (!hasSalesPercent || !hasHourlyRate);
-    
     for (let day = 1; day <= lastDay.getDate(); day++) {
         const dayElement = document.createElement('div');
         dayElement.className = 'day';
@@ -78,26 +75,6 @@ function generateCalendar() {
             ${contentHTML}
         `;
         
-        // Добавляем индикаторы смен если выполняются условия
-        if (showShiftIndicators) {
-            const shiftIndicators = document.createElement('div');
-            shiftIndicators.className = 'shift-indicators';
-            
-            if (dayData.dayShift) {
-                const dayShiftIndicator = document.createElement('div');
-                dayShiftIndicator.className = 'shift-indicator day-shift';
-                shiftIndicators.appendChild(dayShiftIndicator);
-            }
-            
-            if (dayData.nightShift) {
-                const nightShiftIndicator = document.createElement('div');
-                nightShiftIndicator.className = 'shift-indicator night-shift';
-                shiftIndicators.appendChild(nightShiftIndicator);
-            }
-            
-            dayElement.appendChild(shiftIndicators);
-        }
-        
         if (dayData.color) {
             if (dayData.color === '#ffffff') {
                 dayElement.style.backgroundColor = '';
@@ -128,6 +105,54 @@ function generateCalendar() {
             dayElement.classList.add('today');
         }
         
+        const hasShiftRateOnly = hasShiftRate && !hasSalesPercent && !hasHourlyRate;
+        if (hasShiftRateOnly) {
+            const shiftIconsContainer = document.createElement('div');
+            shiftIconsContainer.className = 'shift-icons-container';
+            shiftIconsContainer.style.position = 'absolute';
+            shiftIconsContainer.style.bottom = '5px';
+            shiftIconsContainer.style.left = '0';
+            shiftIconsContainer.style.right = '0';
+            shiftIconsContainer.style.display = 'flex';
+            shiftIconsContainer.style.justifyContent = 'space-between';
+            shiftIconsContainer.style.padding = '0 8px';
+            shiftIconsContainer.style.pointerEvents = 'none';
+            
+            if (dayData.dayShift) {
+                const dayShiftIcon = document.createElement('div');
+                dayShiftIcon.className = 'shift-icon day-shift';
+                dayShiftIcon.style.width = '8px';
+                dayShiftIcon.style.height = '8px';
+                dayShiftIcon.style.borderRadius = '50%';
+                dayShiftIcon.style.backgroundColor = '#ffeb3b';
+                dayShiftIcon.style.boxShadow = '0 0 2px rgba(0,0,0,0.5)';
+                shiftIconsContainer.appendChild(dayShiftIcon);
+            } else {
+                const emptySpace = document.createElement('div');
+                emptySpace.style.width = '8px';
+                emptySpace.style.height = '8px';
+                shiftIconsContainer.appendChild(emptySpace);
+            }
+            
+            if (dayData.nightShift) {
+                const nightShiftIcon = document.createElement('div');
+                nightShiftIcon.className = 'shift-icon night-shift';
+                nightShiftIcon.style.width = '8px';
+                nightShiftIcon.style.height = '8px';
+                nightShiftIcon.style.borderRadius = '50%';
+                nightShiftIcon.style.backgroundColor = '#2196f3';
+                nightShiftIcon.style.boxShadow = '0 0 2px rgba(0,0,0,0.5)';
+                shiftIconsContainer.appendChild(nightShiftIcon);
+            } else {
+                const emptySpace = document.createElement('div');
+                emptySpace.style.width = '8px';
+                emptySpace.style.height = '8px';
+                shiftIconsContainer.appendChild(emptySpace);
+            }
+            
+            dayElement.appendChild(shiftIconsContainer);
+        }
+        
         dayElement.addEventListener('click', () => handleDayClick(day));
         calendar.appendChild(dayElement);
     }
@@ -138,6 +163,27 @@ function generateCalendar() {
         `${monthNames[currentMonth]} ${currentYear}`;
     
     calculateSummaryDisplay();
+}
+
+// Расчеты для отображения
+function calculateSummaryDisplay() {
+    const template = getCurrentTemplate();
+    const currentCalendarData = getCurrentCalendarData();
+    const summary = calculateMonthlySummary(currentCalendarData, template, currentYear, currentMonth);
+    
+    document.getElementById('modal-work-days').textContent = summary.workDays;
+    document.getElementById('modal-total-earned').textContent = summary.totalIncome.toLocaleString();
+    document.getElementById('modal-salary').textContent = summary.finalSalary.toLocaleString();
+    document.getElementById('summary-month-year').textContent = 
+        `${new Date(currentYear, currentMonth).toLocaleString('ru', { month: 'long' })} ${currentYear}`;
+    
+    const advanceRow = document.getElementById('advance-row');
+    const hasAdvance = template.ruleBlocks.some(block => block.type === 'advance');
+    advanceRow.style.display = hasAdvance ? 'block' : 'none';
+    
+    if (hasAdvance) {
+        document.getElementById('modal-advance').textContent = calculateAdvanceDeduction(template, summary.totalIncome).toLocaleString();
+    }
 }
 
 // Обработчик клика по дню
