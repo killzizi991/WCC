@@ -1,4 +1,4 @@
-// FILE: style.css
+
 /* Сброс стилей */
 * {
     margin: 0;
@@ -493,87 +493,6 @@ input:focus, textarea:focus {
     color: #4a6cf7;
 }
 
-/* Кастомные селекты */
-.custom-select {
-    position: relative;
-    width: 100%;
-}
-
-.custom-select-header {
-    padding: 12px;
-    border: 1px solid #e2e8f0;
-    border-radius: 5px;
-    background: #ffffff;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 1rem;
-    transition: all 0.2s ease;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.custom-select-header:hover {
-    border-color: #4a6cf7;
-}
-
-.custom-select-header.active {
-    border-color: #4a6cf7;
-    box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.2);
-}
-
-.custom-select-options {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 5px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-    max-height: 200px;
-    overflow-y: auto;
-    display: none;
-}
-
-.custom-select-options.active {
-    display: block;
-}
-
-.custom-select-option {
-    padding: 12px;
-    cursor: pointer;
-    border-bottom: 1px solid #f1f1f1;
-    transition: background-color 0.2s ease;
-}
-
-.custom-select-option:hover {
-    background-color: #f8fafc;
-}
-
-.custom-select-option:last-child {
-    border-bottom: none;
-}
-
-.custom-select-option.selected {
-    background-color: #4a6cf7;
-    color: white;
-}
-
-.select-arrow {
-    transition: transform 0.2s ease;
-}
-
-.custom-select-header.active .select-arrow {
-    transform: rotate(180deg);
-}
-
-/* Скрываем оригинальные селекты */
-select.hidden-select {
-    display: none;
-}
-
 /* Адаптивность */
 @media (max-width: 768px) {
     body {
@@ -1040,32 +959,6 @@ select.hidden-select {
         background: #2d3035 !important;
         border-color: #5a6c7d !important;
         color: #e9ecef !important;
-    }
-
-    /* Стили для кастомных селектов в темной теме */
-    .custom-select-header {
-        background: #3b3e45;
-        border-color: #5a6c7d;
-        color: #e9ecef;
-    }
-
-    .custom-select-options {
-        background: #2d3035;
-        border-color: #5a6c7d;
-    }
-
-    .custom-select-option {
-        border-bottom-color: #4a4d55;
-        color: #e9ecef;
-    }
-
-    .custom-select-option:hover {
-        background-color: #3b3e45;
-    }
-
-    .custom-select-option.selected {
-        background-color: #4a6cf7;
-        color: white;
     }
 }
 
