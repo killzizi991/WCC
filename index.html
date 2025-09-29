@@ -1,4 +1,4 @@
-
+// FILE: index.html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -189,6 +189,19 @@
             </div>
             
             <button id="save-settings">Сохранить настройки</button>
+        </div>
+    </div>
+
+    <!-- Модальное окно подтверждения -->
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 id="confirm-modal-title">Подтверждение</h3>
+            <p id="confirm-modal-message"></p>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="confirm-modal-confirm" style="flex: 1; background: #dc3545;">Подтвердить</button>
+                <button id="confirm-modal-cancel" style="flex: 1; background: #6c757d;">Отмена</button>
+            </div>
         </div>
     </div>
 
