@@ -1,4 +1,3 @@
-// FILE: calendar-manager.js
 // Генерация календаря
 function generateCalendar() {
     const calendar = document.getElementById('calendar');
@@ -23,6 +22,9 @@ function generateCalendar() {
     }
     
     const currentCalendarData = getCurrentCalendarData();
+    const template = getCurrentTemplate();
+    const hasSalesPercent = template.ruleBlocks.some(block => block.type === 'salesPercent');
+    const hasHourlyRate = template.ruleBlocks.some(block => block.type === 'hourlyRate');
     
     for (let day = 1; day <= lastDay.getDate(); day++) {
         const dayElement = document.createElement('div');
@@ -36,9 +38,39 @@ function generateCalendar() {
             return value;
         };
         
+        const formatHoursNumber = (dayData) => {
+            const dayHours = parseFloat(dayData.dayHours) || 0;
+            const nightHours = parseFloat(dayData.nightHours) || 0;
+            return dayHours + nightHours;
+        };
+        
+        let contentHTML = '';
+        
+        if (hasSalesPercent && hasHourlyRate) {
+            const salesValue = dayData.sales ? formatSalesNumber(dayData.sales) : '';
+            const hoursValue = (dayData.dayHours || dayData.nightHours) ? formatHoursNumber(dayData) : '';
+            
+            if (salesValue || hoursValue) {
+                contentHTML = `
+                    <div class="day-data">
+                        ${salesValue ? `<div class="day-sales small">${salesValue}</div>` : ''}
+                        ${hoursValue ? `<div class="day-hours small">${hoursValue}</div>` : ''}
+                    </div>
+                `;
+            }
+        } else if (hasSalesPercent) {
+            if (dayData.sales) {
+                contentHTML = `<div class="day-sales">${formatSalesNumber(dayData.sales)}</div>`;
+            }
+        } else if (hasHourlyRate) {
+            if (dayData.dayHours || dayData.nightHours) {
+                contentHTML = `<div class="day-hours">${formatHoursNumber(dayData)}</div>`;
+            }
+        }
+        
         dayElement.innerHTML = `
             <div class="day-number">${day}</div>
-            ${dayData.sales ? `<div class="day-sales">${formatSalesNumber(dayData.sales)}</div>` : ''}
+            ${contentHTML}
         `;
         
         if (dayData.color) {
