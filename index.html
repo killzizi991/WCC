@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -425,6 +426,37 @@
             <span class="close">&times;</span>
             <h3>Часто задаваемые вопросы</h3>
             <div id="help-content" style="margin-top: 20px;"></div>
+        </div>
+    </div>
+
+    <!-- Новые модальные окна для ввода текста -->
+    <div id="edit-template-name-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Редактирование названия шаблона</h3>
+            <div class="setting-group">
+                <label>Название шаблона:</label>
+                <input type="text" id="edit-template-name-input" placeholder="Введите название шаблона">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="save-template-name" style="flex: 1;">Сохранить</button>
+                <button id="cancel-template-name" style="flex: 1; background: #6c757d;">Отменить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="create-template-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Создание нового шаблона</h3>
+            <div class="setting-group">
+                <label>Название шаблона:</label>
+                <input type="text" id="new-template-name-input" placeholder="Введите название нового шаблона">
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="create-template" style="flex: 1;">Создать</button>
+                <button id="cancel-create-template" style="flex: 1; background: #6c757d;">Отменить</button>
+            </div>
         </div>
     </div>
 
