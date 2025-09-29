@@ -48,7 +48,7 @@ function setupTemplatesModalListeners() {
         
         const editNameButton = document.getElementById('edit-template-name');
         if (editNameButton) {
-            editNameButton.addEventListener('click', editTemplateName);
+            editNameButton.addEventListener('click', showEditTemplateNameModal);
         }
         
         const currentTemplateName = document.getElementById('current-template-name');
@@ -70,28 +70,75 @@ function setupTemplatesModalListeners() {
         if (cancelButton) {
             cancelButton.addEventListener('click', closeModal);
         }
+        
+        // Обработчики для новых модальных окон
+        const saveTemplateNameButton = document.getElementById('save-template-name');
+        if (saveTemplateNameButton) {
+            saveTemplateNameButton.addEventListener('click', saveTemplateName);
+        }
+        
+        const cancelTemplateNameButton = document.getElementById('cancel-template-name');
+        if (cancelTemplateNameButton) {
+            cancelTemplateNameButton.addEventListener('click', function() {
+                closeModal();
+                showModal('templates-modal');
+            });
+        }
+        
+        const createTemplateButton = document.getElementById('create-template');
+        if (createTemplateButton) {
+            createTemplateButton.addEventListener('click', createNewTemplateFromModal);
+        }
+        
+        const cancelCreateTemplateButton = document.getElementById('cancel-create-template');
+        if (cancelCreateTemplateButton) {
+            cancelCreateTemplateButton.addEventListener('click', function() {
+                closeModal();
+                showModal('templates-modal');
+            });
+        }
     } catch (error) {
         console.error('Ошибка настройки обработчиков шаблонов:', error);
     }
 }
 
-// Редактирование названия шаблона
-function editTemplateName() {
+// Показать модальное окно редактирования названия шаблона
+function showEditTemplateNameModal() {
     try {
         const currentTemplate = getCurrentTemplate();
-        const newName = prompt('Введите новое название шаблона:', currentTemplate.name);
-        
-        if (newName && newName.trim() !== '') {
-            currentTemplate.name = newName.trim();
-            const currentTemplateName = document.getElementById('current-template-name');
-            if (currentTemplateName) {
-                currentTemplateName.textContent = currentTemplate.name;
-            }
-            saveToStorage('appSettings', appSettings);
-            showNotification('Название шаблона изменено');
+        const input = document.getElementById('edit-template-name-input');
+        if (input) {
+            input.value = currentTemplate.name;
         }
+        showModal('edit-template-name-modal');
     } catch (error) {
-        console.error('Ошибка редактирования названия шаблона:', error);
+        console.error('Ошибка показа модального окна редактирования названия:', error);
+    }
+}
+
+// Сохранение названия шаблона
+function saveTemplateName() {
+    try {
+        const input = document.getElementById('edit-template-name-input');
+        if (!input || !input.value.trim()) {
+            showNotification('Введите название шаблона');
+            return;
+        }
+        
+        const currentTemplate = getCurrentTemplate();
+        currentTemplate.name = input.value.trim();
+        
+        const currentTemplateName = document.getElementById('current-template-name');
+        if (currentTemplateName) {
+            currentTemplateName.textContent = currentTemplate.name;
+        }
+        
+        saveToStorage('appSettings', appSettings);
+        closeModal();
+        showModal('templates-modal');
+        showNotification('Название шаблона изменено');
+    } catch (error) {
+        console.error('Ошибка сохранения названия шаблона:', error);
         showNotification('Ошибка изменения названия шаблона');
     }
 }
@@ -118,7 +165,7 @@ function showTemplatesDropdown() {
         newTemplateOption.style.cursor = 'pointer';
         newTemplateOption.style.fontWeight = 'bold';
         newTemplateOption.textContent = 'Новый шаблон';
-        newTemplateOption.addEventListener('click', createNewTemplate);
+        newTemplateOption.addEventListener('click', showCreateTemplateModal);
         dropdown.appendChild(newTemplateOption);
         
         dropdown.style.display = 'block';
@@ -135,6 +182,73 @@ function showTemplatesDropdown() {
         }, 0);
     } catch (error) {
         console.error('Ошибка показа выпадающего списка шаблонов:', error);
+    }
+}
+
+// Показать модальное окно создания нового шаблона
+function showCreateTemplateModal() {
+    try {
+        const input = document.getElementById('new-template-name-input');
+        if (input) {
+            input.value = '';
+        }
+        showModal('create-template-modal');
+    } catch (error) {
+        console.error('Ошибка показа модального окна создания шаблона:', error);
+    }
+}
+
+// Создание нового шаблона из модального окна
+function createNewTemplateFromModal() {
+    try {
+        const input = document.getElementById('new-template-name-input');
+        if (!input || !input.value.trim()) {
+            showNotification('Введите название нового шаблона');
+            return;
+        }
+        
+        const newTemplateName = input.value.trim();
+        const newTemplateId = 'template_' + Date.now();
+        const currentTemplate = getCurrentTemplate();
+        
+        appSettings.templates[newTemplateId] = {
+            id: newTemplateId,
+            name: newTemplateName,
+            ruleBlocks: [],
+            functionalBorderData: {
+                sales: 30000,
+                dayShift: false,
+                nightShift: false,
+                dayHours: 8,
+                nightHours: 0
+            },
+            calendarData: {}
+        };
+        
+        appSettings.currentTemplateId = newTemplateId;
+        saveToStorage('appSettings', appSettings);
+        
+        const currentTemplateName = document.getElementById('current-template-name');
+        if (currentTemplateName) {
+            currentTemplateName.textContent = newTemplateName;
+        }
+        
+        const dropdown = document.getElementById('template-dropdown');
+        if (dropdown) {
+            dropdown.style.display = 'none';
+        }
+        
+        renderRuleBlocksList();
+        generateFunctionalBorderFields(appSettings.templates[newTemplateId]);
+        
+        generateCalendar();
+        
+        closeModal();
+        showModal('templates-modal');
+        showNotification('Создан новый шаблон: ' + newTemplateName);
+    } catch (error) {
+        console.error('Ошибка создания нового шаблона:', error);
+        showNotification('Ошибка создания шаблона');
     }
 }
 
@@ -165,54 +279,6 @@ function switchTemplate(templateId) {
     } catch (error) {
         console.error('Ошибка переключения шаблона:', error);
         showNotification('Ошибка переключения шаблона');
-    }
-}
-
-// Создание нового шаблона
-function createNewTemplate() {
-    try {
-        const newTemplateName = prompt('Введите название нового шаблона:');
-        if (!newTemplateName || newTemplateName.trim() === '') return;
-        
-        const newTemplateId = 'template_' + Date.now();
-        const currentTemplate = getCurrentTemplate();
-        
-        appSettings.templates[newTemplateId] = {
-            id: newTemplateId,
-            name: newTemplateName.trim(),
-            ruleBlocks: [],
-            functionalBorderData: {
-                sales: 30000,
-                dayShift: false,
-                nightShift: false,
-                dayHours: 8,
-                nightHours: 0
-            },
-            calendarData: {}
-        };
-        
-        appSettings.currentTemplateId = newTemplateId;
-        saveToStorage('appSettings', appSettings);
-        
-        const currentTemplateName = document.getElementById('current-template-name');
-        if (currentTemplateName) {
-            currentTemplateName.textContent = newTemplateName.trim();
-        }
-        
-        const dropdown = document.getElementById('template-dropdown');
-        if (dropdown) {
-            dropdown.style.display = 'none';
-        }
-        
-        renderRuleBlocksList();
-        generateFunctionalBorderFields(appSettings.templates[newTemplateId]);
-        
-        generateCalendar();
-        
-        showNotification('Создан новый шаблон: ' + newTemplateName.trim());
-    } catch (error) {
-        console.error('Ошибка создания нового шаблона:', error);
-        showNotification('Ошибка создания шаблона');
     }
 }
 
