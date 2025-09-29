@@ -297,3 +297,126 @@ async function forceUpdate() {
     }
     
     const registrations = await navigator.serviceWorker.getRegistrations();
+    for (let registration of registrations) {
+      await registration.unregister();
+    }
+    
+    localStorage.removeItem('sw_version');
+    
+    setTimeout(() => {
+      window.location.reload(true);
+    }, 1000);
+  } catch (error) {
+    console.error('Ошибка принудительного обновления:', error);
+    showNotification('Ошибка обновления приложения');
+  }
+}
+
+// Экспорт данных
+function exportData() {
+  try {
+    const data = {
+      appSettings: appSettings,
+      exportDate: new Date().toISOString(),
+      version: '1.3'
+    };
+    
+    const validation = validateImportedData(data);
+    if (!validation.isValid) {
+      showNotification('Ошибка экспорта: неверная структура данных');
+      return;
+    }
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `calendar-backup-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showNotification('Данные экспортированы');
+    closeModal();
+  } catch (error) {
+    console.error('Ошибка экспорта данных:', error);
+    showNotification('Ошибка экспорта данных');
+  }
+}
+
+// Импорт данных из файла
+function importData(event) {
+  try {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (!file.name.endsWith('.json') && file.type !== 'application/json') {
+      showNotification('Выберите файл в формате JSON');
+      event.target.value = '';
+      return;
+    }
+    
+    if (file.size > 10 * 1024 * 1024) {
+      showNotification('Файл слишком большой (макс. 10MB)');
+      event.target.value = '';
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        let data;
+        try {
+          data = JSON.parse(e.target.result);
+        } catch (parseError) {
+          console.error('Ошибка парсинга JSON:', parseError);
+          showNotification('Ошибка импорта: неверный формат JSON файла');
+          return;
+        }
+        
+        const validation = validateImportedData(data);
+        if (!validation.isValid) {
+          showNotification('Ошибка импорта: ' + validation.error);
+          return;
+        }
+        
+        const migratedSettings = processDataMigration(data);
+        if (!migratedSettings) {
+          showNotification('Ошибка обработки данных импорта');
+          return;
+        }
+        
+        if (!migratedSettings.templates || typeof migratedSettings.templates !== 'object') {
+          showNotification('Неверная структура данных шаблонов');
+          return;
+        }
+        
+        if (!saveToStorage('appSettings', migratedSettings)) {
+          showNotification('Ошибка сохранения импортированных данных');
+          return;
+        }
+        
+        appSettings = migratedSettings;
+        
+        generateCalendar();
+        showNotification('Данные импортированы');
+        
+      } catch (error) {
+        console.error('Ошибка импорта:', error);
+        showNotification('Ошибка импорта данных: ' + error.message);
+      }
+    };
+    
+    reader.onerror = function() {
+      showNotification('Ошибка чтения файла');
+    };
+    
+    reader.readAsText(file);
+    event.target.value = '';
+  } catch (error) {
+    console.error('Ошибка импорта файла:', error);
+    showNotification('Ошибка импорта файла');
+  }
+}
