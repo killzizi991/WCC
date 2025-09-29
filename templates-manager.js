@@ -328,6 +328,20 @@ function addRuleBlock(blockType) {
         const newBlock = createRuleBlock(blockType);
         currentTemplate.ruleBlocks.push(newBlock);
         
+        // Инициализация значений функциональной обводки только если они еще не установлены
+        if (blockType === 'salesPercent' && currentTemplate.functionalBorderData.sales === undefined) {
+            currentTemplate.functionalBorderData.sales = 30000;
+        }
+        
+        if (blockType === 'hourlyRate') {
+            if (currentTemplate.functionalBorderData.dayHours === undefined) {
+                currentTemplate.functionalBorderData.dayHours = 8;
+            }
+            if (currentTemplate.functionalBorderData.nightHours === undefined) {
+                currentTemplate.functionalBorderData.nightHours = 0;
+            }
+        }
+        
         saveToStorage('appSettings', appSettings);
         renderRuleBlocksList();
         generateFunctionalBorderFields(currentTemplate);
@@ -1032,7 +1046,10 @@ function saveTemplateChanges() {
         if (hasSalesPercent) {
             const salesInput = document.getElementById('functional-border-sales');
             if (salesInput) {
-                template.functionalBorderData.sales = parseInt(salesInput.value) || 30000;
+                const value = parseInt(salesInput.value);
+                if (!isNaN(value)) {
+                    template.functionalBorderData.sales = value;
+                }
             }
         }
         
@@ -1051,12 +1068,18 @@ function saveTemplateChanges() {
         if (hasHourlyRate) {
             const dayHoursInput = document.getElementById('functional-border-day-hours');
             if (dayHoursInput) {
-                template.functionalBorderData.dayHours = parseFloat(dayHoursInput.value) || 8;
+                const value = parseFloat(dayHoursInput.value);
+                if (!isNaN(value)) {
+                    template.functionalBorderData.dayHours = value;
+                }
             }
             
             const nightHoursInput = document.getElementById('functional-border-night-hours');
             if (nightHoursInput) {
-                template.functionalBorderData.nightHours = parseFloat(nightHoursInput.value) || 0;
+                const value = parseFloat(nightHoursInput.value);
+                if (!isNaN(value)) {
+                    template.functionalBorderData.nightHours = value;
+                }
             }
         }
         
@@ -1093,7 +1116,7 @@ function generateFunctionalBorderFields(template) {
             const input = document.createElement('input');
             input.type = 'number';
             input.id = 'functional-border-sales';
-            input.value = template.functionalBorderData.sales || 30000;
+            input.value = template.functionalBorderData.sales !== undefined ? template.functionalBorderData.sales : 30000;
             input.min = 0;
             input.step = 1000;
             salesGroup.appendChild(label);
@@ -1130,7 +1153,11 @@ function generateFunctionalBorderFields(template) {
             const nightCheckbox = document.createElement('input');
             nightCheckbox.type = 'checkbox';
             nightCheckbox.id = 'functional-border-night-shift';
-            if (template.functionalBorderData.nightShift) nightCheckbox.checked = true;
+            if (template.functionalBorderData.nightShift !== undefined) {
+                nightCheckbox.checked = template.functionalBorderData.nightShift;
+            } else {
+                nightCheckbox.checked = false;
+            }
             const nightText = document.createTextNode('Ночная смена');
             nightLabel.appendChild(nightCheckbox);
             nightLabel.appendChild(nightText);
@@ -1160,7 +1187,7 @@ function generateFunctionalBorderFields(template) {
             const nightInput = document.createElement('input');
             nightInput.type = 'number';
             nightInput.id = 'functional-border-night-hours';
-            nightInput.value = template.functionalBorderData.nightHours || 0;
+            nightInput.value = template.functionalBorderData.nightHours !== undefined ? template.functionalBorderData.nightHours : 0;
             nightInput.min = 0;
             nightInput.step = 0.5;
             hoursGroup.appendChild(nightLabel);
