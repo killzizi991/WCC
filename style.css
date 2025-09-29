@@ -219,31 +219,6 @@ button:active {
     font-size: 0.75em;
 }
 
-/* Индикаторы смен */
-.shift-indicators {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 2px;
-    padding: 0 2px;
-    height: 8px;
-}
-
-.shift-indicator {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    box-shadow: 0 0 2px rgba(0,0,0,0.5);
-}
-
-.day-shift {
-    background: #ffd700; /* яркий желтый */
-}
-
-.night-shift {
-    background: #007bff; /* яркий синий */
-}
-
 /* Функциональная обводки */
 .day.functional-border {
     border: 2px solid #e74c3c;
@@ -573,15 +548,6 @@ input:focus, textarea:focus {
         width: 36px;
         height: 36px;
     }
-    
-    .shift-indicators {
-        height: 7px;
-    }
-    
-    .shift-indicator {
-        width: 7px;
-        height: 7px;
-    }
 }
 
 @media (max-width: 480px) {
@@ -637,15 +603,6 @@ input:focus, textarea:focus {
     #current-month-year {
         font-size: 1rem;
     }
-    
-    .shift-indicators {
-        height: 6px;
-    }
-    
-    .shift-indicator {
-        width: 6px;
-        height: 6px;
-    }
 }
 
 @media (max-width: 400px) {
@@ -693,15 +650,6 @@ input:focus, textarea:focus {
     .day-data .day-sales.small,
     .day-data .day-hours.small {
         font-size: 0.7rem;
-    }
-    
-    .shift-indicators {
-        height: 5px;
-    }
-    
-    .shift-indicator {
-        width: 5px;
-        height: 5px;
     }
 }
 
