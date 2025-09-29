@@ -1,4 +1,4 @@
-// FILE: core.js
+
 // Основные переменные
 let currentDate = new Date();
 let currentYear = currentDate.getFullYear();
@@ -191,46 +191,62 @@ function migrateToTemplateStructure() {
 // Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', () => {
   try {
-    migrateToTemplateStructure();
-    
-    const currentTemplate = getCurrentTemplate();
-    
-    if (currentTemplate.functionalBorderValue && typeof currentTemplate.functionalBorderValue === 'number') {
-      currentTemplate.functionalBorderData = {
-        sales: currentTemplate.functionalBorderValue,
-        dayShift: true,
-        nightShift: false,
-        dayHours: 8,
-        nightHours: 0
-      };
-      delete currentTemplate.functionalBorderValue;
-      saveToStorage('appSettings', appSettings);
-    }
-
-    generateCalendar();
-    setupEventListeners();
-    initPeriodSelector();
-    
-    if (!localStorage.getItem('firstRun')) {
-      localStorage.setItem('firstRun', 'true');
-      showWelcomeMessage();
-    }
-    
-    window.addEventListener('resize', function() {
-      const newHeight = window.innerHeight;
-      const heightDifference = Math.abs(lastWindowHeight - newHeight);
+    // Безопасная инициализация с обработкой ошибок
+    try {
+      migrateToTemplateStructure();
       
-      if (heightDifference > 200) {
-        isKeyboardOpen = (newHeight < lastWindowHeight);
-        lastWindowHeight = newHeight;
+      const currentTemplate = getCurrentTemplate();
+      
+      if (currentTemplate.functionalBorderValue && typeof currentTemplate.functionalBorderValue === 'number') {
+        currentTemplate.functionalBorderData = {
+          sales: currentTemplate.functionalBorderValue,
+          dayShift: true,
+          nightShift: false,
+          dayHours: 8,
+          nightHours: 0
+        };
+        delete currentTemplate.functionalBorderValue;
+        saveToStorage('appSettings', appSettings);
       }
-    });
-    
-    validateDataIntegrity();
+
+      generateCalendar();
+      setupEventListeners();
+      initPeriodSelector();
+      
+      if (!localStorage.getItem('firstRun')) {
+        localStorage.setItem('firstRun', 'true');
+        showWelcomeMessage();
+      }
+      
+      window.addEventListener('resize', function() {
+        const newHeight = window.innerHeight;
+        const heightDifference = Math.abs(lastWindowHeight - newHeight);
+        
+        if (heightDifference > 200) {
+          isKeyboardOpen = (newHeight < lastWindowHeight);
+          lastWindowHeight = newHeight;
+        }
+      });
+      
+      validateDataIntegrity();
+      
+    } catch (initError) {
+      console.error('Критическая ошибка инициализации:', initError);
+      showNotification('Ошибка инициализации приложения. Проверьте консоль для подробностей.');
+      
+      // Пытаемся восстановить базовую функциональность
+      try {
+        setupEventListeners();
+        initPeriodSelector();
+        showNotification('Приложение запущено в ограниченном режиме');
+      } catch (recoveryError) {
+        console.error('Не удалось восстановить базовую функциональность:', recoveryError);
+      }
+    }
     
   } catch (error) {
-    console.error('Ошибка инициализации приложения:', error);
-    showNotification('Критическая ошибка при запуске приложения');
+    console.error('Фатальная ошибка при запуске приложения:', error);
+    showNotification('Критическая ошибка при запуске приложения. Пожалуйста, перезагрузите страницу.');
   }
 });
 
