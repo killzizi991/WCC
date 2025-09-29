@@ -259,12 +259,12 @@ button:active {
 
 .modal-content {
     background: white;
-    margin: 5% auto;
-    padding: 25px;
+    margin: 2% auto;
+    padding: 20px;
     border-radius: 8px;
-    width: 90%;
-    max-width: 400px;
-    max-height: 80vh;
+    width: 95%;
+    max-width: 380px;
+    max-height: 90vh;
     overflow-y: auto;
     position: relative;
     animation: slideIn 0.3s ease;
@@ -284,8 +284,8 @@ button:active {
     font-weight: bold;
     cursor: pointer;
     position: absolute;
-    top: 15px;
-    right: 20px;
+    top: 10px;
+    right: 15px;
 }
 
 .close:hover {
@@ -450,9 +450,32 @@ input:focus, textarea:focus {
     color: #4a6cf7;
 }
 
+/* Оптимизация для мобильных устройств */
 @media (max-width: 768px) {
     body {
-        padding: 15px;
+        padding: 10px;
+    }
+    
+    .header {
+        padding: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .header-container {
+        margin-bottom: 8px;
+    }
+    
+    #current-month-year {
+        font-size: 1.1rem;
+    }
+    
+    .tools-container {
+        gap: 8px;
+    }
+    
+    button {
+        padding: 10px 14px;
+        font-size: 0.85rem;
     }
     
     .calendar {
@@ -461,54 +484,6 @@ input:focus, textarea:focus {
     
     .day {
         min-height: 70px;
-        padding: 10px;
-    }
-    
-    .day-number {
-        font-size: 0.95rem;
-    }
-    
-    .day-sales {
-        font-size: 0.95rem;
-    }
-    
-    .modal-content {
-        margin: 8% auto;
-        width: 95%;
-        padding: 20px;
-    }
-    
-    .header {
-        padding: 12px;
-    }
-    
-    button {
-        padding: 10px 16px;
-        font-size: 0.85rem;
-    }
-    
-    .period-options {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .palette-tool {
-        width: 36px;
-        height: 36px;
-    }
-}
-
-@media (max-width: 480px) {
-    .header-container {
-        flex-wrap: wrap;
-    }
-    
-    .tools-container {
-        width: 100%;
-        margin-top: 10px;
-    }
-    
-    .day {
-        min-height: 60px;
         padding: 8px;
     }
     
@@ -517,7 +492,82 @@ input:focus, textarea:focus {
     }
     
     .day-sales {
+        font-size: 0.85rem;
+    }
+    
+    .modal-content {
+        margin: 1% auto;
+        padding: 15px;
+        width: 98%;
+        max-width: 360px;
+    }
+    
+    .close {
+        top: 8px;
+        right: 12px;
+        font-size: 22px;
+    }
+    
+    .period-options {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .palette-tool {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .palette-panel {
+        padding: 10px;
+    }
+    
+    input, textarea {
+        padding: 10px;
+        font-size: 16px; /* Предотвращает масштабирование в iOS */
+    }
+    
+    .summary-results {
+        padding: 15px;
+    }
+    
+    .summary-results p {
         font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 8px;
+    }
+    
+    .header-container {
+        flex-wrap: wrap;
+    }
+    
+    .tools-container {
+        width: 100%;
+        margin-top: 8px;
+        justify-content: space-between;
+    }
+    
+    .day {
+        min-height: 60px;
+        padding: 6px;
+    }
+    
+    .day-number {
+        font-size: 0.85rem;
+    }
+    
+    .day-sales {
+        font-size: 0.8rem;
+    }
+    
+    .modal-content {
+        margin: 0.5% auto;
+        padding: 12px;
+        width: 99%;
+        max-width: 340px;
     }
     
     .period-options {
@@ -525,25 +575,70 @@ input:focus, textarea:focus {
     }
     
     .palette-panel {
-        padding: 12px;
+        padding: 8px;
     }
     
     .palette-tools {
-        gap: 8px;
+        gap: 6px;
     }
     
     .palette-tool {
-        width: 32px;
-        height: 32px;
-        font-size: 1rem;
+        width: 30px;
+        height: 30px;
+        font-size: 0.9rem;
     }
     
     #current-month-year {
         font-size: 1rem;
     }
+    
+    .color-picker {
+        gap: 8px;
+    }
+    
+    .color-option {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .setting-group {
+        margin: 12px 0;
+    }
+    
+    .setting-group label {
+        font-size: 0.9rem;
+    }
 }
 
-@media (max-width: 400px) {
+/* Оптимизация для очень маленьких экранов */
+@media (max-width: 360px) {
+    .modal-content {
+        padding: 10px;
+        max-width: 320px;
+    }
+    
+    .day {
+        min-height: 55px;
+        padding: 4px;
+    }
+    
+    .day-number {
+        font-size: 0.8rem;
+    }
+    
+    .day-sales {
+        font-size: 0.75rem;
+    }
+    
+    button {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+    }
+    
+    .header {
+        padding: 8px;
+    }
+    
     #current-month-year {
         font-size: 0.9rem;
     }
@@ -578,17 +673,45 @@ input:focus, textarea:focus {
     .day-sales {
         font-size: 0.8rem;
     }
+    
+    .modal-content {
+        margin: 1% auto;
+        max-height: 95vh;
+    }
 }
 
 @media (max-height: 700px) {
     .day {
         min-height: 65px;
     }
+    
+    .modal-content {
+        margin: 1% auto;
+        max-height: 95vh;
+    }
 }
 
 @media (min-height: 1000px) {
     .day {
         min-height: 90px;
+    }
+}
+
+/* Специфичные стили для iOS */
+@supports (-webkit-touch-callout: none) {
+    input, textarea, select {
+        font-size: 16px; /* Предотвращает масштабирование в iOS */
+    }
+    
+    .modal-content {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Специфичные стили для Android */
+@supports not (-webkit-touch-callout: none) {
+    .modal-content {
+        scroll-behavior: smooth;
     }
 }
 
@@ -874,10 +997,15 @@ input:focus, textarea:focus {
 
 @supports (padding: max(0px)) {
     body {
-        padding-left: max(15px, env(safe-area-inset-left));
-        padding-right: max(15px, env(safe-area-inset-right));
-        padding-top: max(15px, env(safe-area-inset-top));
-        padding-bottom: max(15px, env(safe-area-inset-bottom));
+        padding-left: max(8px, env(safe-area-inset-left));
+        padding-right: max(8px, env(safe-area-inset-right));
+        padding-top: max(8px, env(safe-area-inset-top));
+        padding-bottom: max(8px, env(safe-area-inset-bottom));
+    }
+    
+    .modal-content {
+        margin-left: max(1%, env(safe-area-inset-left));
+        margin-right: max(1%, env(safe-area-inset-right));
     }
 }
 
@@ -909,12 +1037,6 @@ input:focus-visible,
 textarea:focus-visible {
     outline: 2px solid #4a6cf7;
     outline-offset: 2px;
-}
-
-@supports (-webkit-touch-callout: none) {
-    input, textarea {
-        font-size: 16px;
-    }
 }
 
 .notification {
