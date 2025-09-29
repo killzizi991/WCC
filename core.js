@@ -230,6 +230,19 @@ document.addEventListener('DOMContentLoaded', () => {
       
       validateDataIntegrity();
       
+      // Обработчики для очистки нулевых значений в полях ввода
+      document.addEventListener('focusin', function(e) {
+        if (e.target.type === 'number' && parseFloat(e.target.value) === 0) {
+          e.target.value = '';
+        }
+      });
+
+      document.addEventListener('focusout', function(e) {
+        if (e.target.type === 'number' && e.target.value === '') {
+          e.target.value = '0';
+        }
+      });
+      
     } catch (initError) {
       console.error('Критическая ошибка инициализации:', initError);
       showNotification('Ошибка инициализации приложения. Проверьте консоль для подробностей.');
