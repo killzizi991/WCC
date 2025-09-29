@@ -1,4 +1,3 @@
-
 /* Сброс стилей */
 * {
     margin: 0;
@@ -190,6 +189,26 @@ button:active {
     word-break: break-word;
     font-weight: 500;
     text-shadow: 0 0 1px #000, 0 0 1px #000, 0 0 1px #000, 0 0 1px #000;
+}
+
+.day-hours {
+    font-size: 1rem;
+    color: #2c3e50;
+    word-break: break-word;
+    font-weight: 500;
+    text-shadow: 0 0 1px #000, 0 0 1px #000, 0 0 1px #000, 0 0 1px #000;
+}
+
+.day-data {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.day-data .day-sales.small,
+.day-data .day-hours.small {
+    font-size: 0.85rem;
+    line-height: 1.1;
 }
 
 .day-comment {
@@ -496,6 +515,15 @@ input:focus, textarea:focus {
         font-size: 0.95rem;
     }
     
+    .day-hours {
+        font-size: 0.95rem;
+    }
+    
+    .day-data .day-sales.small,
+    .day-data .day-hours.small {
+        font-size: 0.8rem;
+    }
+    
     .modal-content {
         margin: 8% auto;
         width: 95%;
@@ -542,6 +570,15 @@ input:focus, textarea:focus {
     
     .day-sales {
         font-size: 0.9rem;
+    }
+    
+    .day-hours {
+        font-size: 0.9rem;
+    }
+    
+    .day-data .day-sales.small,
+    .day-data .day-hours.small {
+        font-size: 0.75rem;
     }
     
     .period-options {
@@ -603,6 +640,15 @@ input:focus, textarea:focus {
     
     .day-sales {
         font-size: 0.8rem;
+    }
+    
+    .day-hours {
+        font-size: 0.8rem;
+    }
+    
+    .day-data .day-sales.small,
+    .day-data .day-hours.small {
+        font-size: 0.7rem;
     }
 }
 
@@ -680,6 +726,11 @@ input:focus, textarea:focus {
     }
     
     .day-sales {
+        color: #e9ecef;
+        text-shadow: 0 0 1px #000, 0 0 1px #000, 0 0 1px #000, 0 0 1px #000;
+    }
+    
+    .day-hours {
         color: #e9ecef;
         text-shadow: 0 0 1px #000, 0 0 1px #000, 0 0 1px #000, 0 0 1px #000;
     }
