@@ -185,6 +185,13 @@ button:active {
     text-shadow: 0 0 1px #000, 0 0 1px #000, 0 0 1px #000, 0 0 1px #000;
 }
 
+.day-comment {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 0.75em;
+}
+
 .day.functional-border {
     border: 2px solid #e74c3c;
     animation: pulse-border 2s infinite;
@@ -259,12 +266,12 @@ button:active {
 
 .modal-content {
     background: white;
-    margin: 2% auto;
-    padding: 20px;
+    margin: 5% auto;
+    padding: 25px;
     border-radius: 8px;
-    width: 95%;
-    max-width: 380px;
-    max-height: 85vh;
+    width: 90%;
+    max-width: 400px;
+    max-height: 80vh;
     overflow-y: auto;
     position: relative;
     animation: slideIn 0.3s ease;
@@ -452,7 +459,7 @@ input:focus, textarea:focus {
 
 @media (max-width: 768px) {
     body {
-        padding: 10px;
+        padding: 15px;
     }
     
     .calendar {
@@ -473,10 +480,9 @@ input:focus, textarea:focus {
     }
     
     .modal-content {
-        margin: 1% auto;
-        width: 98%;
-        padding: 15px;
-        max-width: 360px;
+        margin: 8% auto;
+        width: 95%;
+        padding: 20px;
     }
     
     .header {
@@ -521,13 +527,6 @@ input:focus, textarea:focus {
         font-size: 0.9rem;
     }
     
-    .modal-content {
-        margin: 0.5% auto;
-        width: 99%;
-        padding: 12px;
-        max-width: 340px;
-    }
-    
     .period-options {
         grid-template-columns: 1fr;
     }
@@ -554,11 +553,6 @@ input:focus, textarea:focus {
 @media (max-width: 400px) {
     #current-month-year {
         font-size: 0.9rem;
-    }
-    
-    .modal-content {
-        padding: 10px;
-        max-width: 320px;
     }
 }
 
@@ -591,20 +585,11 @@ input:focus, textarea:focus {
     .day-sales {
         font-size: 0.8rem;
     }
-    
-    .modal-content {
-        margin: 0.5% auto;
-        max-height: 95vh;
-    }
 }
 
 @media (max-height: 700px) {
     .day {
         min-height: 65px;
-    }
-    
-    .modal-content {
-        max-height: 90vh;
     }
 }
 
@@ -896,15 +881,10 @@ input:focus, textarea:focus {
 
 @supports (padding: max(0px)) {
     body {
-        padding-left: max(10px, env(safe-area-inset-left));
-        padding-right: max(10px, env(safe-area-inset-right));
-        padding-top: max(10px, env(safe-area-inset-top));
-        padding-bottom: max(10px, env(safe-area-inset-bottom));
-    }
-    
-    .modal-content {
-        margin-left: max(1%, env(safe-area-inset-left));
-        margin-right: max(1%, env(safe-area-inset-right));
+        padding-left: max(15px, env(safe-area-inset-left));
+        padding-right: max(15px, env(safe-area-inset-right));
+        padding-top: max(15px, env(safe-area-inset-top));
+        padding-bottom: max(15px, env(safe-area-inset-bottom));
     }
 }
 
