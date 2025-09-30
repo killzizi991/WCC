@@ -160,7 +160,32 @@ function showTemplatesDropdown() {
             const option = document.createElement('div');
             option.style.padding = '10px';
             option.style.cursor = 'pointer';
-            option.textContent = template.name;
+            option.style.display = 'flex';
+            option.style.justifyContent = 'space-between';
+            option.style.alignItems = 'center';
+            
+            const templateName = document.createElement('span');
+            templateName.textContent = template.name;
+            
+            const deleteIcon = document.createElement('span');
+            deleteIcon.textContent = '🗑️';
+            deleteIcon.style.marginLeft = '10px';
+            deleteIcon.style.cursor = 'pointer';
+            deleteIcon.style.opacity = '0.7';
+            
+            // Не показывать иконку удаления для основного шаблона
+            if (template.id !== 'default') {
+                deleteIcon.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteTemplate(template.id);
+                });
+            } else {
+                deleteIcon.style.visibility = 'hidden';
+            }
+            
+            option.appendChild(templateName);
+            option.appendChild(deleteIcon);
+            
             option.addEventListener('click', () => switchTemplate(template.id));
             dropdown.appendChild(option);
         });
@@ -205,6 +230,68 @@ function showTemplatesDropdown() {
         }, 0);
     } catch (error) {
         console.error('Ошибка показа выпадающего списка шаблонов:', error);
+    }
+}
+
+// Удаление шаблона
+function deleteTemplate(templateId) {
+    try {
+        // Нельзя удалить основной шаблон
+        if (templateId === 'default') {
+            showNotification('Нельзя удалить основной шаблон');
+            return;
+        }
+
+        // Нельзя удалить, если это последний шаблон
+        const templateCount = Object.keys(appSettings.templates).length;
+        if (templateCount <= 1) {
+            showNotification('Должен остаться хотя бы один шаблон');
+            return;
+        }
+
+        const templateName = appSettings.templates[templateId].name;
+        
+        showConfirmModal(
+            'Удаление шаблона',
+            `Вы уверены, что хотите удалить шаблон "${templateName}"? Это действие нельзя отменить.`,
+            () => {
+                // Удаляем шаблон
+                delete appSettings.templates[templateId];
+
+                // Если удаленный шаблон был текущим, переключаемся на основной
+                if (appSettings.currentTemplateId === templateId) {
+                    appSettings.currentTemplateId = 'default';
+                }
+
+                saveToStorage('appSettings', appSettings);
+
+                // Обновляем интерфейс
+                generateCalendar();
+
+                // Закрываем выпадающий список
+                const dropdown = document.getElementById('template-dropdown');
+                if (dropdown) {
+                    dropdown.style.display = 'none';
+                }
+
+                // Обновляем модальное окно шаблонов, если оно открыто
+                const templatesModal = document.getElementById('templates-modal');
+                if (templatesModal && templatesModal.style.display === 'block') {
+                    const currentTemplate = getCurrentTemplate();
+                    const currentTemplateNameElement = document.getElementById('current-template-name');
+                    if (currentTemplateNameElement) {
+                        currentTemplateNameElement.textContent = currentTemplate.name;
+                    }
+                    renderRuleBlocksList();
+                    generateFunctionalBorderFields(currentTemplate);
+                }
+
+                showNotification(`Шаблон "${templateName}" удален`);
+            }
+        );
+    } catch (error) {
+        console.error('Ошибка удаления шаблона:', error);
+        showNotification('Ошибка удаления шаблона');
     }
 }
 
