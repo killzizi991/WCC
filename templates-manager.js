@@ -34,6 +34,7 @@ function setupTemplatesModalListeners() {
         if (closeButton) {
             closeButton.addEventListener('click', function() {
                 closeModal();
+                generateCalendar();
             });
         }
         
@@ -42,6 +43,7 @@ function setupTemplatesModalListeners() {
             modal.addEventListener('click', function(e) {
                 if (e.target === this) {
                     closeModal();
+                    generateCalendar();
                 }
             });
         }
@@ -68,7 +70,10 @@ function setupTemplatesModalListeners() {
         
         const cancelButton = document.getElementById('cancel-template-changes');
         if (cancelButton) {
-            cancelButton.addEventListener('click', closeModal);
+            cancelButton.addEventListener('click', function() {
+                closeModal();
+                generateCalendar();
+            });
         }
         
         // Обработчики для новых модальных окон
@@ -1193,6 +1198,7 @@ function saveTemplateChanges() {
         
         saveToStorage('appSettings', appSettings);
         closeAllModals();
+        generateCalendar();
         showNotification('Изменения шаблона сохранены');
     } catch (error) {
         console.error('Ошибка сохранения изменений шаблона:', error);
