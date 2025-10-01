@@ -426,25 +426,151 @@ function generateDynamicFields(dayData) {
         const shiftGroup = document.createElement('div');
         shiftGroup.className = 'setting-group';
         
-        const dayShiftLabel = document.createElement('label');
-        dayShiftLabel.className = 'custom-checkbox';
-        dayShiftLabel.innerHTML = `
-            <input type="checkbox" id="day-shift-checkbox" ${dayData.dayShift ? 'checked' : ''}>
-            <span class="checkmark"></span>
-            Дневная смена
-        `;
-        shiftGroup.appendChild(dayShiftLabel);
+        // Кастомный чекбокс для дневной смены
+        const dayShiftContainer = document.createElement('div');
+        dayShiftContainer.className = 'custom-checkbox-container';
+        dayShiftContainer.style.display = 'flex';
+        dayShiftContainer.style.justifyContent = 'space-between';
+        dayShiftContainer.style.alignItems = 'center';
+        dayShiftContainer.style.marginBottom = '10px';
         
+        const dayShiftLabel = document.createElement('label');
+        dayShiftLabel.className = 'custom-checkbox-label';
+        dayShiftLabel.textContent = 'Дневная смена';
+        dayShiftLabel.style.flex = '1';
+        dayShiftLabel.style.cursor = 'pointer';
+        
+        const dayShiftCheckbox = document.createElement('input');
+        dayShiftCheckbox.type = 'checkbox';
+        dayShiftCheckbox.id = 'day-shift-checkbox';
+        dayShiftCheckbox.checked = dayData.dayShift || false;
+        dayShiftCheckbox.style.display = 'none';
+        
+        const dayShiftCustom = document.createElement('div');
+        dayShiftCustom.className = 'custom-checkbox';
+        dayShiftCustom.style.width = '20px';
+        dayShiftCustom.style.height = '20px';
+        dayShiftCustom.style.border = '2px solid #4a6cf7';
+        dayShiftCustom.style.borderRadius = '4px';
+        dayShiftCustom.style.backgroundColor = dayShiftCheckbox.checked ? '#4a6cf7' : 'transparent';
+        dayShiftCustom.style.position = 'relative';
+        dayShiftCustom.style.marginLeft = '10px';
+        dayShiftCustom.style.transition = 'all 0.2s ease';
+        
+        if (dayShiftCheckbox.checked) {
+            const checkmark = document.createElement('div');
+            checkmark.style.position = 'absolute';
+            checkmark.style.left = '4px';
+            checkmark.style.top = '1px';
+            checkmark.style.width = '8px';
+            checkmark.style.height = '12px';
+            checkmark.style.border = 'solid white';
+            checkmark.style.borderWidth = '0 2px 2px 0';
+            checkmark.style.transform = 'rotate(45deg)';
+            dayShiftCustom.appendChild(checkmark);
+        }
+        
+        dayShiftLabel.appendChild(dayShiftCheckbox);
+        dayShiftLabel.appendChild(dayShiftCustom);
+        dayShiftContainer.appendChild(dayShiftLabel);
+        
+        dayShiftLabel.addEventListener('click', function(e) {
+            e.preventDefault();
+            dayShiftCheckbox.checked = !dayShiftCheckbox.checked;
+            dayShiftCustom.style.backgroundColor = dayShiftCheckbox.checked ? '#4a6cf7' : 'transparent';
+            
+            if (dayShiftCheckbox.checked) {
+                if (!dayShiftCustom.querySelector('div')) {
+                    const checkmark = document.createElement('div');
+                    checkmark.style.position = 'absolute';
+                    checkmark.style.left = '4px';
+                    checkmark.style.top = '1px';
+                    checkmark.style.width = '8px';
+                    checkmark.style.height = '12px';
+                    checkmark.style.border = 'solid white';
+                    checkmark.style.borderWidth = '0 2px 2px 0';
+                    checkmark.style.transform = 'rotate(45deg)';
+                    dayShiftCustom.appendChild(checkmark);
+                }
+            } else {
+                dayShiftCustom.innerHTML = '';
+            }
+        });
+        
+        shiftGroup.appendChild(dayShiftContainer);
+        
+        // Кастомный чекбокс для ночной смены (если есть ночные смены)
         if (hasNightShifts) {
+            const nightShiftContainer = document.createElement('div');
+            nightShiftContainer.className = 'custom-checkbox-container';
+            nightShiftContainer.style.display = 'flex';
+            nightShiftContainer.style.justifyContent = 'space-between';
+            nightShiftContainer.style.alignItems = 'center';
+            
             const nightShiftLabel = document.createElement('label');
-            nightShiftLabel.className = 'custom-checkbox';
-            nightShiftLabel.style.marginTop = '10px';
-            nightShiftLabel.innerHTML = `
-                <input type="checkbox" id="night-shift-checkbox" ${dayData.nightShift ? 'checked' : ''}>
-                <span class="checkmark"></span>
-                Ночная смена
-            `;
-            shiftGroup.appendChild(nightShiftLabel);
+            nightShiftLabel.className = 'custom-checkbox-label';
+            nightShiftLabel.textContent = 'Ночная смена';
+            nightShiftLabel.style.flex = '1';
+            nightShiftLabel.style.cursor = 'pointer';
+            
+            const nightShiftCheckbox = document.createElement('input');
+            nightShiftCheckbox.type = 'checkbox';
+            nightShiftCheckbox.id = 'night-shift-checkbox';
+            nightShiftCheckbox.checked = dayData.nightShift || false;
+            nightShiftCheckbox.style.display = 'none';
+            
+            const nightShiftCustom = document.createElement('div');
+            nightShiftCustom.className = 'custom-checkbox';
+            nightShiftCustom.style.width = '20px';
+            nightShiftCustom.style.height = '20px';
+            nightShiftCustom.style.border = '2px solid #4a6cf7';
+            nightShiftCustom.style.borderRadius = '4px';
+            nightShiftCustom.style.backgroundColor = nightShiftCheckbox.checked ? '#4a6cf7' : 'transparent';
+            nightShiftCustom.style.position = 'relative';
+            nightShiftCustom.style.marginLeft = '10px';
+            nightShiftCustom.style.transition = 'all 0.2s ease';
+            
+            if (nightShiftCheckbox.checked) {
+                const checkmark = document.createElement('div');
+                checkmark.style.position = 'absolute';
+                checkmark.style.left = '4px';
+                checkmark.style.top = '1px';
+                checkmark.style.width = '8px';
+                checkmark.style.height = '12px';
+                checkmark.style.border = 'solid white';
+                checkmark.style.borderWidth = '0 2px 2px 0';
+                checkmark.style.transform = 'rotate(45deg)';
+                nightShiftCustom.appendChild(checkmark);
+            }
+            
+            nightShiftLabel.appendChild(nightShiftCheckbox);
+            nightShiftLabel.appendChild(nightShiftCustom);
+            nightShiftContainer.appendChild(nightShiftLabel);
+            
+            nightShiftLabel.addEventListener('click', function(e) {
+                e.preventDefault();
+                nightShiftCheckbox.checked = !nightShiftCheckbox.checked;
+                nightShiftCustom.style.backgroundColor = nightShiftCheckbox.checked ? '#4a6cf7' : 'transparent';
+                
+                if (nightShiftCheckbox.checked) {
+                    if (!nightShiftCustom.querySelector('div')) {
+                        const checkmark = document.createElement('div');
+                        checkmark.style.position = 'absolute';
+                        checkmark.style.left = '4px';
+                        checkmark.style.top = '1px';
+                        checkmark.style.width = '8px';
+                        checkmark.style.height = '12px';
+                        checkmark.style.border = 'solid white';
+                        checkmark.style.borderWidth = '0 2px 2px 0';
+                        checkmark.style.transform = 'rotate(45deg)';
+                        nightShiftCustom.appendChild(checkmark);
+                    }
+                } else {
+                    nightShiftCustom.innerHTML = '';
+                }
+            });
+            
+            shiftGroup.appendChild(nightShiftContainer);
         }
         
         dynamicFields.appendChild(shiftGroup);
@@ -484,6 +610,24 @@ function generateDynamicFields(dayData) {
             salesInput.addEventListener('input', function() {
                 if (this.value && parseFloat(this.value) > 0) {
                     dayShiftCheckbox.checked = true;
+                    
+                    // Обновляем визуальное состояние кастомного чекбокса
+                    const dayShiftCustom = document.querySelector('.custom-checkbox-container:first-child .custom-checkbox');
+                    if (dayShiftCustom) {
+                        dayShiftCustom.style.backgroundColor = '#4a6cf7';
+                        if (!dayShiftCustom.querySelector('div')) {
+                            const checkmark = document.createElement('div');
+                            checkmark.style.position = 'absolute';
+                            checkmark.style.left = '4px';
+                            checkmark.style.top = '1px';
+                            checkmark.style.width = '8px';
+                            checkmark.style.height = '12px';
+                            checkmark.style.border = 'solid white';
+                            checkmark.style.borderWidth = '0 2px 2px 0';
+                            checkmark.style.transform = 'rotate(45deg)';
+                            dayShiftCustom.appendChild(checkmark);
+                        }
+                    }
                 }
             });
         }
