@@ -1,4 +1,6 @@
 // FILE: templates-manager.js
+[file content begin]
+// FILE: templates-manager.js
 // Показать модальное окно шаблонов
 function showTemplatesModal() {
     try {
@@ -1009,21 +1011,71 @@ function validateHourlyRate(block) {
 // Настройка модального окна для аванса
 function setupAdvanceModal(modal, block) {
     try {
+        // Заменяем стандартный select на кастомные переключатели
         const advanceTypeSelect = modal.querySelector('#advance-type');
+        if (advanceTypeSelect) {
+            // Создаем контейнер для переключателей
+            const modeSwitcher = document.createElement('div');
+            modeSwitcher.className = 'mode-switcher';
+            modeSwitcher.style.display = 'flex';
+            modeSwitcher.style.gap = '10px';
+            modeSwitcher.style.marginBottom = '15px';
+
+            // Создаем переключатель для фиксированной суммы
+            const fixedOption = document.createElement('button');
+            fixedOption.className = 'mode-option period-option';
+            fixedOption.textContent = 'Фиксированная сумма';
+            fixedOption.dataset.mode = 'fixed';
+            fixedOption.type = 'button';
+
+            // Создаем переключатель для процента
+            const percentOption = document.createElement('button');
+            percentOption.className = 'mode-option period-option';
+            percentOption.textContent = 'Процент от заработка';
+            percentOption.dataset.mode = 'percent';
+            percentOption.type = 'button';
+
+            // Добавляем переключатели в контейнер
+            modeSwitcher.appendChild(fixedOption);
+            modeSwitcher.appendChild(percentOption);
+
+            // Вставляем контейнер перед полем ввода фиксированной суммы
+            const fixedContainer = modal.querySelector('#advance-fixed-container');
+            if (fixedContainer) {
+                fixedContainer.parentNode.insertBefore(modeSwitcher, fixedContainer);
+            }
+
+            // Удаляем старый select
+            advanceTypeSelect.parentNode.removeChild(advanceTypeSelect);
+
+            // Устанавливаем обработчики для переключателей
+            fixedOption.addEventListener('click', () => {
+                fixedOption.classList.add('active');
+                percentOption.classList.remove('active');
+                toggleAdvanceType('fixed');
+            });
+
+            percentOption.addEventListener('click', () => {
+                percentOption.classList.add('active');
+                fixedOption.classList.remove('active');
+                toggleAdvanceType('percent');
+            });
+
+            // Устанавливаем активный переключатель в соответствии с текущим значением блока
+            if (block.advanceType === 'fixed') {
+                fixedOption.classList.add('active');
+            } else {
+                percentOption.classList.add('active');
+            }
+        }
+
         const advanceFixedInput = modal.querySelector('#advance-fixed');
         const advancePercentInput = modal.querySelector('#advance-percent');
         
-        if (advanceTypeSelect) advanceTypeSelect.value = block.advanceType || 'fixed';
         if (advanceFixedInput) advanceFixedInput.value = block.value || 0;
         if (advancePercentInput) advancePercentInput.value = block.value || 0;
         
         toggleAdvanceType(block.advanceType);
-        
-        if (advanceTypeSelect) {
-            advanceTypeSelect.addEventListener('change', (e) => {
-                toggleAdvanceType(e.target.value);
-            });
-        }
     } catch (error) {
         console.error('Ошибка настройки модального окна аванса:', error);
     }
@@ -1044,10 +1096,11 @@ function toggleAdvanceType(type) {
 // Сохранение изменений аванса
 function saveAdvanceChanges(modal, block) {
     try {
-        const advanceTypeSelect = modal.querySelector('#advance-type');
-        if (!advanceTypeSelect) return false;
+        // Получаем выбранный режим из переключателей
+        const activeMode = modal.querySelector('.mode-option.active');
+        if (!activeMode) return false;
         
-        block.advanceType = advanceTypeSelect.value;
+        block.advanceType = activeMode.dataset.mode;
         const valueInput = modal.querySelector(block.advanceType === 'fixed' ? '#advance-fixed' : '#advance-percent');
         
         if (valueInput) {
@@ -1069,21 +1122,71 @@ function saveAdvanceChanges(modal, block) {
 // Настройка модального окна для налога
 function setupTaxModal(modal, block) {
     try {
+        // Заменяем стандартный select на кастомные переключатели
         const taxSourceSelect = modal.querySelector('#tax-source');
+        if (taxSourceSelect) {
+            // Создаем контейнер для переключателей
+            const modeSwitcher = document.createElement('div');
+            modeSwitcher.className = 'mode-switcher';
+            modeSwitcher.style.display = 'flex';
+            modeSwitcher.style.gap = '10px';
+            modeSwitcher.style.marginBottom = '15px';
+
+            // Создаем переключатель для всего заработка
+            const totalOption = document.createElement('button');
+            totalOption.className = 'mode-option period-option';
+            totalOption.textContent = 'Со всего заработка';
+            totalOption.dataset.mode = 'total';
+            totalOption.type = 'button';
+
+            // Создаем переключатель для фиксированной суммы
+            const fixedOption = document.createElement('button');
+            fixedOption.className = 'mode-option period-option';
+            fixedOption.textContent = 'С фиксированной суммы';
+            fixedOption.dataset.mode = 'fixed';
+            fixedOption.type = 'button';
+
+            // Добавляем переключатели в контейнер
+            modeSwitcher.appendChild(totalOption);
+            modeSwitcher.appendChild(fixedOption);
+
+            // Вставляем контейнер перед полем ввода процента налога
+            const taxPercentInput = modal.querySelector('#tax-percent');
+            if (taxPercentInput) {
+                taxPercentInput.parentNode.insertBefore(modeSwitcher, taxPercentInput);
+            }
+
+            // Удаляем старый select
+            taxSourceSelect.parentNode.removeChild(taxSourceSelect);
+
+            // Устанавливаем обработчики для переключателей
+            totalOption.addEventListener('click', () => {
+                totalOption.classList.add('active');
+                fixedOption.classList.remove('active');
+                toggleTaxSource('total');
+            });
+
+            fixedOption.addEventListener('click', () => {
+                fixedOption.classList.add('active');
+                totalOption.classList.remove('active');
+                toggleTaxSource('fixed');
+            });
+
+            // Устанавливаем активный переключатель в соответствии с текущим значением блока
+            if (block.taxSource === 'fixed') {
+                fixedOption.classList.add('active');
+            } else {
+                totalOption.classList.add('active');
+            }
+        }
+
         const taxPercentInput = modal.querySelector('#tax-percent');
         const taxFixedInput = modal.querySelector('#tax-fixed');
         
-        if (taxSourceSelect) taxSourceSelect.value = block.taxSource || 'total';
         if (taxPercentInput) taxPercentInput.value = block.taxPercent || 0;
         if (taxFixedInput) taxFixedInput.value = block.fixedAmount || 0;
         
         toggleTaxSource(block.taxSource);
-        
-        if (taxSourceSelect) {
-            taxSourceSelect.addEventListener('change', (e) => {
-                toggleTaxSource(e.target.value);
-            });
-        }
     } catch (error) {
         console.error('Ошибка настройки модального окна налога:', error);
     }
@@ -1103,12 +1206,15 @@ function toggleTaxSource(source) {
 // Сохранение изменений налога
 function saveTaxChanges(modal, block) {
     try {
-        const taxSourceSelect = modal.querySelector('#tax-source');
+        // Получаем выбранный режим из переключателей
+        const activeMode = modal.querySelector('.mode-option.active');
+        if (!activeMode) return false;
+        
+        block.taxSource = activeMode.dataset.mode;
         const taxPercentInput = modal.querySelector('#tax-percent');
         
-        if (!taxSourceSelect || !taxPercentInput) return false;
+        if (!taxPercentInput) return false;
         
-        block.taxSource = taxSourceSelect.value;
         block.taxPercent = parseFloat(taxPercentInput.value) || 0;
         
         if (block.taxSource === 'fixed') {
@@ -1165,11 +1271,65 @@ function saveBonusChanges(modal, block) {
 // Настройка модального окна для сверхурочных
 function setupOvertimeModal(modal, block) {
     try {
+        // Заменяем стандартный select на кастомные переключатели
         const overtimeTypeSelect = modal.querySelector('#overtime-type');
+        if (overtimeTypeSelect) {
+            // Создаем контейнер для переключателей
+            const modeSwitcher = document.createElement('div');
+            modeSwitcher.className = 'mode-switcher';
+            modeSwitcher.style.display = 'flex';
+            modeSwitcher.style.gap = '10px';
+            modeSwitcher.style.marginBottom = '15px';
+
+            // Создаем переключатель для смен
+            const shiftsOption = document.createElement('button');
+            shiftsOption.className = 'mode-option period-option';
+            shiftsOption.textContent = 'Смены';
+            shiftsOption.dataset.mode = 'shifts';
+            shiftsOption.type = 'button';
+
+            // Создаем переключатель для часов
+            const hoursOption = document.createElement('button');
+            hoursOption.className = 'mode-option period-option';
+            hoursOption.textContent = 'Часы';
+            hoursOption.dataset.mode = 'hours';
+            hoursOption.type = 'button';
+
+            // Добавляем переключатели в контейнер
+            modeSwitcher.appendChild(shiftsOption);
+            modeSwitcher.appendChild(hoursOption);
+
+            // Вставляем контейнер перед полем ввода предела
+            const overtimeLimitInput = modal.querySelector('#overtime-limit');
+            if (overtimeLimitInput) {
+                overtimeLimitInput.parentNode.insertBefore(modeSwitcher, overtimeLimitInput);
+            }
+
+            // Удаляем старый select
+            overtimeTypeSelect.parentNode.removeChild(overtimeTypeSelect);
+
+            // Устанавливаем обработчики для переключателей
+            shiftsOption.addEventListener('click', () => {
+                shiftsOption.classList.add('active');
+                hoursOption.classList.remove('active');
+            });
+
+            hoursOption.addEventListener('click', () => {
+                hoursOption.classList.add('active');
+                shiftsOption.classList.remove('active');
+            });
+
+            // Устанавливаем активный переключатель в соответствии с текущим значением блока
+            if (block.overtimeType === 'hours') {
+                hoursOption.classList.add('active');
+            } else {
+                shiftsOption.classList.add('active');
+            }
+        }
+
         const overtimeLimitInput = modal.querySelector('#overtime-limit');
         const overtimeMultiplierInput = modal.querySelector('#overtime-multiplier');
         
-        if (overtimeTypeSelect) overtimeTypeSelect.value = block.overtimeType || 'shifts';
         if (overtimeLimitInput) overtimeLimitInput.value = block.limit || 0;
         if (overtimeMultiplierInput) overtimeMultiplierInput.value = block.multiplier || 1.5;
     } catch (error) {
@@ -1180,13 +1340,16 @@ function setupOvertimeModal(modal, block) {
 // Сохранение изменений сверхурочных
 function saveOvertimeChanges(modal, block) {
     try {
-        const overtimeTypeSelect = modal.querySelector('#overtime-type');
+        // Получаем выбранный режим из переключателей
+        const activeMode = modal.querySelector('.mode-option.active');
+        if (!activeMode) return false;
+        
+        block.overtimeType = activeMode.dataset.mode;
         const overtimeLimitInput = modal.querySelector('#overtime-limit');
         const overtimeMultiplierInput = modal.querySelector('#overtime-multiplier');
         
-        if (!overtimeTypeSelect || !overtimeLimitInput || !overtimeMultiplierInput) return false;
+        if (!overtimeLimitInput || !overtimeMultiplierInput) return false;
         
-        block.overtimeType = overtimeTypeSelect.value;
         block.limit = parseFloat(overtimeLimitInput.value) || 0;
         block.multiplier = parseFloat(overtimeMultiplierInput.value) || 1.5;
         
@@ -1526,3 +1689,4 @@ function generateFunctionalBorderFields(template) {
         console.error('Ошибка генерации полей функциональной обводки:', error);
     }
 }
+[file content end]
