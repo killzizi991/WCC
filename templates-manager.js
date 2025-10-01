@@ -1,5 +1,4 @@
-// FILE: templates-manager.js
-[file content begin]
+
 // FILE: templates-manager.js
 // Показать модальное окно шаблонов
 function showTemplatesModal() {
@@ -1689,4 +1688,5 @@ function generateFunctionalBorderFields(template) {
         console.error('Ошибка генерации полей функциональной обводки:', error);
     }
 }
-[file content end]
+
+
