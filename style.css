@@ -438,9 +438,63 @@ input:focus, textarea:focus {
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.setting-group input[type="checkbox"] {
+/* Кастомные чекбоксы */
+.custom-checkbox {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin: 8px 0;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.custom-checkbox input[type="checkbox"] {
+    display: none;
+}
+
+.checkmark {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #4a6cf7;
+    border-radius: 4px;
     margin-right: 10px;
-    transform: scale(1.1);
+    position: relative;
+    transition: all 0.2s ease;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    margin-top: -2px;
+}
+
+.custom-checkbox input[type="checkbox"]:checked ~ .checkmark {
+    background-color: #4a6cf7;
+    border-color: #4a6cf7;
+}
+
+.custom-checkbox input[type="checkbox"]:checked ~ .checkmark:after {
+    display: block;
+}
+
+.custom-checkbox:hover .checkmark {
+    border-color: #3a56d8;
+    box-shadow: 0 2px 4px rgba(74, 108, 247, 0.2);
+}
+
+.custom-checkbox input[type="checkbox"]:checked:hover ~ .checkmark {
+    background-color: #3a56d8;
+    border-color: #3a56d8;
 }
 
 /* Результаты расчетов */
@@ -548,6 +602,11 @@ input:focus, textarea:focus {
         width: 36px;
         height: 36px;
     }
+    
+    .checkmark {
+        width: 18px;
+        height: 18px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -603,6 +662,11 @@ input:focus, textarea:focus {
     #current-month-year {
         font-size: 1rem;
     }
+    
+    .checkmark {
+        width: 16px;
+        height: 16px;
+    }
 }
 
 @media (max-width: 400px) {
@@ -650,6 +714,11 @@ input:focus, textarea:focus {
     .day-data .day-sales.small,
     .day-data .day-hours.small {
         font-size: 0.7rem;
+    }
+    
+    .checkmark {
+        width: 14px;
+        height: 14px;
     }
 }
 
@@ -781,6 +850,30 @@ input:focus, textarea:focus {
     .palette-tool {
         border-color: #5a6c7d;
         background: #3b3e45;
+    }
+
+    /* Стили для кастомных чекбоксов в темной теме */
+    .custom-checkbox {
+        color: #e9ecef;
+    }
+    
+    .checkmark {
+        background: #3b3e45;
+        border-color: #6c9bff;
+    }
+    
+    .custom-checkbox input[type="checkbox"]:checked ~ .checkmark {
+        background-color: #6c9bff;
+        border-color: #6c9bff;
+    }
+    
+    .custom-checkbox:hover .checkmark {
+        border-color: #8ab4f8;
+    }
+    
+    .custom-checkbox input[type="checkbox"]:checked:hover ~ .checkmark {
+        background-color: #8ab4f8;
+        border-color: #8ab4f8;
     }
 
     /* Стили для уведомлений в темной теме */
