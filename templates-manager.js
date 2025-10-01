@@ -1330,38 +1330,22 @@ function generateFunctionalBorderFields(template) {
             shiftGroup.className = 'setting-group';
             
             const dayLabel = document.createElement('label');
-            dayLabel.style.display = 'flex';
-            dayLabel.style.alignItems = 'center';
-            dayLabel.style.gap = '10px';
-            const dayCheckbox = document.createElement('input');
-            dayCheckbox.type = 'checkbox';
-            dayCheckbox.id = 'functional-border-day-shift';
-            if (template.functionalBorderData.dayShift !== undefined) {
-                dayCheckbox.checked = template.functionalBorderData.dayShift;
-            } else {
-                dayCheckbox.checked = false;
-            }
-            const dayText = document.createTextNode('Дневная смена');
-            dayLabel.appendChild(dayCheckbox);
-            dayLabel.appendChild(dayText);
+            dayLabel.className = 'custom-checkbox';
+            dayLabel.innerHTML = `
+                <input type="checkbox" id="functional-border-day-shift" ${template.functionalBorderData.dayShift !== undefined && template.functionalBorderData.dayShift ? 'checked' : ''}>
+                <span class="checkmark"></span>
+                Дневная смена
+            `;
             shiftGroup.appendChild(dayLabel);
             
             const nightLabel = document.createElement('label');
-            nightLabel.style.display = 'flex';
-            nightLabel.style.alignItems = 'center';
-            nightLabel.style.gap = '10px';
+            nightLabel.className = 'custom-checkbox';
             nightLabel.style.marginTop = '10px';
-            const nightCheckbox = document.createElement('input');
-            nightCheckbox.type = 'checkbox';
-            nightCheckbox.id = 'functional-border-night-shift';
-            if (template.functionalBorderData.nightShift !== undefined) {
-                nightCheckbox.checked = template.functionalBorderData.nightShift;
-            } else {
-                nightCheckbox.checked = false;
-            }
-            const nightText = document.createTextNode('Ночная смена');
-            nightLabel.appendChild(nightCheckbox);
-            nightLabel.appendChild(nightText);
+            nightLabel.innerHTML = `
+                <input type="checkbox" id="functional-border-night-shift" ${template.functionalBorderData.nightShift !== undefined && template.functionalBorderData.nightShift ? 'checked' : ''}>
+                <span class="checkmark"></span>
+                Ночная смена
+            `;
             shiftGroup.appendChild(nightLabel);
             
             container.appendChild(shiftGroup);
