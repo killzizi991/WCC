@@ -425,18 +425,28 @@ function generateDynamicFields(dayData) {
         
         const shiftGroup = document.createElement('div');
         shiftGroup.className = 'setting-group';
-        shiftGroup.innerHTML = `
-            <label style="display: flex; align-items: center; gap: 10px;">
-                <input type="checkbox" id="day-shift-checkbox" ${dayData.dayShift ? 'checked' : ''}>
-                Дневная смена
-            </label>
-            ${hasNightShifts ? `
-            <label style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
-                <input type="checkbox" id="night-shift-checkbox" ${dayData.nightShift ? 'checked' : ''}>
-                Ночная смена
-            </label>
-            ` : ''}
+        
+        const dayShiftLabel = document.createElement('label');
+        dayShiftLabel.className = 'custom-checkbox';
+        dayShiftLabel.innerHTML = `
+            <input type="checkbox" id="day-shift-checkbox" ${dayData.dayShift ? 'checked' : ''}>
+            <span class="checkmark"></span>
+            Дневная смена
         `;
+        shiftGroup.appendChild(dayShiftLabel);
+        
+        if (hasNightShifts) {
+            const nightShiftLabel = document.createElement('label');
+            nightShiftLabel.className = 'custom-checkbox';
+            nightShiftLabel.style.marginTop = '10px';
+            nightShiftLabel.innerHTML = `
+                <input type="checkbox" id="night-shift-checkbox" ${dayData.nightShift ? 'checked' : ''}>
+                <span class="checkmark"></span>
+                Ночная смена
+            `;
+            shiftGroup.appendChild(nightShiftLabel);
+        }
+        
         dynamicFields.appendChild(shiftGroup);
     }
     
