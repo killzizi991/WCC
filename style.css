@@ -416,6 +416,17 @@ input:focus, textarea:focus {
     transform: translateY(-1px);
 }
 
+.period-option.active {
+    background: #4a6cf7;
+    color: white;
+    border-color: #4a6cf7;
+    transform: none;
+}
+
+.period-option.active:hover {
+    transform: none;
+}
+
 /* Настройки */
 .setting-group {
     margin: 15px 0;
@@ -441,6 +452,46 @@ input:focus, textarea:focus {
 .setting-group input[type="checkbox"] {
     margin-right: 10px;
     transform: scale(1.1);
+}
+
+/* Переключатели режимов */
+.mode-switcher {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.mode-option {
+    padding: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #2c3e50;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    flex: 1;
+    text-align: center;
+    border: none;
+}
+
+.mode-option:hover {
+    background: #4a6cf7;
+    color: white;
+    border-color: #4a6cf7;
+    transform: translateY(-1px);
+}
+
+.mode-option.active {
+    background: #4a6cf7;
+    color: white;
+    border-color: #4a6cf7;
+    transform: none;
+}
+
+.mode-option.active:hover {
+    transform: none;
 }
 
 /* Результаты расчетов */
@@ -547,6 +598,10 @@ input:focus, textarea:focus {
     .palette-tool {
         width: 36px;
         height: 36px;
+    }
+    
+    .mode-switcher {
+        flex-direction: column;
     }
 }
 
@@ -747,6 +802,11 @@ input:focus, textarea:focus {
         color: #e9ecef;
     }
     
+    .period-option.active {
+        background: #6c9bff;
+        border-color: #6c9bff;
+    }
+    
     .period-selector {
         background: #2d3035;
         color: #e9ecef;
@@ -781,6 +841,24 @@ input:focus, textarea:focus {
     .palette-tool {
         border-color: #5a6c7d;
         background: #3b3e45;
+    }
+    
+    .mode-option {
+        background: #3b3e45;
+        border-color: #5a6c7d;
+        color: #e9ecef;
+    }
+    
+    .mode-option:hover {
+        background: #6c9bff;
+        color: #e9ecef;
+        border-color: #6c9bff;
+    }
+    
+    .mode-option.active {
+        background: #6c9bff;
+        color: #e9ecef;
+        border-color: #6c9bff;
     }
 
     /* Стили для уведомлений в темной теме */
